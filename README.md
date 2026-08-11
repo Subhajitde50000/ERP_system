@@ -12,8 +12,6 @@ the live admin features, the API reference and the production checklist.
 ```bash
 # 1. Database (PostgreSQL)
 psql -U erp_user -d erp_db -f database/database.sql
-psql -U erp_user -d erp_db -f database/update.sql
-psql -U erp_user -d erp_db -f database/update2.sql
 
 # 2. Backend
 cd backend && python -m venv .venv && source .venv/bin/activate
