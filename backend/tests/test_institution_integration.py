@@ -294,11 +294,11 @@ async def test_staff_invite_student_enroll(real_backend):
     assert sc.status_code == 201, sc.text
     assert sc.json()["data"]["enrollment"]["class_name"] == "PHY-1"
 
-    # verify student can log in using default password password1232!
+    # verify student can NO longer log in using the old shared default password
+    # (each account now gets a unique random password — the shared "password1232!" was a security risk)
     st_login = await client.post("/api/v1/tenant/auth/login", json={
         "slug": "green", "identifier": "PHY001", "password": "password1232!"})
-    assert st_login.status_code == 200, st_login.text
-    assert "tokens" in st_login.json()["data"]
+    assert st_login.status_code == 401, "Student should NOT be able to log in with the old shared default password"
 
     # duplicate roll number rejected
     dup_s = await client.post("/api/v1/institution/students", headers=h, json={"name": "Duplicate", "roll_no": "PHY001"})
@@ -393,10 +393,11 @@ async def test_students_bulk_upload(real_backend):
     by_roll = {s["roll_no"]: s for s in lst.json()["data"]}
     assert by_roll["CHM001"]["enrollment"]["class_name"] == "CHM-1"
 
-    # verify bulk imported student can log in using default password password1232!
+    # verify bulk imported student can NO longer log in using the old shared default password
+    # (each account now gets a unique random password — the shared "password1232!" was a security risk)
     bulk_st_login = await client.post("/api/v1/tenant/auth/login", json={
         "slug": "green", "identifier": "CHM001", "password": "password1232!"})
-    assert bulk_st_login.status_code == 200, bulk_st_login.text
+    assert bulk_st_login.status_code == 401, "Bulk-imported student should NOT log in with old shared default password"
 
     # re-uploading an existing roll number → DB duplicate reported per row
     csv2 = "name,roll_no\nRavi Kumar,CHM001\nTom Jose,CHM004\n"

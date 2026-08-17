@@ -81,8 +81,14 @@ BULK_MAX_ROWS = 10_000
 # Default password for newly added staff members
 DEFAULT_STAFF_PASSWORD = "password1234!"
 
-# Default password for newly added student accounts
-DEFAULT_STUDENT_PASSWORD = "password1232!"
+# SECURITY: Do NOT use a shared constant for student initial passwords.
+# Each account receives a unique cryptographically-random password so that
+# knowing one student's roll number does not grant access to any account.
+# Credentials are distributed out-of-band (printed card, SMS, etc.).
+# Students change their password via the forgot-password / reset flow.
+def _random_student_password() -> str:
+    """Return a per-user unguessable initial password (never shared across accounts)."""
+    return generate_secure_token(32)
 
 # Roles an Institution Admin may NOT invite or grant: platform roles
 # (SUPER_ADMIN & co) are out of scope, INSTITUTION_ADMIN is the console owner,
@@ -1299,7 +1305,7 @@ class InstitutionService:
             email=str(payload.email).lower() if payload.email else None,
             student_roll_no=payload.roll_no, gender=Gender(payload.gender) if payload.gender else None,
             date_of_birth=payload.date_of_birth,
-            password_hash=hash_password(DEFAULT_STUDENT_PASSWORD), is_active=True,
+            password_hash=hash_password(_random_student_password()), is_active=True,
         )
         db.add(user)
         await db.flush()
@@ -1496,7 +1502,7 @@ class InstitutionService:
             id=uuid.uuid4(), tenant_id=tenant.id, name=name, email=email,
             student_roll_no=roll_no, gender=Gender(gender) if gender else None,
             date_of_birth=dob,
-            password_hash=hash_password(DEFAULT_STUDENT_PASSWORD), is_active=True,
+            password_hash=hash_password(_random_student_password()), is_active=True,
         )
         db.add(user)
         await db.flush()

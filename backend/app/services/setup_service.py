@@ -37,7 +37,14 @@ from app.utils.security import hash_password
 
 ONBOARDING_KEY = "onboarding"
 DEFAULT_SETUP_PASSWORD = "Setup@12345"  # staff get a reset link in real deployments
-DEFAULT_STUDENT_PASSWORD = "password1232!"
+
+# SECURITY: Do NOT use a shared constant for student initial passwords.
+# Each account receives a unique cryptographically-random password so that
+# knowing one student's roll number does not grant access to any account.
+def _random_student_password() -> str:
+    """Return a per-user unguessable initial password (never shared across accounts)."""
+    from app.utils.security import generate_secure_token
+    return generate_secure_token(32)
 
 
 class SetupService:
@@ -369,7 +376,7 @@ class SetupService:
                     gender=student.gender,
                     date_of_birth=student.date_of_birth,
                     student_roll_no=student.roll_no,
-                    password_hash=hash_password(DEFAULT_STUDENT_PASSWORD),
+                    password_hash=hash_password(_random_student_password()),
                     is_active=True,
                 )
                 db.add(user)
