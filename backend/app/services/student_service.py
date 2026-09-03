@@ -15,6 +15,7 @@ Sensitive data boundaries enforced here:
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -151,6 +152,7 @@ from app.schemas.student import (
 )
 from app.services.audit_service import AuditService
 from app.services.principal_service import PrincipalService, _value
+from app.services.push_service import PushService
 from app.services.teacher_service import grade_for
 
 
@@ -182,6 +184,9 @@ class StudentContext:
             academic_year=self.academic_year.name,
             roll_number=self.enrollment.roll_number,
         )
+
+
+logger = logging.getLogger(__name__)
 
 
 class StudentService:
@@ -1750,6 +1755,25 @@ class StudentService:
                 "files": len(payload.files),
             },
         )
+        # Let the assignment's teacher know a (new) attempt arrived. Wrapped in
+        # try/except so a notification problem can never fail the submission.
+        try:
+            await PushService.create_in_app_notifications(
+                db,
+                tenant_id=student.tenant_id,
+                user_ids=[assignment.teacher_id],
+                title="New assignment submission",
+                body=f"{student.name} submitted \"{assignment.title}\" (v{submission.version}).",
+                notif_type="SUBMISSION_RECEIVED",
+                data={
+                    "assignment_id": str(assignment.id),
+                    "submission_id": str(submission.id),
+                    "student_id": str(student.id),
+                    "version": int(submission.version or 1),
+                },
+            )
+        except Exception as exc:  # noqa: BLE001 - best-effort; never block submission
+            logger.warning("Could not notify teacher of submission %s: %s", submission.id, exc)
         files = await StudentService._submission_files(db, [submission.id])
         return StudentSubmissionOut(
             id=submission.id,

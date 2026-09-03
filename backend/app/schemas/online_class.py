@@ -13,6 +13,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from app.schemas.common import APIResponse
+from app.schemas.notification import NotificationPage, NotificationRow  # noqa: F401  (canonical definitions live in schemas/notification.py)
 from app.schemas.teacher import TeacherScheduleSlot, TeachingAssignment
 
 
@@ -179,26 +180,9 @@ class StudentOnlineClassList(BaseModel):
 
 
 # ── Student Notifications Inbox ───────────────────────────────────────────────
-
-
-class NotificationRow(BaseModel):
-    id: uuid.UUID
-    title: str
-    body: str
-    type: str
-    data: dict[str, Any] = {}
-    is_read: bool
-    read_at: datetime | None = None
-    created_at: datetime
-
-
-class NotificationPage(BaseModel):
-    total: int
-    unread_count: int
-    limit: int
-    offset: int
-    items: list[NotificationRow]
-
+# NotificationRow / NotificationPage now live in app.schemas.notification and
+# are imported above so the online-class module keeps its public names while
+# the whole codebase shares one schema definition.
 
 # ── Admin & Institutional Monitoring ─────────────────────────────────────────
 

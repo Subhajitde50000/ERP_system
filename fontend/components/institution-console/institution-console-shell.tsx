@@ -11,9 +11,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { GraduationCap, LogOut, Menu, X, type LucideIcon } from "lucide-react";
+import { Bell, GraduationCap, LogOut, Menu, X, type LucideIcon } from "lucide-react";
 
 import { useInstitutionAuth } from "@/hooks/use-institution-auth";
+import { useUnreadNotifications } from "@/hooks/use-unread-notifications";
 
 export interface InstitutionConsoleNavItem {
   label: string;
@@ -37,7 +38,12 @@ export function InstitutionConsoleShell({
   const { user, logout } = useInstitutionAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { unread } = useUnreadNotifications();
   const [open, setOpen] = useState(false);
+
+  // Every console serves its own /notifications page (student/teacher/admin…
+  // route prefix), so the bell links to the *current* console's inbox.
+  const notificationsHref = `/${pathname.split("/")[1] || ""}/notifications`;
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -140,6 +146,20 @@ export function InstitutionConsoleShell({
           </button>
           <GraduationCap className="hidden h-4 w-4 text-muted-foreground sm:block" aria-hidden="true" />
           <span className="font-display text-sm font-bold text-primary">{headerTitle}</span>
+          <div className="ml-auto flex items-center gap-2">
+            <Link
+              href={notificationsHref}
+              aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+              className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Bell className="h-[18px] w-[18px]" aria-hidden="true" />
+              {unread > 0 ? (
+                <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+                  {unread > 99 ? "99+" : unread}
+                </span>
+              ) : null}
+            </Link>
+          </div>
         </header>
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
       </div>

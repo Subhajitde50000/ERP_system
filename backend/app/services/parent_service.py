@@ -70,7 +70,6 @@ from app.models.catalog import Plan
 from app.models.enrollment import Enrollment
 from app.models.hod import AttendanceRecord, MentorAssignment
 from app.models.lms import AttendanceLeave, LeaveStatus
-from app.models.online_class import Notification
 from app.models.parent import (
     DEFAULT_PARENT_ACCESS_SCOPE,
     PARENT_ACCESS_MODULES,
@@ -109,6 +108,7 @@ from app.schemas.student import StudentDashboard
 from app.services.audit_service import AuditService
 from app.services.mailer import queue_email
 from app.services.principal_service import PrincipalService, _value
+from app.services.push_service import PushService
 from app.services.student_service import StudentService
 from app.utils.security import generate_secure_token, hash_password, hash_token
 
@@ -952,20 +952,20 @@ class ParentService:
             ) from exc
 
         # Tell the child an absence was filed for them, so the family is not
-        # running two different stories past the class teacher.
-        db.add(
-            Notification(
-                id=uuid.uuid4(),
-                tenant_id=parent.tenant_id,
-                user_id=child.id,
-                title="Leave request filed by your guardian",
-                body=(
-                    f"{parent.name} requested leave from {payload.from_date:%d %b %Y} "
-                    f"to {payload.to_date:%d %b %Y}."
-                ),
-                type="parent.leave.filed",
-                data={"leave_id": str(leave.id)},
-            )
+        # running two different stories past the class teacher. Uses the shared
+        # notification service so the child also receives a push on their
+        # registered devices (in-app row + FCM outbox in one call).
+        await PushService.create_in_app_notifications(
+            db,
+            tenant_id=parent.tenant_id,
+            user_ids=[child.id],
+            title="Leave request filed by your guardian",
+            body=(
+                f"{parent.name} requested leave from {payload.from_date:%d %b %Y} "
+                f"to {payload.to_date:%d %b %Y}."
+            ),
+            notif_type="parent.leave.filed",
+            data={"leave_id": str(leave.id)},
         )
         AuditService.record(
             db,

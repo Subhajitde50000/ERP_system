@@ -122,6 +122,7 @@ from app.models.online_class import (
     OnlineClassParticipant,
     OnlineClassStatus,
 )
+from app.models.notification import DeviceToken, NotificationDelivery
 
 __all__ = [
     "PlatformUser",

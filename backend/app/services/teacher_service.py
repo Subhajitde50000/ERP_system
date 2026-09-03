@@ -16,6 +16,7 @@ before writing, exactly like the HOD department fence.
 from __future__ import annotations
 
 import csv
+import logging
 import io
 import json
 import uuid
@@ -152,9 +153,11 @@ from app.schemas.teacher import (
     TeachingAssignment,
 )
 from app.services.audit_service import AuditService
-from app.services.principal_service import PrincipalService
 from app.services.principal_service import PrincipalService, _value
+from app.services.push_service import PushService
 
+
+logger = logging.getLogger(__name__)
 
 _PENDING_SUBMISSION_STATUSES = (
     SubmissionStatus.SUBMITTED,
@@ -3628,6 +3631,31 @@ class TeacherService:
             old_value={"status": old_status},
             new_value={"status": submission.status.value, "score": payload.score},
         )
+
+        # Notify the submitting student that their work was reviewed. For
+        # group submissions the lead submitter is the student_id on the row;
+        # milestones/group members already see the status change in-app.
+        decision_label = {
+            "APPROVED": "approved",
+            "REJECTED": "rejected",
+            "CHANGES_REQUESTED": "sent back with change requests",
+        }.get(payload.decision, payload.decision.lower())
+        try:
+            await PushService.create_in_app_notifications(
+                db,
+                tenant_id=teacher.tenant_id,
+                user_ids=[submission.student_id],
+                title="Your submission was reviewed",
+                body=f'Your submission for "{assignment.title}" was {decision_label}.',
+                notif_type="ASSIGNMENT_REVIEWED",
+                data={
+                    "assignment_id": str(assignment.id),
+                    "submission_id": str(submission.id),
+                    "decision": payload.decision,
+                },
+            )
+        except Exception as exc:  # noqa: BLE001 - notification must not fail a review
+            logger.warning("Failed to notify student after review: %s", exc)
         return await TeacherService._submission_detail(
             db, teacher.tenant_id, submission, assignment, user, enrollment, milestone
         )

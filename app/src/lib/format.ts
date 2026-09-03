@@ -53,6 +53,21 @@ export function localDate(value: Date = new Date()): string {
   return `${y}-${m}-${d}`;
 }
 
+/** Compact relative age for feed rows, e.g. "5m ago", "3h ago", "12 Sep". */
+export function timeAgo(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const at = new Date(iso);
+  if (Number.isNaN(at.valueOf())) return "";
+  const minutes = Math.floor((Date.now() - at.valueOf()) / 60_000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" }).format(at);
+}
+
 /** ISO / server datetime → `YYYY-MM-DDTHH:MM` for a datetime-local field. */
 export function toDatetimeLocal(value: string | null | undefined): string {
   if (!value) return "";

@@ -42,6 +42,8 @@ from app.routers import (
     library_router,
     hostel_router,
     online_class_router,
+    notifications_router,
+    push_tokens_router,
 )
 from app.schemas.common import ErrorDetail
 
@@ -99,6 +101,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
+from app.services.fcm_client import get_fcm_client
 from app.services.scheduler_service import start_scheduler, stop_scheduler
 
 
@@ -110,6 +113,11 @@ async def on_startup():
 @app.on_event("shutdown")
 async def on_shutdown():
     stop_scheduler()
+    # Release the shared FCM HTTP client connection pool, if one was created.
+    try:
+        await get_fcm_client().aclose()
+    except Exception:  # pragma: no cover - teardown best-effort
+        pass
 
 
 # ── Health Check ─────────────────────────────────────────────────────────────
@@ -141,3 +149,5 @@ app.include_router(parent_router, prefix=api_prefix)
 app.include_router(library_router, prefix=api_prefix)
 app.include_router(hostel_router, prefix=api_prefix)
 app.include_router(online_class_router, prefix=api_prefix)
+app.include_router(notifications_router, prefix=api_prefix)
+app.include_router(push_tokens_router, prefix=api_prefix)

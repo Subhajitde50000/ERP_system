@@ -38,7 +38,6 @@ from app.models.academic import Department, SchoolClass, Subject
 from app.models.enrollment import Enrollment
 from app.models.hod import AttendanceRecord
 from app.models.online_class import (
-    Notification,
     OnlineAttendanceStatus,
     OnlineClass,
     OnlineClassFile,
@@ -73,6 +72,7 @@ from app.schemas.online_class import (
 )
 from app.services.audit_service import AuditService
 from app.services.principal_service import PrincipalService
+from app.services.notification_service import NotificationService
 from app.services.push_service import PushService
 from app.services.teacher_service import TeacherService
 
@@ -1322,6 +1322,11 @@ class OnlineClassService:
         return await OnlineClassService._to_row(db, oc)
 
     # ── Student Notification Inbox ────────────────────────────────────────────
+    # These used to re-implement the inbox queries locally. The platform-wide
+    # notification service (app/services/notification_service.py) is now the
+    # single owner of inbox + push logic; these methods stay only as the
+    # legacy entry points used by the /online-classes/my/notifications routes
+    # and delegate unchanged semantics.
 
     @staticmethod
     async def list_notifications(
@@ -1331,84 +1336,15 @@ class OnlineClassService:
         offset: int = 0,
         unread_only: bool = False,
     ) -> NotificationPage:
-        TeacherService._validate_page(limit, offset)
-        base = select(Notification).where(Notification.user_id == user.id)
-        if unread_only:
-            base = base.where(Notification.is_read.is_(False))
-
-        total = (await db.execute(select(func.count(Notification.id)).where(Notification.user_id == user.id))).scalar_one()
-        unread_count = (
-            await db.execute(
-                select(func.count(Notification.id)).where(
-                    Notification.user_id == user.id,
-                    Notification.is_read.is_(False),
-                )
-            )
-        ).scalar_one()
-
-        rows = (
-            await db.execute(
-                base.order_by(Notification.created_at.desc()).limit(limit).offset(offset)
-            )
-        ).scalars().all()
-
-        return NotificationPage(
-            total=total,
-            unread_count=unread_count,
-            limit=limit,
-            offset=offset,
-            items=[
-                NotificationRow(
-                    id=n.id,
-                    title=n.title,
-                    body=n.body,
-                    type=n.type,
-                    data=n.data or {},
-                    is_read=n.is_read,
-                    read_at=n.read_at,
-                    created_at=n.created_at,
-                )
-                for n in rows
-            ],
-        )
+        return await NotificationService.list_inbox(db, user.id, limit=limit, offset=offset, unread_only=unread_only)
 
     @staticmethod
     async def mark_notification_read(db: AsyncSession, user: User, notif_id: uuid.UUID) -> NotificationRow:
-        n = (
-            await db.execute(
-                select(Notification).where(
-                    Notification.id == notif_id,
-                    Notification.user_id == user.id,
-                )
-            )
-        ).scalar_one_or_none()
-        if n is None:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Notification not found")
-        if not n.is_read:
-            n.is_read = True
-            n.read_at = datetime.now(timezone.utc)
-            await db.flush()
-        return NotificationRow(
-            id=n.id,
-            title=n.title,
-            body=n.body,
-            type=n.type,
-            data=n.data or {},
-            is_read=n.is_read,
-            read_at=n.read_at,
-            created_at=n.created_at,
-        )
+        return await NotificationService.mark_read(db, user.id, notif_id)
 
     @staticmethod
     async def mark_all_notifications_read(db: AsyncSession, user: User) -> int:
-        now = datetime.now(timezone.utc)
-        result = await db.execute(
-            update(Notification)
-            .where(Notification.user_id == user.id, Notification.is_read.is_(False))
-            .values(is_read=True, read_at=now)
-        )
-        await db.flush()
-        return result.rowcount
+        return await NotificationService.mark_all_read(db, user.id)
 
     # ── Admin & Principal Monitoring ──────────────────────────────────────────
 

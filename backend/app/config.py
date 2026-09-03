@@ -59,10 +59,23 @@ class Settings(BaseSettings):
     def allowed_mime_set(self) -> set[str]:
         return {m.strip() for m in self.ONLINE_CLASS_ALLOWED_MIME_TYPES.split(",") if m.strip()}
 
-    # ── Firebase Cloud Messaging (optional push notifications) ────────────────
-    # Set this to your FCM v1 service-account JSON path or leave blank to
-    # disable push entirely (in-app DB notifications still work).
-    FCM_SERVER_KEY: str = ""
+    # ── Firebase Cloud Messaging (Android / iOS / web push) ──────────────────
+    # Remote push is sent through the FCM v1 HTTP API. Two ways to provide the
+    # Firebase service-account credentials (a Google Cloud service account with
+    # the "Firebase Cloud Messaging API" enabled):
+    #   1. FCM_SERVICE_ACCOUNT_JSON    – path to the downloaded JSON file
+    #   2. FCM_SERVICE_ACCOUNT_B64     – base64 of the same JSON (useful on
+    #                                    platforms where secrets live in env)
+    # When neither is set, remote push is disabled and only the in-app DB
+    # inbox is written (safe default for development / tests).
+    FCM_SERVICE_ACCOUNT_JSON: str = ""
+    FCM_SERVICE_ACCOUNT_B64: str = ""
+    # Optional project id override; usually read from the service-account file.
+    FCM_PROJECT_ID: str = ""
+    # Default time-to-live applied to FCM messages.
+    FCM_TTL_SECONDS: int = 86400
+    # How many outbox rows the background delivery worker claims per run.
+    NOTIFICATION_PUSH_BATCH_SIZE: int = 100
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"

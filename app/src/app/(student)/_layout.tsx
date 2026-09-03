@@ -58,6 +58,7 @@ export default function StudentLayout() {
         <Stack.Screen name="results/[id]/index" />
         <Stack.Screen name="results/[id]/grade-card" />
         <Stack.Screen name="notices" />
+        <Stack.Screen name="notifications" />
         <Stack.Screen name="discussion/index" />
         <Stack.Screen name="discussion/[id]" />
         <Stack.Screen name="fees/index" />

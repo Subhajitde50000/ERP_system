@@ -1,8 +1,11 @@
-"""Background scheduler for online classes (auto-start & reminders).
+"""Background scheduler.
 
-Runs background tasks:
-1. Auto-starts scheduled classes that reached their `scheduled_at` timestamp.
-2. Sends reminders to enrolled students ~10 minutes before a scheduled class starts.
+Jobs:
+1. Auto-starts scheduled online classes that reached `scheduled_at`.
+2. Sends online-class reminders to enrolled students ~10 minutes early.
+3. Drains the notification push outbox (Firebase FCM) in batches — durable,
+   retried delivery of every push that was enqueued with an in-app
+   notification (see app/services/notification_service.py).
 """
 
 from __future__ import annotations
@@ -15,6 +18,7 @@ from sqlalchemy import select
 
 from app.database import AsyncSessionLocal
 from app.models.online_class import OnlineClass, OnlineClassStatus
+from app.services.notification_service import NotificationService
 from app.services.online_class_service import OnlineClassService
 
 logger = logging.getLogger(__name__)
@@ -77,6 +81,16 @@ async def send_class_reminders() -> None:
         logger.error("Error running send_class_reminders: %s", e)
 
 
+async def drain_push_deliveries() -> None:
+    """Sweep the notification push outbox (Firebase FCM delivery worker)."""
+    try:
+        summary = await NotificationService.deliver_pending()
+        if summary.get("claimed"):
+            logger.info("push worker round: %s", summary)
+    except Exception as exc:  # noqa: BLE001 - a worker failure must not kill the loop
+        logger.exception("push worker round failed: %s", exc)
+
+
 def start_scheduler() -> None:
     """Initialize and start the background scheduler."""
     if not scheduler.running:
@@ -94,8 +108,15 @@ def start_scheduler() -> None:
             id="online_class_reminders",
             replace_existing=True,
         )
+        scheduler.add_job(
+            drain_push_deliveries,
+            "interval",
+            seconds=10,
+            id="push_deliveries",
+            replace_existing=True,
+        )
         scheduler.start()
-        logger.info("Online class background scheduler started.")
+        logger.info("ERP background scheduler started (online classes + push worker).")
 
 
 def stop_scheduler() -> None:

@@ -2043,6 +2043,40 @@ CREATE TABLE device_tokens (
   CONSTRAINT uq_device_tokens__user_id_token UNIQUE (user_id, token)
 );
 
+-- Push enqueue path: "all live tokens of these users" during a broadcast.
+CREATE INDEX idx_device_tokens_user_active
+  ON device_tokens (user_id)
+  WHERE is_active = TRUE;
+
+-- Durable push outbox — one row per (notification, live device token),
+-- drained by the FCM worker (NotificationService.deliver_pending).
+CREATE TABLE notification_deliveries (
+
+  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_id              UUID NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+  user_id                      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  device_token_id              UUID NOT NULL REFERENCES device_tokens(id) ON DELETE CASCADE,
+  platform                     VARCHAR(10) NOT NULL,            -- android | ios | web
+  status                       VARCHAR(20) NOT NULL DEFAULT 'PENDING',  -- PENDING|SENT|FAILED|SKIPPED
+  attempts                     SMALLINT NOT NULL DEFAULT 0,
+  last_error                   TEXT,
+  next_attempt_at              TIMESTAMPTZ,
+  created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at                      TIMESTAMPTZ
+);
+
+-- Worker scan: only pending rows whose backoff window has elapsed.
+CREATE INDEX idx_notif_deliveries_pending
+  ON notification_deliveries (status, next_attempt_at)
+  WHERE status = 'PENDING';
+
+-- Fast lookup when a notification row is deleted / audited.
+CREATE INDEX idx_notif_deliveries_notification
+  ON notification_deliveries (notification_id);
+
+CREATE INDEX idx_notif_deliveries_user
+  ON notification_deliveries (user_id);
+
 CREATE TABLE audit_logs (
 
   id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
