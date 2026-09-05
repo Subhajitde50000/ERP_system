@@ -165,3 +165,22 @@ To restore from a previous backup `.sql.gz`:
 chmod +x scripts/restore-db.sh
 ./scripts/restore-db.sh backups/erp_backup_YYYYMMDD_HHMMSS.sql.gz
 ```
+
+---
+
+## 6. Security Hardening & Best Practices
+
+### Security Headers
+The ERP reverse proxy (`nginx/default.conf`) and Next.js frontend (`fontend/next.config.mjs`) enforce strict HTTP security headers:
+- **Content-Security-Policy (CSP)**: Restricts script, style, and iframe sources to prevent Cross-Site Scripting (XSS) and code injection.
+- **Strict-Transport-Security (HSTS)**: `max-age=63072000; includeSubDomains; preload` enforces HTTPS exclusively in production.
+- **X-Frame-Options**: `SAMEORIGIN` prevents clickjacking attacks.
+- **X-Content-Type-Options**: `nosniff` prevents MIME-type confusion attacks.
+- **Referrer-Policy**: `strict-origin-when-cross-origin` protects sensitive URL paths from leaking.
+- **Permissions-Policy**: Restricts access to device hardware (camera and microphone allowed only for self during live classrooms; sensitive sensors disabled).
+
+### Token Storage & XSS Mitigation
+- **Short-Lived Access Tokens**: Stored **only in memory** (never in `localStorage` or `sessionStorage`).
+- **Refresh Tokens**: Issued and delivered in secure **`httpOnly` cookies** (`SameSite=Lax`, `Secure` in production, `path=/`) for web clients. Because JavaScript cannot access `httpOnly` cookies, malicious scripts injected via potential XSS vectors cannot exfiltrate the persistent refresh token.
+- **Mobile Compatibility**: Mobile clients receive the token in the API response body and transmit it in headers/body, maintaining seamless full-duplex compatibility.
+

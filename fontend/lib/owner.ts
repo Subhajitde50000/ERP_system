@@ -116,12 +116,17 @@ export async function ownerLogin(
 
 export async function ownerLogout(): Promise<void> {
   const refresh = loadOwnerRefresh();
-  if (!refresh) return;
   try {
-    await ownerFetch("/logout", {
-      method: "POST",
-      body: JSON.stringify({ refresh_token: refresh }),
-    }, true);
+    await ownerFetch(
+      "/logout",
+      {
+        method: "POST",
+        body: JSON.stringify(refresh ? { refresh_token: refresh } : {}),
+      },
+      true,
+    );
+  } catch {
+    // Teardown best-effort
   } finally {
     setOwnerAccessToken(null);
     clearOwnerRefresh();
@@ -130,11 +135,13 @@ export async function ownerLogout(): Promise<void> {
 
 export async function refreshOwnerToken(): Promise<string | null> {
   const refresh = loadOwnerRefresh();
-  if (!refresh) return null;
   try {
     const data = await ownerFetch<{ accessToken: string; expiresIn: number }>(
       "/refresh",
-      { method: "POST", body: JSON.stringify({ refresh_token: refresh }) },
+      {
+        method: "POST",
+        body: JSON.stringify(refresh ? { refresh_token: refresh } : {}),
+      },
     );
     setOwnerAccessToken(data.accessToken);
     return data.accessToken;
@@ -144,6 +151,7 @@ export async function refreshOwnerToken(): Promise<string | null> {
     return null;
   }
 }
+
 
 export async function getOwnerMe(): Promise<OwnerProfile | null> {
   if (!_ownerAccessToken) return null;

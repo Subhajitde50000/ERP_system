@@ -10,11 +10,12 @@ Endpoints:
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.database import get_db
 from app.dependencies.auth import get_current_platform_user
 from app.models.platform_user import PlatformUser
@@ -33,6 +34,7 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/platform/auth", tags=["Platform Authentication"])
 limiter = Limiter(key_func=get_remote_address)
+settings = get_settings()
 
 
 @router.post("/login", response_model=APIResponse[PlatformLoginResponse])
@@ -40,6 +42,7 @@ limiter = Limiter(key_func=get_remote_address)
 async def platform_login(
     req: PlatformLoginRequest,
     request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Authenticate a platform staff member and return JWT token pair."""
@@ -49,32 +52,57 @@ async def platform_login(
         request=request,
         db=db,
     )
+    # Set secure httpOnly cookie
+    response.set_cookie(
+        key="erp_platform_refresh_token",
+        value=data.tokens.refresh_token,
+        httponly=True,
+        secure=settings.APP_ENV == "production",
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        path="/",
+    )
     return APIResponse(success=True, data=data, message="Platform login successful")
 
 
 @router.post("/logout", response_model=APIResponse[None])
 async def platform_logout(
-    req: LogoutRequest,
+    req: LogoutRequest | None,
+    request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[PlatformUser, Depends(get_current_platform_user)],
 ):
-    """Revoke the current platform session."""
-    await AuthService.platform_logout(refresh_token=req.refresh_token, db=db)
+    """Revoke the current platform session and clear cookie."""
+    token = (req.refresh_token if req and req.refresh_token else None) or request.cookies.get("erp_platform_refresh_token") or request.cookies.get("refresh_token")
+    if token:
+        await AuthService.platform_logout(refresh_token=token, db=db)
+    response.delete_cookie(key="erp_platform_refresh_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
     return APIResponse(success=True, data=None, message="Logout successful")
 
 
 @router.post("/refresh", response_model=APIResponse[AccessTokenResponse])
 async def platform_refresh(
-    req: RefreshRequest,
+    req: RefreshRequest | None,
+    request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Issue a new platform access token using a valid refresh token."""
+    """Issue a new platform access token using a valid refresh token from body or cookie."""
+    token = (req.refresh_token if req and req.refresh_token else None) or request.cookies.get("erp_platform_refresh_token") or request.cookies.get("refresh_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Refresh token is required via request body or httpOnly cookie",
+        )
     data = await AuthService.platform_refresh(
-        refresh_token=req.refresh_token, db=db
+        refresh_token=token, db=db
     )
     return APIResponse(
         success=True, data=data, message="Token refreshed successfully"
     )
+
 
 
 @router.get("/me", response_model=APIResponse[PlatformUserInfo])

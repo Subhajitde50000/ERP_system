@@ -213,7 +213,7 @@ assets before any app-related promotion.
 
 | # | Issue | Fix |
 |---|---|---|
-| C1 | **No Dockerfile, no docker-compose, no CI/CD, no deploy scripts** in repo | Add containerization (backend, web, postgres, redis), GitHub Actions running pytest + `next build` + expo lint/tsc, and a documented deploy pipeline |
+| C1 | **No Dockerfile, no docker-compose, no CI/CD, no deploy scripts** in repo | ✅ **FIXED**: Multi-stage Dockerfiles (backend & frontend), docker-compose (dev & prod), GitHub Actions CI/CD workflows, and deploy/backup scripts created. |
 | C2 | **Two schema sources** (`database/database.sql` + 14 SQL migrations vs Alembic 7 revisions with "drift" patches) | Make Alembic the single source of truth; baseline against production; add a CI drift check (`alembic check`) |
 | C3 | **README quickstart is wrong**: references `python run.py` which doesn't exist | Use `uvicorn app.main:app`; fix docs |
 | C4 | **No error monitoring / structured log aggregation** (no Sentry/Logtail/Datadog) | Add Sentry (backend + web), ship RequestID-correlated logs |
@@ -223,8 +223,9 @@ assets before any app-related promotion.
 | C8 | Forgot-password mail path has a `TODO` (outbox event with raw token not enqueued in `auth_service.py:480`) | Verify reset emails actually send in production; complete outbox wiring |
 | C9 | FCM push is a stub (`FCM_SERVER_KEY` slot but no firebase-admin SDK; `device_tokens` table exists) | Either wire firebase-admin or remove push claims from marketing |
 | C10 | Tenant login brute-force defence is only 10 req/min per **IP**; no per-account lockout for tenant users (owner routes have limits; verify account lockout) | Add per-account failed-attempt lockout + CAPTCHA after N failures |
-| C11 | Refresh token in **localStorage** (XSS-exfiltratable) on web | Consider httpOnly cookie for refresh token with SameSite=strict; CSP headers |
-| C12 | No security headers documented (CSP, HSTS, X-Frame-Options) at the app/proxy layer | Add at reverse proxy/Next config |
+| C11 | Refresh token in **localStorage** (XSS-exfiltratable) on web | ✅ **FIXED**: Switched to secure `httpOnly` cookies (`SameSite=Lax`, `Secure` in prod, `path=/`) with in-memory access tokens and graceful fallback. |
+| C12 | No security headers documented (CSP, HSTS, X-Frame-Options) at the app/proxy layer | ✅ **FIXED**: Added CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy & Permissions-Policy at Next.js, FastAPI, and Nginx proxy layers; documented in DEPLOYMENT.md. |
+
 | C13 | Tests are heavily mocked in part and there's no CI gate; no load test for the exam-burst scenario the capacity report promises | Add CI gate + k6/Locust load test for attendance/exam bursts |
 | C14 | Duplicate superadmin scripts (`manage_superadmin.py` at root and in `scripts/`) | Consolidate |
 | C15 | Email deliverability via a personal Gmail (500/day cap, spam risk) for transactional mail to schools/parents | Use a transactional provider (SES/Postmark/Resend) with subdomain + DKIM |
