@@ -9,6 +9,22 @@ the live admin features, the API reference and the production checklist.
 
 ## Quick start
 
+### Option A: Docker (Recommended)
+
+```bash
+# 1. Copy Docker environment variables
+cp .env.docker.example .env
+
+# 2. Start PostgreSQL, Redis, Backend & Frontend
+docker compose up --build
+
+# Web: http://localhost:3000 | API Docs: http://localhost:8000/docs
+```
+
+For complete production deployment, CI/CD, and backup instructions, see **[`DEPLOYMENT.md`](./DEPLOYMENT.md)**.
+
+### Option B: Local Manual Setup
+
 ```bash
 # 1. Database (PostgreSQL)
 psql -U erp_user -d erp_db -f database/database.sql
@@ -26,3 +42,4 @@ npm run dev                                               # :3000
 ```
 
 See `doc/` for architecture, system flow and the owner-account model.
+

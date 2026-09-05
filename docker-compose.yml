@@ -1,0 +1,120 @@
+version: "3.8"
+
+services:
+  # ─── PostgreSQL Database ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: erp_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-erp_db}
+      POSTGRES_USER: ${POSTGRES_USER:-erp_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-erp_password}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-erp_user} -d ${POSTGRES_DB:-erp_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - erp_network
+
+  # ─── Redis Cache & PubSub ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: erp_redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - erp_network
+
+  # ─── Database Migrations & Initial Setup ───────────────────────────────────
+  migration:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: erp_migration
+    command: >
+      sh -c "alembic upgrade head"
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://erp_user:erp_password@postgres:5432/erp_db}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-secret-key-change-this-in-production-must-be-long}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - erp_network
+
+  # ─── FastAPI Backend ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: erp_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://erp_user:erp_password@postgres:5432/erp_db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-secret-key-change-this-in-production-must-be-long}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      APP_ENV: ${APP_ENV:-development}
+      APP_DEBUG: ${APP_DEBUG:-true}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:80,http://localhost,http://xyz.com}
+      PUBLIC_ROOT_DOMAIN: ${PUBLIC_ROOT_DOMAIN:-xyz.com}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@xyz.com}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-ERP Platform}
+    ports:
+      - "${PORT:-8000}:8000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    networks:
+      - erp_network
+
+  # ─── Next.js Frontend ──────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./fontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        NEXT_PUBLIC_ROOT_DOMAIN: ${NEXT_PUBLIC_ROOT_DOMAIN:-xyz.com}
+    container_name: erp_frontend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXT_PUBLIC_ROOT_DOMAIN: ${NEXT_PUBLIC_ROOT_DOMAIN:-xyz.com}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - erp_network
+
+networks:
+  erp_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

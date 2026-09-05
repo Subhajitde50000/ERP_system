@@ -1,0 +1,145 @@
+version: "3.8"
+
+services:
+  # ─── Production Nginx Gateway ──────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: erp_nginx_prod
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - erp_prod_network
+
+  # ─── PostgreSQL Database ───────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: erp_postgres_prod
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - erp_prod_network
+
+  # ─── Redis Cache & PubSub ──────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: erp_redis_prod
+    restart: always
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-}"
+    volumes:
+      - redis_prod_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - erp_prod_network
+
+  # ─── Database Migrations ───────────────────────────────────────────────────
+  migration:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: erp_migration_prod
+    command: sh -c "alembic upgrade head"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - erp_prod_network
+
+  # ─── FastAPI Backend ───────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: erp_backend_prod
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: ${REDIS_URL}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-15}
+      REFRESH_TOKEN_EXPIRE_DAYS: ${REFRESH_TOKEN_EXPIRE_DAYS:-7}
+      APP_ENV: production
+      APP_DEBUG: "false"
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      PUBLIC_ROOT_DOMAIN: ${PUBLIC_ROOT_DOMAIN}
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-google}
+      EMAIL_FROM: ${EMAIL_FROM}
+      EMAIL_FROM_NAME: ${EMAIL_FROM_NAME}
+      GOOGLE_SMTP_HOST: ${GOOGLE_SMTP_HOST:-}
+      GOOGLE_SMTP_PORT: ${GOOGLE_SMTP_PORT:-587}
+      GOOGLE_SMTP_USER: ${GOOGLE_SMTP_USER:-}
+      GOOGLE_SMTP_PASSWORD: ${GOOGLE_SMTP_PASSWORD:-}
+    volumes:
+      - backend_prod_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migration:
+        condition: service_completed_successfully
+    networks:
+      - erp_prod_network
+
+  # ─── Next.js Frontend ──────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./fontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_ROOT_DOMAIN: ${PUBLIC_ROOT_DOMAIN}
+        NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY:-}
+        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN:-}
+        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID:-}
+        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID:-}
+        NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID:-}
+        NEXT_PUBLIC_FIREBASE_VAPID_KEY: ${NEXT_PUBLIC_FIREBASE_VAPID_KEY:-}
+    container_name: erp_frontend_prod
+    restart: always
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_ROOT_DOMAIN: ${PUBLIC_ROOT_DOMAIN}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - erp_prod_network
+
+networks:
+  erp_prod_network:
+    driver: bridge
+
+volumes:
+  postgres_prod_data:
+  redis_prod_data:
+  backend_prod_uploads:
