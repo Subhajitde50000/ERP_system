@@ -161,13 +161,17 @@ blank/error; verify grade-card PDF/image export and marks breakdown on web and m
 - **Fail-Fast Startup Validation**: Added `validate_storage_config()` in `app/main.py` startup to ensure missing S3 configurations fail immediately with actionable instructions rather than failing during customer uploads.
 - **Private Signed URLs & Magic-Byte Validation**: All files are served via short-lived HMAC-signed URLs (`/api/v1/files/{key}?exp=...&sig=...`), stored under tenant-prefixed keys (`{tenant_id}/{namespace}/{uuid}_{filename}`), and validated against binary signatures (magic bytes) to block executable payloads and webshells.
 
-### B7. Mobile app cannot reach a real backend
-`EXPO_PUBLIC_API_URL` defaults to `http://localhost:8000`, which on a physical phone is
-the phone itself. No production API env, no Android network-security config for cleartext,
-and the app is not configured for store builds (no app icons/store listing work shown).
-
-**Fix:** add production/staging env builds, HTTPS API, eas build profiles, and store
-assets before any app-related promotion.
+### B7. Mobile app cannot reach a real backend [FIXED]
+**Status: FIXED**
+- **Dev profile env var**: Removed hardcoded `http://localhost:8000` from `eas.json` development profile; dev builds now use `EXPO_PUBLIC_API_URL` from `.env.local` (documented in `.env.example`), defaulting to `localhost:8000` only when unset.
+- **Fail-fast production guard**: `src/lib/auth.ts::resolveApiBaseUrl` throws at startup when a production build has no URL or points at localhost/127.0.0.1/10.0.2.2 — ships broken builds are impossible.
+- **Network security hardened**: `usesCleartextTraffic: false` (Android) and `NSAllowsArbitraryLoads: false` (iOS) in `app.json` via `expo-build-properties` ensure release builds reject HTTP URLs.
+- **iOS icon fixed**: `app.json` `ios.icon` corrected from the Expo placeholder (`./assets/expo.icon` icon.json directory) to the actual 1024×1024 PNG (`./assets/images/icon.png`).
+- **EAS submit.production wired**: `eas.json` `submit.production` now includes `android.serviceAccountKeyPath` and `ios.appleId`/`ascAppId`/`appleTeamId` (sourced from EAS secrets); `google-play-key.json` is gitignored.
+- **Staging build profile added**: `eas.json` now has `development`, `preview`, `staging`, and `production` profiles with `EXPO_PUBLIC_WEB_URL` included in all non-dev profiles.
+- **Store assets present**: Feature graphic (1024×500), icon-512 (512×512), Android adaptive/monochrome icons, splash screen all exist in `assets/`.
+- **Store submission guide**: Created `app/PRE-LAUNCH-CHECKLIST.md` with step-by-step instructions for EAS init, bundle ID change, credentials, Play Store setup, App Store setup, screenshots, and listing copy.
+- **README fixed**: Corrected typo `EPO_PUBLIC_API_URL` → `EXPO_PUBLIC_API_URL`; added `.env.local` workflow and `eas init` one-time setup instructions.
 
 ---
 
