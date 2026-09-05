@@ -235,6 +235,10 @@ const PUBLIC_PAGES = [
   ["/login", "Login"],
   ["/forgot-password", "Forgot password"],
   ["/support", "Support"],
+  ["/contact", "Contact"],
+  ["/privacy", "Privacy Policy"],
+  ["/terms", "Terms of Service"],
+  ["/refund-policy", "Refund Policy"],
   ["/", "Root → redirects to /login"],
   ["/this-route-does-not-exist", "404 page"],
 ];
