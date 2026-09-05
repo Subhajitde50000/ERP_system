@@ -101,3 +101,76 @@ has no native counterpart is it adapted:
   itself is rendered identically where it exists.
 - Exam grading is a full screen (not a modal overlay) so every question is
   readable.
+
+---
+
+# Release pipeline (B7 — environment, EAS builds, store submission)
+
+## Environment model
+
+| Variable | Dev (Expo Go / dev client) | Release (EAS build) |
+| --- | --- | --- |
+| `EXPO_PUBLIC_API_URL` | `http://localhost:8000` (emulator) or `http://<LAN-IP>:8000` (device) | **HTTPS only** — injected by the build profile |
+| `EXPO_PUBLIC_WEB_URL` | optional | web console base URL (enables the in-app "Join audio/video in browser" link) |
+
+Two guardrails make a broken release impossible to ship silently
+(`src/lib/auth.ts::resolveApiBaseUrl`):
+
+* a **production** bundle without `EXPO_PUBLIC_API_URL` throws at startup
+  with instructions instead of pointing at localhost;
+* a **production** bundle pointed at `http://localhost/127.0.0.1/10.0.2.2`
+  throws for the same reason.
+
+Development builds are untouched — localhost stays the default there.
+Cleartext HTTP is disabled in release Android builds and ATS is locked down
+on iOS via `expo-build-properties` in `app.json`; dev builds keep OS defaults
+so local servers work.
+
+## Build profiles (`eas.json`)
+
+```bash
+# one-time
+npm i -g eas-cli && eas login && eas init            # fills extra.eas.projectId
+
+# development build (dev client + localhost API)
+eas build --profile development --platform android
+
+# internal testing build against staging/prod API
+EPO_PUBLIC_API_URL=https://api.staging.example.com \
+eas build --profile preview --platform android
+
+# store build — API URLs come from EAS secrets, never from the repo
+eas secret:create --name EXPO_PUBLIC_API_URL   --value https://api.example.com
+eas secret:create --name EXPO_PUBLIC_WEB_URL   --value https://erp.example.com
+eas build --profile production --platform android
+eas build --profile production --platform ios
+eas submit --profile production --platform android   # then Play/App Store
+```
+
+`appVersionSource: remote` + `autoIncrement` keep `versionCode`/`buildNumber`
+managed by EAS so store uploads never collide.
+
+## Store submission checklist
+
+1. **Identifiers** — `app.json` ships with `com.erpcampus.mobile`
+   (`android.package` / `ios.bundleIdentifier`). These are permanent once
+   published: replace with the institution's own reverse-domain id **before
+   the first store submission**.
+2. **Icons/splash** — already complete in `assets/images/` (1024 icon,
+   Android adaptive set, monochrome, splash, favicon).
+3. **Store assets** — `assets/store/feature-graphic.png` (1024×500) and
+   `assets/store/icon-512.png` are generated deterministically:
+   `python3 - <<'EOF'` snippet in `doc/bugfix-b6-b7.md` §B7 regenerates them.
+4. **Screenshots** — required per store (phone + 7"/10" tablet for Play).
+   Capture from the `preview` build; do not reuse marketing renders.
+5. **Listings** — title ≤ 30 chars, short description ≤ 80, full description
+   ≤ 4000; privacy policy URL is mandatory (data: names, email, attendance,
+   grades — see backend privacy docs) and must reference FCM push usage.
+6. **Backend** — the release API host must be HTTPS with a valid certificate
+   (`NODE_ENV=production` builds reject cleartext URLs); CORS for the app is
+   not needed (native), but the web console origin must be allowlisted.
+
+## Tests
+
+`npm test` — vitest; `npx tsc --noEmit` — types. The API-URL guard has its
+own suite in `src/lib/auth.test.ts`.

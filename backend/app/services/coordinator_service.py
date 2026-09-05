@@ -1391,7 +1391,7 @@ class CoordinatorService:
         )
         db.add(notice)
         await db.flush()
-        attachments = await PrincipalService._save_notice_attachments(db, notice.id, payload.attachments)
+        attachments = await PrincipalService._save_notice_attachments(db, notice.tenant_id, notice.id, payload.attachments)
         AuditService.record(
             db,
             actor=coordinator,

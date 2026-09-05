@@ -271,10 +271,13 @@ async def test_exam_result_stays_hidden_until_release():
         Result(row=(target, SimpleNamespace(id=uuid.uuid4(), code="CS101", name="Data Structures"))),
         Result(scalar=attempt),
     ])
-    with pytest.raises(HTTPException) as raised:
-        await StudentService.exam_result(db, actor, target.id)
-    assert raised.value.status_code == 404
-    assert "not released" in raised.value.detail
+    result = await StudentService.exam_result(db, actor, target.id)
+    # Typed state instead of a prose 404: the UI renders "results under
+    # evaluation" and no score/answer data is exposed yet.
+    assert result.result_state == "UNDER_EVALUATION"
+    assert result.total_score is None
+    assert result.answers == []
+    assert result.submitted_at == attempt.submitted_at
 
 
 async def test_assignment_submit_rejects_past_due_without_late_allowed():

@@ -51,6 +51,7 @@ from app.schemas.teacher import (
     APIResponseTeacherThreads,
     AttendanceSessionUpsert,
     TeacherAssignmentCreate,
+    TeacherAssignmentReopen,
     TeacherAssignmentUpdate,
     TeacherContentIn,
     TeacherContentUpdate,
@@ -579,10 +580,21 @@ async def reopen_assignment(
     assignment_id: uuid.UUID,
     db: Annotated[AsyncSession, Depends(get_db)],
     teacher: Annotated[User, Depends(get_current_tenant_user_teacher)],
+    payload: TeacherAssignmentReopen | None = None,
 ):
+    """Reopen a closed assignment.
+
+    By default the reopen also asks students with un-reviewed submissions to
+    review and resubmit (their latest submission becomes RESUBMIT_REQUESTED).
+    Send ``{"request_resubmission": false}`` to reopen only for students who
+    never submitted.
+    """
+    request_resubmission = True if payload is None else payload.request_resubmission
     return APIResponse(
         success=True,
-        data=await TeacherService.transition_assignment(db, teacher, assignment_id, "reopen"),
+        data=await TeacherService.transition_assignment(
+            db, teacher, assignment_id, "reopen", request_resubmission=request_resubmission
+        ),
         message="Assignment reopened",
     )
 

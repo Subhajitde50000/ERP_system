@@ -8,11 +8,11 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 from app.database import Base
 from app.models.parent import ParentStudentLink  # noqa: F401  (re-exported for hostel_service's guardian fence)
+from app.models.principal import LeaveStatus  # shared PG enum `leave_status`
 from app.models.user import Gender
 
 class AllotmentStatus(str, enum.Enum): ACTIVE="ACTIVE"; VACATED="VACATED"; TRANSFERRED="TRANSFERRED"
 class HostelAttendanceStatus(str, enum.Enum): PRESENT="PRESENT"; ABSENT="ABSENT"; ON_LEAVE="ON_LEAVE"
-class LeaveStatus(str, enum.Enum): PENDING="PENDING"; APPROVED="APPROVED"; REJECTED="REJECTED"; CANCELLED="CANCELLED"
 class ComplaintStatus(str, enum.Enum): OPEN="OPEN"; IN_PROGRESS="IN_PROGRESS"; RESOLVED="RESOLVED"
 
 class HostelBlock(Base):

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date, datetime, time
-from typing import Literal
+from typing import Literal, ClassVar
 
 from pydantic import BaseModel, Field
 
@@ -282,12 +282,31 @@ class StudentResultAnswer(BaseModel):
 
 
 class StudentExamResult(BaseModel):
+    """One exam's result from the student's point of view.
+
+    ``result_state`` is the typed lifecycle the UI renders — clients must not
+    string-match error prose:
+
+    * ``NOT_ATTEMPTED``    — the student never started (or is still writing).
+    * ``IN_PROGRESS``      — attempt open, exam still being written.
+    * ``UNDER_EVALUATION`` — submitted; the teacher has not released results.
+    * ``AVAILABLE``        — released (or early review allowed); scores and
+      the optional answer review are included.
+    """
+
+    # ClassVar: constants for callers, not pydantic fields.
+    RESULT_NOT_ATTEMPTED: ClassVar[str] = "NOT_ATTEMPTED"
+    RESULT_IN_PROGRESS: ClassVar[str] = "IN_PROGRESS"
+    RESULT_UNDER_EVALUATION: ClassVar[str] = "UNDER_EVALUATION"
+    RESULT_AVAILABLE: ClassVar[str] = "AVAILABLE"
+
     exam_id: uuid.UUID
     title: str
     subject_name: str
     total_marks: int
     passing_marks: int
     status: str
+    result_state: str = RESULT_AVAILABLE
     total_score: float | None = None
     percentage: float | None = None
     grade: str | None = None

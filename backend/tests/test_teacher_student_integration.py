@@ -427,9 +427,16 @@ async def test_exam_lifecycle_end_to_end(real_backend, tokens):
     assert submitted.status_code in (200, 201), submitted.text
     assert submitted.json()["data"]["status"] == "SUBMITTED"
 
-    # Result is gated until the teacher releases it.
+    # Result is gated until the teacher releases it: the endpoint answers
+    # with a typed UNDER_EVALUATION header (identity + submitted_at, never
+    # scores/answers) instead of the old prose 404 the UI had to string-match.
     gated = await client.get(f"/api/v1/student/examinations/{exam_id}/result", headers=student)
-    assert gated.status_code == 404, gated.text
+    assert gated.status_code == 200, gated.text
+    gated_data = gated.json()["data"]
+    assert gated_data["result_state"] == "UNDER_EVALUATION"
+    assert gated_data["total_score"] is None
+    assert gated_data["answers"] == []
+    assert gated_data["submitted_at"] is not None
 
     # Teacher grades the descriptive answer, then releases results.
     attempts = await client.get(f"/api/v1/teacher/examinations/{exam_id}/attempts", headers=teacher)

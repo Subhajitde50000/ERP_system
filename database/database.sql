@@ -2900,7 +2900,7 @@ DECLARE
   v_modules  INTEGER;
   v_roles    INTEGER;
   v_plans    INTEGER;
-  v_baseline CONSTANT INTEGER := 24;
+  v_baseline CONSTANT INTEGER := 25;
 BEGIN
   SELECT count(*) INTO v_tables
     FROM information_schema.tables
@@ -2942,16 +2942,16 @@ BEGIN
   RAISE NOTICE ' Seed: plans       : %', v_plans;
   RAISE NOTICE '─────────────────────────────────────────────';
 
-  IF v_tables <> 132 THEN
-    RAISE EXCEPTION 'Expected 132 tables, found %', v_tables;
+  IF v_tables <> 133 THEN
+    RAISE EXCEPTION 'Expected 133 tables, found %', v_tables;
   END IF;
   IF v_unindexed > v_baseline THEN
     RAISE EXCEPTION 'Expected at most % unindexed foreign keys, found % — every new FK '
                     'needs an index or a deliberate reason not to have one',
       v_baseline, v_unindexed;
   END IF;
-  IF v_modules <> 16 OR v_roles <> 22 OR v_plans <> 4 THEN
-    RAISE EXCEPTION 'Seed incomplete: % modules (want 16), % roles (want 22), % plans (want 4)',
+  IF v_modules <> 17 OR v_roles <> 22 OR v_plans <> 4 THEN
+    RAISE EXCEPTION 'Seed incomplete: % modules (want 17), % roles (want 22), % plans (want 4)',
       v_modules, v_roles, v_plans;
   END IF;
 

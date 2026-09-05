@@ -7,6 +7,7 @@
     "@react-native-firebase/app": "^26.3.3",
     "@react-native-firebase/messaging": "^26.3.3",
     "expo": "~57.0.14",
+    "expo-build-properties": "^57.0.17",
     "expo-constants": "~57.0.12",
     "expo-device": "~57.0.1",
     "expo-font": "~57.0.1",
@@ -35,7 +36,8 @@
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^3.2.7"
   },
   "scripts": {
     "start": "expo start",
@@ -43,7 +45,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "test": "vitest run"
   },
   "private": true
 }

@@ -834,7 +834,7 @@ class InstitutionService:
         if role.name in ("VICE_PRINCIPAL", "HOD") and payload.department_id is None:
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"An {role.name} must be assigned a department",
+                detail=f"A {role.name} must be assigned a delegated department",
             )
 
         raw_token = generate_secure_token(32)
@@ -903,7 +903,7 @@ class InstitutionService:
         if role.name in ("VICE_PRINCIPAL", "HOD") and department_id is None:
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"An {role.name} must be assigned a department",
+                detail=f"A {role.name} must be assigned a delegated department",
             )
 
         if role.name == "HOD" and department_id is not None:
@@ -1001,7 +1001,7 @@ class InstitutionService:
         if role.name in ("VICE_PRINCIPAL", "HOD") and department_id is None:
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"A department is required to revoke an {role.name} scope",
+                detail=f"A delegated department is required to revoke a {role.name} scope",
             )
         if department_id is not None:
             await InstitutionService._assert_dept(db, tenant_id, department_id)
