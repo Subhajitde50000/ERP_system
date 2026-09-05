@@ -82,6 +82,7 @@ from app.schemas.principal import (
     ScheduleApprovalRequest,
 )
 from app.services.audit_service import AuditService
+from app.services.storage_service import storage
 
 
 _APPROVAL_STATES = {"PENDING", "APPROVED", "REJECTED"}
@@ -97,7 +98,6 @@ _EXAM_FINAL_STATUSES = {
     ExamStatus.CANCELLED,
 }
 
-_NOTICE_UPLOAD_ROOT = Path(__file__).resolve().parents[2] / "uploads" / "notices"
 _NOTICE_MAX_FILE_BYTES = 10 * 1024 * 1024
 _NOTICE_ALLOWED_MIME_TYPES = {
     "application/pdf", "application/msword",
@@ -1501,7 +1501,10 @@ class PrincipalService:
             target_names.get((notice.target_scope.value, notice.target_id)),
         )
         return PrincipalNoticeDetail(
-            **base.model_dump(), readers=readers,
+            # LeadershipNoticeRow already carries an `attachments` default —
+            # exclude it or the explicit kwarg below collides (TypeError).
+            **base.model_dump(exclude={"attachments"}),
+            readers=readers,
             attachments=await PrincipalService._notice_attachments(db, notice.id),
         )
 
@@ -1551,7 +1554,9 @@ class PrincipalService:
         )
         db.add(notice)
         await db.flush()
-        attachments = await PrincipalService._save_notice_attachments(db, notice.id, payload.attachments)
+        attachments = await PrincipalService._save_notice_attachments(
+            db, notice.tenant_id, notice.id, payload.attachments
+        )
         AuditService.record(
             db,
             actor=principal,
@@ -1575,10 +1580,18 @@ class PrincipalService:
             0,
             targets.get((notice.target_scope.value, notice.target_id)),
         )
-        return PrincipalNoticeDetail(**base.model_dump(), readers=[], attachments=attachments)
+        return PrincipalNoticeDetail(
+            # LeadershipNoticeRow already carries an `attachments` default —
+            # exclude it or the explicit kwarg below collides (TypeError).
+            **base.model_dump(exclude={"attachments"}),
+            readers=[],
+            attachments=attachments,
+        )
 
     @staticmethod
-    async def _save_notice_attachments(db: AsyncSession, notice_id: uuid.UUID, attachments: list) -> list[NoticeAttachmentOut]:
+    async def _save_notice_attachments(
+        db: AsyncSession, tenant_id: uuid.UUID, notice_id: uuid.UUID, attachments: list
+    ) -> list[NoticeAttachmentOut]:
         saved: list[NoticeAttachmentOut] = []
         for item in attachments:
             if item.external_url:
@@ -1598,22 +1611,25 @@ class PrincipalService:
                 raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid attachment data") from None
             if not content or len(content) > _NOTICE_MAX_FILE_BYTES:
                 raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Each attachment must be at most 10 MB")
-            suffix = Path(item.file_name).suffix.lower()
-            safe_name = f"{uuid.uuid4().hex}{suffix}"
-            target_dir = _NOTICE_UPLOAD_ROOT / str(notice_id)
-            target_dir.mkdir(parents=True, exist_ok=True)
-            (target_dir / safe_name).write_bytes(content)
-            file_key = f"/uploads/notices/{notice_id}/{safe_name}"
-            row = NoticeAttachment(id=uuid.uuid4(), notice_id=notice_id, file_name=Path(item.file_name).name[:255], file_key=file_key, file_size_bytes=len(content), mime_type=item.mime_type)
+            stored = await storage.save(
+                tenant_id,
+                f"notices/{notice_id}",
+                item.file_name,
+                content,
+                item.mime_type,
+                max_bytes=_NOTICE_MAX_FILE_BYTES,
+            )
+            file_key = stored.key
+            row = NoticeAttachment(id=uuid.uuid4(), notice_id=notice_id, file_name=Path(item.file_name).name[:255], file_key=file_key, file_size_bytes=stored.size, mime_type=stored.mime)
             db.add(row)
-            saved.append(NoticeAttachmentOut(id=row.id, file_name=row.file_name, file_size_bytes=row.file_size_bytes, mime_type=row.mime_type, url=file_key, is_image=row.mime_type.startswith("image/"), is_link=False))
+            saved.append(NoticeAttachmentOut(id=row.id, file_name=row.file_name, file_size_bytes=row.file_size_bytes, mime_type=row.mime_type, url=storage.signed_url(file_key), is_image=row.mime_type.startswith("image/"), is_link=False))
         await db.flush()
         return saved
 
     @staticmethod
     async def _notice_attachments(db: AsyncSession, notice_id: uuid.UUID) -> list[NoticeAttachmentOut]:
         rows = (await db.execute(select(NoticeAttachment).where(NoticeAttachment.notice_id == notice_id).order_by(NoticeAttachment.created_at))).scalars().all()
-        return [NoticeAttachmentOut(id=row.id, file_name=row.file_name, file_size_bytes=row.file_size_bytes, mime_type=row.mime_type, url=row.external_url or row.file_key or "", is_image=row.mime_type.startswith("image/"), is_link=bool(row.external_url)) for row in rows]
+        return [NoticeAttachmentOut(id=row.id, file_name=row.file_name, file_size_bytes=row.file_size_bytes, mime_type=row.mime_type, url=row.external_url or (storage.signed_url(row.file_key) if row.file_key else ""), is_image=row.mime_type.startswith("image/"), is_link=bool(row.external_url)) for row in rows]
 
     @staticmethod
     def _notice_row(

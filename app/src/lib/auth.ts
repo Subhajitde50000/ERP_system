@@ -16,8 +16,43 @@ import { errorMessage } from "./api-client";
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
-export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8000";
+/**
+ * Resolve the backend URL for this build (B7).
+ *
+ * Dev keeps the localhost default — that is correct for an emulator
+ * (10.0.2.2 is aliased by Android) and for Expo Go against a local server.
+ * A *release* build that still points at localhost is broken by definition:
+ * on a physical phone localhost is the phone itself, so the app ships dead.
+ * Instead of shipping that, fail fast with an actionable message at startup.
+ */
+export function resolveApiBaseUrl(env: {
+  EXPO_PUBLIC_API_URL?: string;
+  NODE_ENV?: string;
+}): string {
+  const raw = (env.EXPO_PUBLIC_API_URL ?? "").trim();
+  const isProduction = env.NODE_ENV === "production";
+  if (!raw) {
+    if (isProduction) {
+      throw new Error(
+        "This app was built without EXPO_PUBLIC_API_URL. Set it in eas.json " +
+          "(or as an EAS secret) before producing a release build — see app/README.md.",
+      );
+    }
+    return "http://localhost:8000";
+  }
+  if (isProduction && /^http:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)/.test(raw)) {
+    throw new Error(
+      `EXPO_PUBLIC_API_URL (${raw}) is only reachable from a development ` +
+        "machine. Release builds must use the HTTPS API URL — see app/README.md.",
+    );
+  }
+  return raw.replace(/\/$/, "");
+}
+
+export const API_BASE_URL = resolveApiBaseUrl({
+  EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
+  NODE_ENV: process.env.NODE_ENV,
+});
 
 const TENANT_LOGIN = `${API_BASE_URL}/api/v1/tenant/auth/login`;
 const TENANT_LOGOUT = `${API_BASE_URL}/api/v1/tenant/auth/logout`;

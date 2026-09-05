@@ -11,7 +11,6 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from fastapi import FastAPI, Request, status
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -42,6 +41,9 @@ from app.routers import (
     library_router,
     hostel_router,
     online_class_router,
+    notifications_router,
+    push_tokens_router,
+    files_router,
 )
 from app.schemas.common import ErrorDetail
 
@@ -59,9 +61,9 @@ app = FastAPI(
     docs_url="/docs" if settings.APP_DEBUG else None,
     redoc_url="/redoc" if settings.APP_DEBUG else None,
 )
-uploads_directory = PROJECT_ROOT / "uploads"
-uploads_directory.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_directory), name="uploads")
+# B6: uploads live under this root (STORAGE_BACKEND=local) but are NEVER
+# publicly mounted — every byte is served through the signed-URL files router.
+(PROJECT_ROOT / "uploads").mkdir(parents=True, exist_ok=True)
 
 # Attach limiter to app state so the decorator can find it
 app.state.limiter = limiter
@@ -99,17 +101,29 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
+from app.services.fcm_client import get_fcm_client
+from app.services.online_class_service import live_rooms
 from app.services.scheduler_service import start_scheduler, stop_scheduler
 
 
 @app.on_event("startup")
 async def on_startup():
-    start_scheduler()
+    # Cross-worker live-room fan-out (Redis pub/sub) before anything serves.
+    await live_rooms.start()
+    await start_scheduler()
 
 
 @app.on_event("shutdown")
 async def on_shutdown():
-    stop_scheduler()
+    await stop_scheduler()
+    # Close the live-room Redis listener after jobs stop, but before the
+    # process exits, so in-flight frames get a chance to drain.
+    await live_rooms.stop()
+    # Release the shared FCM HTTP client connection pool, if one was created.
+    try:
+        await get_fcm_client().aclose()
+    except Exception:  # pragma: no cover - teardown best-effort
+        pass
 
 
 # ── Health Check ─────────────────────────────────────────────────────────────
@@ -141,3 +155,8 @@ app.include_router(parent_router, prefix=api_prefix)
 app.include_router(library_router, prefix=api_prefix)
 app.include_router(hostel_router, prefix=api_prefix)
 app.include_router(online_class_router, prefix=api_prefix)
+app.include_router(notifications_router, prefix=api_prefix)
+app.include_router(push_tokens_router, prefix=api_prefix)
+# Stored uploads: signed, expiring downloads — replaces the old public
+# /uploads static mount (see app/routers/files.py).
+app.include_router(files_router, prefix=api_prefix)

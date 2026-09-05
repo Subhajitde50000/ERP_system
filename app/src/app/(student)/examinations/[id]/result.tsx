@@ -4,15 +4,15 @@
  * answer-key review for a released result.
  */
 
-import { StyleSheet, Text, View } from "react-native";
+import { Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Link, useLocalSearchParams } from "expo-router";
-import { CircleCheck } from "lucide-react-native";
+import { CircleCheck, Clock } from "lucide-react-native";
 
 import { AsyncState } from "@/components/principal-ui";
 import { Screen } from "@/components/screen";
 import { Card, PageHeader } from "@/components/ui";
 import { dateTime, percent, statusLabel } from "@/lib/format";
-import { fetchExamResult } from "@/lib/student";
+import { fetchExamResult, gradeCardText } from "@/lib/student";
 import { useResource } from "@/hooks/use-resource";
 import { Colors, Radius, Shadow } from "@/theme";
 
@@ -24,11 +24,58 @@ export default function StudentExamResultPage() {
     [examId],
   );
 
-  const isPendingRelease = Boolean(
-    resource.error && resource.error.toLowerCase().includes("not released"),
-  );
+  // Typed lifecycle from the API; the string fallback keeps older backends
+  // (which answer 404 "Results are not released yet") on the right screen.
+  const state =
+    resource.data?.result_state ??
+    (resource.error && resource.error.toLowerCase().includes("not released")
+      ? ("UNDER_EVALUATION" as const)
+      : undefined);
 
-  if (isPendingRelease) {
+  if (state === "NOT_ATTEMPTED") {
+    return (
+      <Screen>
+        <PageHeader title="Exam result" subtitle="Nothing to show for this exam yet." />
+        <Card style={styles.pendingCard}>
+          <Clock size={48} color={Colors.mutedForeground} />
+          <Text style={styles.pendingTitle}>You haven&apos;t attempted this exam</Text>
+          <Text style={styles.pendingBody}>
+            There is no submitted attempt for this exam on your record. If you believe this is a mistake, please contact your class teacher.
+          </Text>
+          <View style={styles.pendingActions}>
+            <Link href="/(student)/examinations" style={styles.pendingPrimary}>
+              Back to examinations
+            </Link>
+          </View>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (state === "IN_PROGRESS") {
+    return (
+      <Screen>
+        <PageHeader title="Exam result" subtitle="Your attempt is still open." />
+        <Card style={styles.pendingCard}>
+          <Clock size={48} color={Colors.accent} />
+          <Text style={styles.pendingTitle}>Your attempt is still in progress</Text>
+          <Text style={styles.pendingBody}>
+            Results appear here once you submit your paper and your teacher releases them.
+          </Text>
+          <View style={styles.pendingActions}>
+            <Link href={{ pathname: "/(student)/examinations/[id]", params: { id: examId } }} style={styles.pendingPrimary}>
+              Continue exam
+            </Link>
+            <Link href="/(student)/examinations" style={styles.pendingSecondary}>
+              Back
+            </Link>
+          </View>
+        </Card>
+      </Screen>
+    );
+  }
+
+  if (state === "UNDER_EVALUATION") {
     return (
       <Screen>
         <PageHeader title="Exam submitted" subtitle="Your answers have been successfully recorded." />
@@ -36,7 +83,7 @@ export default function StudentExamResultPage() {
           <CircleCheck size={48} color={Colors.successText} />
           <Text style={styles.pendingTitle}>Exam Submitted Successfully!</Text>
           <Text style={styles.pendingBody}>
-            Your attempt has been submitted. Your teacher will evaluate your answers and release the results soon.
+            Your attempt has been submitted and is under evaluation. Your teacher will release the results soon.
           </Text>
           <View style={styles.pendingNote}>
             <Text style={styles.pendingNoteText}>
@@ -58,7 +105,7 @@ export default function StudentExamResultPage() {
 
   return (
     <Screen>
-      <PageHeader title="Exam result" subtitle="Your score and, once released, the answer key." />
+      <PageHeader title="Exam result" subtitle="Your score, grade card and marks breakdown." />
       <AsyncState
         loading={resource.loading}
         error={resource.error}
@@ -73,6 +120,16 @@ export default function StudentExamResultPage() {
                 {resource.data.subject_name} · {statusLabel(resource.data.status)} · submitted{" "}
                 {resource.data.submitted_at ? dateTime(resource.data.submitted_at) : "—"}
               </Text>
+              <TouchableOpacity
+                style={styles.shareButton}
+                onPress={() =>
+                  Share.share({ message: gradeCardText(resource.data!) }).catch(() => {
+                    /* user cancelled the share sheet — nothing to do */
+                  })
+                }
+              >
+                <Text style={styles.shareText}>Share result</Text>
+              </TouchableOpacity>
               <View style={styles.scoreRow}>
                 <View style={styles.scoreBox}>
                   <Text style={styles.scoreValue}>{resource.data.total_score ?? "—"}</Text>
@@ -108,7 +165,7 @@ export default function StudentExamResultPage() {
             </Card>
             {resource.data.answers.length ? (
               <Card>
-                <Text style={styles.reviewTitle}>Answer review</Text>
+                <Text style={styles.reviewTitle}>Marks breakdown</Text>
                 {!resource.data.show_answers ? (
                   <Text style={styles.reviewNote}>
                     Your teacher has hidden the correct answers for now — only your own answers and scores are shown.
@@ -207,6 +264,20 @@ const styles = StyleSheet.create({
     color: Colors.mutedForeground,
     overflow: "hidden",
     textAlign: "center",
+  },
+  shareButton: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.field,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  shareText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: Colors.accent,
   },
   title: {
     fontSize: 18,

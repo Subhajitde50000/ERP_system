@@ -310,6 +310,13 @@ export interface StudentResultAnswer {
   feedback: string | null;
 }
 
+/** Typed result lifecycle — mirrors StudentExamResult.RESULT_* on the backend. */
+export type StudentResultState =
+  | "NOT_ATTEMPTED"
+  | "IN_PROGRESS"
+  | "UNDER_EVALUATION"
+  | "AVAILABLE";
+
 export interface StudentExamResult {
   exam_id: string;
   title: string;
@@ -317,12 +324,30 @@ export interface StudentExamResult {
   total_marks: number;
   passing_marks: number;
   status: string;
+  result_state?: StudentResultState;
   total_score: number | null;
   percentage: number | null;
   grade: string | null;
   submitted_at: string | null;
   show_answers: boolean;
   answers: StudentResultAnswer[];
+}
+
+/** Plain-text grade card used by the mobile "Share result" action. */
+export function gradeCardText(result: StudentExamResult): string {
+  const score = `${result.total_score !== null ? result.total_score : "—"}/${result.total_marks}`;
+  const pct = result.percentage !== null ? `${result.percentage}%` : "—";
+  const grade =
+    result.grade ??
+    (result.total_score !== null ? (result.total_score >= result.passing_marks ? "PASS" : "FAIL") : "—");
+  return [
+    result.title,
+    result.subject_name,
+    `Score: ${score} · ${pct} · Grade: ${grade}`,
+    result.submitted_at ? `Submitted: ${result.submitted_at}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export const fetchStudentExams = (filters: {

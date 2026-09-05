@@ -33,6 +33,7 @@ import {
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { NotificationBell } from "@/components/notification-bell";
 import { isTeacherRole } from "@/lib/roles";
 import { useInstitutionAuth } from "@/lib/session";
 import { Colors } from "@/theme";
@@ -68,6 +69,7 @@ export function StudentShellHeader({ onOpenNav }: { onOpenNav: () => void }) {
       </TouchableOpacity>
       <GraduationCap size={16} color={Colors.mutedForeground} />
       <Text style={styles.headerTitle}>My learning</Text>
+      <NotificationBell />
     </View>
   );
 }

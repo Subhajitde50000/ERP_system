@@ -36,6 +36,9 @@ apscheduler==3.11.0
 
 # Utilities
 python-multipart==0.0.12
+# Object-storage backend for uploads (STORAGE_BACKEND=s3; optional at runtime —
+# imported lazily so local-disk deployments don't need it installed)
+boto3==1.35.90
 # Windows requires tzdata for Python's zoneinfo module (no system tz database)
 tzdata>=2024.1
 

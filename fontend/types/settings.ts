@@ -1,5 +1,4 @@
 import type { ModuleKey, InstitutionRole } from "./auth";
-import type { NotificationEvent } from "./notification";
 
 /**
  * Settings contracts — role_based_shared_pages.md PAGE 16 (C-RB-16).
@@ -111,15 +110,6 @@ export interface AcademicYearRow {
 
 export type NotificationChannel = "IN_APP" | "PUSH" | "EMAIL" | "SMS";
 
-/** Institution-wide: which channels each event fires on. */
-export interface NotificationRule {
-  event: NotificationEvent;
-  label: string;
-  channels: NotificationChannel[];
-  /** Channels the institution has switched on for this event */
-  enabled: NotificationChannel[];
-}
-
 /** Personal: the "notification preferences" every role gets. */
 export interface NotificationPreference {
   channel: NotificationChannel;
@@ -168,7 +158,6 @@ export interface SettingsData {
   institution?: InstitutionSettings;
   modules?: ModuleToggle[];
   academicYears?: AcademicYearRow[];
-  notificationRules?: NotificationRule[];
   feeHeads?: FeeHeadRow[];
   leavePolicies?: LeavePolicyRow[];
   salaryDefaults?: SalaryDefaults;

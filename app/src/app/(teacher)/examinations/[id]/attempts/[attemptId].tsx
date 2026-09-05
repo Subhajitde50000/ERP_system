@@ -16,6 +16,7 @@ import { dateTime, statusLabel } from "@/lib/format";
 import {
   fetchExamAttempt,
   gradeExamAttempt,
+  type TeacherAnswerOption,
   type TeacherAnswerRow,
   type TeacherAttemptDetail,
 } from "@/lib/teacher";
@@ -119,11 +120,30 @@ function GradingForm({ examId, detail }: { examId: string; detail: TeacherAttemp
               {statusLabel(answer.question_type)} · {answer.marks} marks
             </Text>
             <Text style={styles.qText}>{answer.question_text || "(question text unavailable)"}</Text>
-            <View style={styles.answerBox}>
-              <Text style={styles.answerText}>
-                {answer.text_answer?.trim() || answer.selected_option_text || "(no answer written)"}
-              </Text>
-            </View>
+            {answer.text_answer?.trim() ? (
+              <View style={styles.answerBox}>
+                <Text style={styles.answerText}>{answer.text_answer}</Text>
+              </View>
+            ) : answer.selected_option_text ? (
+              <View style={styles.answerBox}>
+                <Text style={styles.answerText}>
+                  Student picked: <Text style={styles.answerPick}>{answer.selected_option_text}</Text>
+                </Text>
+              </View>
+            ) : answer.matched_pairs && Object.keys(answer.matched_pairs).length ? (
+              <View style={styles.answerBox}>
+                {Object.entries(answer.matched_pairs).map(([left, right]) => (
+                  <Text key={left} style={styles.answerText}>
+                    {left} → {right}
+                  </Text>
+                ))}
+              </View>
+            ) : (
+              <View style={styles.answerBox}>
+                <Text style={styles.answerMuted}>(no answer written)</Text>
+              </View>
+            )}
+            <AnswerKeyOptions answer={answer} />
             <View style={styles.gradeFields}>
               <TextField
                 label={`Score (0–${answer.marks})`}
@@ -166,16 +186,68 @@ function AutoGradedSummary({ answers }: { answers: TeacherAnswerRow[] }) {
       <Text style={styles.autoSummaryText}>
         Auto-graded objective answers: {earned} / {possible} marks across {auto.length} question(s).
       </Text>
-      {auto.map((answer) => (
-        <View key={answer.answer_id} style={styles.autoRow}>
-          <Text style={styles.autoQ}>{answer.question_text || "(question text unavailable)"}</Text>
-          <Text style={styles.autoA}>
-            Answer: {answer.selected_option_text ?? answer.text_answer ?? "—"}
-            {answer.correct_option_text ? ` · Correct: ${answer.correct_option_text}` : ""}
-            {` · ${answer.score ?? 0}/${answer.marks}`}
-          </Text>
-        </View>
-      ))}
+      {auto.map((answer) => {
+        const unanswered = !answer.selected_option_id;
+        const correct = Boolean(
+          answer.selected_option_id && answer.correct_option_text === answer.selected_option_text,
+        );
+        return (
+          <View key={answer.answer_id} style={styles.autoRow}>
+            <Text style={styles.autoQ}>{answer.question_text || "(question text unavailable)"}</Text>
+            <Text
+              style={[
+                styles.autoVerdict,
+                unanswered
+                  ? { color: Colors.mutedForeground }
+                  : correct
+                    ? { color: Colors.successText }
+                    : { color: Colors.destructiveText },
+              ]}
+            >
+              {unanswered ? "NOT ANSWERED" : correct ? "CORRECT" : "WRONG"}
+              {` · ${answer.score ?? 0}/${answer.marks}`}
+            </Text>
+            <AnswerKeyOptions answer={answer} />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+/**
+ * The full answer key for one question: every option in authoring order with
+ * the correct one and the student's pick flagged. Plain-text badges (no symbol
+ * glyphs) so the screen stays readable in every font.
+ */
+function AnswerKeyOptions({ answer }: { answer: TeacherAnswerRow }) {
+  const options: TeacherAnswerOption[] = [...answer.options].sort((a, b) => a.sort_order - b.sort_order);
+  if (!options.length) return null;
+  return (
+    <View style={styles.keyList}>
+      {options.map((option) => {
+        const isPicked = option.id === answer.selected_option_id;
+        return (
+          <View
+            key={option.id}
+            style={[styles.keyRow, isPicked ? styles.keyRowPicked : null]}
+          >
+            <Text style={styles.keyText}>{option.text}</Text>
+            {option.is_correct ? <Text style={[styles.keyBadge, { color: Colors.successText }]}>CORRECT</Text> : null}
+            {isPicked ? (
+              <Text
+                style={[
+                  styles.keyBadge,
+                  { color: option.is_correct ? Colors.successText : Colors.destructiveText },
+                ]}
+              >
+                STUDENT&apos;S PICK
+              </Text>
+            ) : null}
+          </View>
+        );
+      })}
+      {!answer.selected_option_id && !answer.options.length ? null : null}
     </View>
   );
 }
@@ -242,6 +314,51 @@ const styles = StyleSheet.create({
   autoSummaryText: {
     fontSize: 12,
     fontWeight: "600",
+    color: Colors.mutedForeground,
+  },
+  autoVerdict: {
+    marginTop: 2,
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  keyList: {
+    marginTop: 6,
+    gap: 6,
+  },
+  keyRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: Radius.field,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  keyRowPicked: {
+    borderColor: Colors.accent,
+    backgroundColor: Colors.accentLight,
+  },
+  keyText: {
+    flex: 1,
+    minWidth: 120,
+    fontSize: 13,
+    color: Colors.primary,
+  },
+  keyBadge: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  answerPick: {
+    fontWeight: "600",
+    color: Colors.primary,
+  },
+  answerMuted: {
+    fontSize: 14,
+    lineHeight: 20,
+    fontStyle: "italic",
     color: Colors.mutedForeground,
   },
   autoRow: {

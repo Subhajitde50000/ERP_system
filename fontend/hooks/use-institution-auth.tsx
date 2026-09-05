@@ -23,6 +23,7 @@ import {
   refreshAccessToken,
   logout as tenantLogout,
 } from "@/lib/auth";
+import { disableWebPush } from "@/lib/web-push";
 
 export interface InstitutionUser {
   id: string;
@@ -89,6 +90,10 @@ export function InstitutionAuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
+      // Unregister this browser from web push first (best-effort, no-op when
+      // Firebase isn't configured) so private notifications never land on a
+      // signed-out shared device.
+      await disableWebPush();
       await tenantLogout();
     } finally {
       setUser(null);

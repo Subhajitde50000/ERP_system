@@ -15,6 +15,7 @@ Sensitive data boundaries enforced here:
 
 from __future__ import annotations
 
+import logging
 import uuid
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -151,14 +152,11 @@ from app.schemas.student import (
 )
 from app.services.audit_service import AuditService
 from app.services.principal_service import PrincipalService, _value
+from app.services.push_service import PushService
 from app.services.teacher_service import grade_for
 
 
 _OBJECTIVE_QUESTION_TYPES = (QuestionType.MCQ, QuestionType.TRUE_FALSE)
-_SUBMITTABLE_STATUSES = (
-    SubmissionStatus.RESUBMIT_REQUESTED,
-    SubmissionStatus.REJECTED,
-)
 _AUTO_SUBMIT_GRACE = timedelta(minutes=5)
 
 
@@ -182,6 +180,9 @@ class StudentContext:
             academic_year=self.academic_year.name,
             roll_number=self.enrollment.roll_number,
         )
+
+
+logger = logging.getLogger(__name__)
 
 
 class StudentService:
@@ -1183,6 +1184,13 @@ class StudentService:
 
     @staticmethod
     async def exam_result(db: AsyncSession, student: User, exam_id: uuid.UUID) -> StudentExamResult:
+        """C-ST-09 — the student's result for one exam, with a typed state.
+
+        The endpoint answers "what state is my result in?" instead of raising
+        prose 404s the UI would have to string-match: NOT_ATTEMPTED /
+        IN_PROGRESS / UNDER_EVALUATION / AVAILABLE (see StudentExamResult).
+        Only a genuinely invisible exam still raises 404.
+        """
         ctx = await StudentService.context_for_user(db, student)
         exam, subject = await StudentService._visible_exam(db, student, ctx, exam_id)
         attempt = (
@@ -1194,19 +1202,35 @@ class StudentService:
                 )
             )
         ).scalar_one_or_none()
-        if attempt is None or _value(attempt.status) in (None, AttemptStatus.IN_PROGRESS.value):
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="No submitted attempt for this exam")
+
+        def header(state: str) -> StudentExamResult:
+            return StudentExamResult(
+                exam_id=exam.id,
+                title=exam.title,
+                subject_name=subject.name,
+                total_marks=exam.total_marks,
+                passing_marks=exam.passing_marks,
+                status=_value(exam.status) or "COMPLETED",
+                result_state=state,
+                submitted_at=attempt.submitted_at if attempt else None,
+            )
+
+        if attempt is None:
+            return header(StudentExamResult.RESULT_NOT_ATTEMPTED)
+        if _value(attempt.status) in (None, AttemptStatus.IN_PROGRESS.value):
+            return header(StudentExamResult.RESULT_IN_PROGRESS)
         released = (_value(exam.status) or "") == ExamStatus.RESULTS_RELEASED.value
+        # show_score_immediately is the teacher's explicit "quiz mode" opt-in
+        # for a score right after submit. allow_review deliberately does NOT
+        # bypass the release gate: it only widens what a *released* result
+        # includes (see show_answers below) — the integration suite pins
+        # "gated until the teacher releases it" as the product rule.
         immediate = exam.show_score_immediately and _value(attempt.status) in (
             AttemptStatus.SUBMITTED.value,
             AttemptStatus.GRADED.value,
         )
-        review_allowed = exam.allow_review and _value(attempt.status) in (
-            AttemptStatus.SUBMITTED.value,
-            AttemptStatus.GRADED.value,
-        )
-        if not (released or immediate or review_allowed):
-            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Results are not released yet")
+        if not (released or immediate):
+            return header(StudentExamResult.RESULT_UNDER_EVALUATION)
         show_answers = released or exam.allow_review
         answers: list[StudentResultAnswer] = []
         if show_answers or immediate:
@@ -1253,6 +1277,7 @@ class StudentService:
             total_marks=exam.total_marks,
             passing_marks=exam.passing_marks,
             status=_value(exam.status) or "COMPLETED",
+            result_state=StudentExamResult.RESULT_AVAILABLE,
             total_score=float(attempt.total_score) if attempt.total_score is not None else None,
             percentage=float(attempt.percentage) if attempt.percentage is not None else (
                 round(float(attempt.total_score) * 100 / exam.total_marks, 2)
@@ -1750,6 +1775,25 @@ class StudentService:
                 "files": len(payload.files),
             },
         )
+        # Let the assignment's teacher know a (new) attempt arrived. Wrapped in
+        # try/except so a notification problem can never fail the submission.
+        try:
+            await PushService.create_in_app_notifications(
+                db,
+                tenant_id=student.tenant_id,
+                user_ids=[assignment.teacher_id],
+                title="New assignment submission",
+                body=f"{student.name} submitted \"{assignment.title}\" (v{submission.version}).",
+                notif_type="SUBMISSION_RECEIVED",
+                data={
+                    "assignment_id": str(assignment.id),
+                    "submission_id": str(submission.id),
+                    "student_id": str(student.id),
+                    "version": int(submission.version or 1),
+                },
+            )
+        except Exception as exc:  # noqa: BLE001 - best-effort; never block submission
+            logger.warning("Could not notify teacher of submission %s: %s", submission.id, exc)
         files = await StudentService._submission_files(db, [submission.id])
         return StudentSubmissionOut(
             id=submission.id,

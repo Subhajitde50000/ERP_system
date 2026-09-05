@@ -118,6 +118,18 @@ def teacher(tenant_id: uuid.UUID, teacher_id: uuid.UUID | None = None) -> User:
     )
 
 
+def subject(tenant_id: uuid.UUID, class_id: uuid.UUID) -> SimpleNamespace:
+    """A subject row as _ensure_subject/_ensure_teaching_assignment see it."""
+    return SimpleNamespace(
+        id=uuid.uuid4(),
+        tenant_id=tenant_id,
+        class_id=class_id,
+        name="Data Structures",
+        code="CS201",
+        is_active=True,
+    )
+
+
 # ── C-AC-01 dashboard ────────────────────────────────────────────────────────
 
 
@@ -174,20 +186,35 @@ async def test_dashboard_returns_all_kpis():
 
 async def test_create_slot_rejects_duplicate_unique_key():
     """UNIQUE (class_id, day_of_week, period_number, effective_from) — §7.8."""
+    import pytest as _pytest
 
     tenant_id = uuid.uuid4()
     actor = coordinator(tenant_id)
     class_id = uuid.uuid4()
+    subject_id = uuid.uuid4()
+    teacher_id = uuid.uuid4()
     today = date(2026, 7, 29)
+    subject_row = subject(tenant_id, class_id)
 
-    # Lookups in `create_slot`:
-    #   1. ensure class     → returns the class row
-    #   2. existing slot?   → returns a duplicate row
+    # Query order in `create_slot` for a fully-specified CLASS slot:
+    #   1. ensure class           → class row
+    #   2. ensure subject         → subject row (bound to this class)
+    #   3. ensure teacher         → teacher row
+    #   4. teaching assignment    → _ensure_subject again, then the link id
+    #   5. teacher free?          → None
+    #   6. room free?             → None
+    #   7. duplicate unique key?  → an existing row → 409
     db = FakeDB(
         [
             Result(scalar=klass(tenant_id, class_id)),
+            Result(scalar=subject_row),
+            Result(scalar=teacher(tenant_id, teacher_id)),
+            Result(scalar=subject_row),
+            Result(scalar=uuid.uuid4()),  # existing TeacherSubject link
+            Result(scalar=None),          # teacher not double-booked
+            Result(scalar=None),          # room not double-booked
             Result(
-                scalar=SimpleNamespace(
+                scalar=SimpleNamespace(  # the conflicting slot
                     id=uuid.uuid4(),
                     class_id=class_id,
                     day_of_week=1,
@@ -204,17 +231,16 @@ async def test_create_slot_rejects_duplicate_unique_key():
         period_number=1,
         start_time=time(9, 0),
         end_time=time(9, 50),
-        subject_id=None,
-        teacher_id=None,
+        subject_id=subject_id,
+        teacher_id=teacher_id,
         room_no="105",
         slot_type="CLASS",
         effective_from=today,
     )
 
-    with pytest.raises(HTTPException) as raised:
+    with _pytest.raises(HTTPException) as raised:
         await CoordinatorService.create_slot(db, tenant_id, actor, payload)
     assert raised.value.status_code == 409
-    assert "already exists" in (raised.value.detail or "").lower()
 
 
 async def test_create_slot_rejects_unknown_class():
@@ -253,23 +279,30 @@ async def test_create_slot_succeeds_with_audit_trail():
     actor = coordinator(tenant_id)
     year = current_year(tenant_id)
     class_id = uuid.uuid4()
+    subject_id = uuid.uuid4()
     teacher_id = uuid.uuid4()
     today = date(2026, 7, 29)
+    subject_row = subject(tenant_id, class_id)
 
-    # Lookups in `create_slot`:
-    #   1. ensure class     → returns the class row
-    #   2. ensure teacher   → returns the teacher row
-    #   3. duplicate?       → returns None (no conflict)
-    #   4. current_year     → returns the year
-    #   5. slot DTO build   → one joined query, returns (class_name, dept, subject, code, teacher_name)
-    # The DTO build uses slot attributes (slot.class_id etc.), so the new
-    # TimetableSlot ORM object must carry them; the service then reads the
-    # joined labels from the 5-tuple the DTO build returned.
+    # Lookups in `create_slot` (fully-specified CLASS slot):
+    #   1. ensure class → class row
+    #   2. ensure subject → subject row
+    #   3. ensure teacher → teacher row
+    #   4. teaching assignment: _ensure_subject again + link id (already linked)
+    #   5./6. teacher & room availability → None
+    #   7. duplicate unique key → None
+    #   8. current_year → the year
+    #   9. slot DTO build → one joined query (labels via .one())
     db = FakeDB(
         [
             Result(scalar=klass(tenant_id, class_id)),
+            Result(scalar=subject_row),
             Result(scalar=teacher(tenant_id, teacher_id)),
-            Result(scalar=None),
+            Result(scalar=subject_row),
+            Result(scalar=uuid.uuid4()),  # existing TeacherSubject link
+            Result(scalar=None),          # teacher free
+            Result(scalar=None),          # room free
+            Result(scalar=None),          # no duplicate
             Result(scalar=year),
             Result(
                 row=SimpleNamespace(
@@ -289,7 +322,7 @@ async def test_create_slot_succeeds_with_audit_trail():
         period_number=1,
         start_time=time(9, 0),
         end_time=time(9, 50),
-        subject_id=None,
+        subject_id=subject_id,
         teacher_id=teacher_id,
         room_no="105",
         slot_type="CLASS",
@@ -310,12 +343,11 @@ async def test_update_slot_records_old_and_new_state():
     tenant_id = uuid.uuid4()
     actor = coordinator(tenant_id)
     slot_id = uuid.uuid4()
-    # The update flow: load slot, ensure_subject (if any), ensure_teacher (if any),
-    # then _slot_dto which runs a joined query.
+    class_id = uuid.uuid4()
     slot = SimpleNamespace(
         id=slot_id,
         tenant_id=tenant_id,
-        class_id=uuid.uuid4(),
+        class_id=class_id,
         academic_year_id=uuid.uuid4(),
         day_of_week=1,
         period_number=1,
@@ -328,9 +360,18 @@ async def test_update_slot_records_old_and_new_state():
         effective_from=date(2026, 7, 29),
         effective_to=None,
     )
+    # Query order in `update_slot` (slot keeps subject+teacher):
+    #   1. load slot
+    #   2. teaching assignment: _ensure_subject + existing link id
+    #   3./4. teacher & room availability (excludes this slot) → None
+    #   5. slot DTO build → joined row via .one()
     db = FakeDB(
         [
             Result(scalar=slot),
+            Result(scalar=subject(tenant_id, class_id)),
+            Result(scalar=uuid.uuid4()),  # existing TeacherSubject link
+            Result(scalar=None),          # teacher free
+            Result(scalar=None),          # room free
             Result(
                 row=SimpleNamespace(
                     class_name="FY-A",

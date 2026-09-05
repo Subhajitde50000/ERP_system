@@ -39,7 +39,12 @@ export function Loading({ label = "Loading…" }: { label?: string }) {
 
 export function ErrorState({ message }: { message: string }) {
   return (
-    <div className="rounded-card border border-destructive-border bg-destructive-light px-5 py-10 text-center text-sm font-medium text-destructive-text">
+    // role="alert" so screen readers announce load failures instead of
+    // leaving the user on a silently stale screen.
+    <div
+      role="alert"
+      className="rounded-card border border-destructive-border bg-destructive-light px-5 py-10 text-center text-sm font-medium text-destructive-text"
+    >
       {message}
     </div>
   );

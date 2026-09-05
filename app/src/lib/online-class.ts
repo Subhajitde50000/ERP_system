@@ -36,6 +36,17 @@ export function fileHref(url: string): string {
   return url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 }
 
+/**
+ * Web-console URL of a live classroom. React Native has no WebRTC in this
+ * build, so audio/video calls run in the browser; the student deep-links to
+ * this page from the InClass screen while staying connected here for chat,
+ * raise-hand and attendance.
+ */
+export function webClassUrl(classId: string): string | null {
+  const base = process.env.EXPO_PUBLIC_WEB_URL;
+  return base ? `${base.replace(/\/$/, "")}/student/online-classes/${classId}` : null;
+}
+
 // ── Shapes (mirror backend/app/schemas/online_class.py) ──────────────────────
 
 export interface TeachingAssignmentOption {

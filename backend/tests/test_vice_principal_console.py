@@ -216,13 +216,15 @@ async def test_vp_notice_detail_never_queries_or_serializes_readers():
         is_pinned=False,
         published_at=datetime.now(timezone.utc),
     )
-    # scope → notice → author → target name. A fifth reader query would fail
-    # the fake and prove the least-data boundary regressed.
+    # scope → notice → author → target name → attachments (notice attachments
+    # are part of the detail payload). A sixth *reader* query would fail the
+    # fake and prove the least-data boundary regressed.
     db = FakeDB([
         Result(rows=[(department_id, "Computer Science")]),
         Result(scalar=notice),
         Result(scalar="Principal"),
         Result(rows=[(department_id, "Computer Science")]),
+        Result(rows=[]),  # no attachments
     ])
 
     detail = await VicePrincipalService.notice_detail(db, actor, notice.id)
@@ -230,7 +232,7 @@ async def test_vp_notice_detail_never_queries_or_serializes_readers():
     assert detail.title == "Department update"
     assert "read_count" not in detail.model_dump()
     assert "readers" not in detail.model_dump()
-    assert len(db.queries) == 4
+    assert len(db.queries) == 5
 
 
 async def test_admin_cannot_invite_an_unscoped_vp():

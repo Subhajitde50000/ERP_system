@@ -8,7 +8,9 @@
     "scheme": "erp-student",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.erpcampus.mobile",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,7 +19,12 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "package": "com.erpcampus.mobile",
+      "versionCode": 1
     },
     "web": {
       "output": "static",
@@ -33,11 +40,34 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      "expo-notifications",
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": false
+          },
+          "ios": {
+            "infoPlist": {
+              "NSAppTransportSecurity": {
+                "NSAllowsArbitraryLoads": false
+              }
+            }
+          }
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
     }
   }
 }

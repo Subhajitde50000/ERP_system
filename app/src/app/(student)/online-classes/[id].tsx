@@ -1,7 +1,8 @@
 /**
  * Student class detail — waiting room, live participation (chat, raise hand,
- * materials) and automatic attendance. Video streams play in the web console;
- * joining here still records your attendance.
+ * materials) and automatic attendance. Audio/video joins via the web console
+ * (deep-linked from the InClass screen); staying connected here still records
+ * attendance.
  */
 
 import { useEffect, useState } from "react";
@@ -22,6 +23,7 @@ import {
   fetchStudentClassView,
   joinOnlineClass,
   leaveOnlineClass,
+  webClassUrl,
   type OnlineClassDetail,
 } from "@/lib/online-class";
 import { Colors, Radius } from "@/theme";
@@ -137,8 +139,11 @@ function InClass({ classId, detail, onLeft }: { classId: string; detail: OnlineC
 
       <Card style={styles.stack}>
         <Text style={styles.note}>
-          🎥 {detail.teacher_name}&apos;s video plays in the web console. While you stay here, your join/leave time is recorded for attendance and you can chat and raise your hand.
+          🎥 Audio/video runs in your browser (the app has no WebRTC in this build). While you stay here, your join/leave time is recorded for attendance and you can chat and raise your hand.
         </Text>
+        {webClassUrl(classId) ? (
+          <Button onPress={() => Linking.openURL(webClassUrl(classId)!)}>Join audio/video in browser</Button>
+        ) : null}
         <View style={styles.row}>
           <TouchableOpacity
             style={[styles.handButton, handRaised && styles.handButtonActive]}

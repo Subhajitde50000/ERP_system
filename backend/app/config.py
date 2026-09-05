@@ -33,6 +33,34 @@ class Settings(BaseSettings):
 
     # ── Redis ─────────────────────────────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379/0"
+    # WebRTC relay for the live classroom (see doc/deploy-coturn.md).
+    # TURN_URL e.g. "turn:turn.example.com:3478" or "turns:...:5349" (TLS);
+    # with static shared-secret auth set username/credential accordingly.
+    TURN_URL: str = ""
+    TURN_USERNAME: str = ""
+    TURN_CREDENTIAL: str = ""
+    # Set to false on API-only workers; run one scheduler-enabled worker
+    # (or a dedicated worker process) to own the background jobs.
+    SCHEDULER_ENABLED: bool = True
+
+    def ice_servers(self) -> list[dict]:
+        """ICE server list for the live-classroom WebRTC peers.
+
+        STUN is enough on open networks; TURN (relay) is what gets calls
+        through symmetric NATs and strict firewalls. TURN is only offered
+        when fully configured — a half-configured relay would just produce
+        failing candidates.
+        """
+        servers = [{"urls": "stun:stun.l.google.com:19302"}]
+        if self.TURN_URL and self.TURN_USERNAME and self.TURN_CREDENTIAL:
+            servers.append(
+                {
+                    "urls": self.TURN_URL,
+                    "username": self.TURN_USERNAME,
+                    "credential": self.TURN_CREDENTIAL,
+                }
+            )
+        return servers
 
     # ── Online Class ──────────────────────────────────────────────────────────
     # Max concurrent WebSocket connections per live room (per worker).
@@ -40,6 +68,21 @@ class Settings(BaseSettings):
     WS_MAX_ROOM_PARTICIPANTS: int = 500
     # Maximum file upload size for class materials / recordings (MB).
     ONLINE_CLASS_UPLOAD_MAX_MB: int = 25
+    # ── File storage (B6): private, tenant-prefixed, signed-URL access ──────
+    # "local" = private disk under UPLOAD_FILE_ROOT (single instance);
+    # "s3"    = object storage (S3/R2/MinIO, multi-instance + durable).
+    STORAGE_BACKEND: str = "local"
+    UPLOAD_FILE_ROOT: str = "uploads"
+    # How long vended file links stay valid (S3 presigned URLs share this).
+    UPLOAD_SIGNED_URL_TTL_SECONDS: int = 900
+    # S3 backend settings. S3_BUCKET is required when STORAGE_BACKEND=s3;
+    # credentials may be omitted when the workload runs on an IAM role.
+    S3_BUCKET: str = ""
+    S3_REGION: str = ""
+    S3_ENDPOINT_URL: str = ""      # e.g. MinIO https://minio.internal:9000
+    S3_ACCESS_KEY_ID: str = ""
+    S3_SECRET_ACCESS_KEY: str = ""
+    S3_KEY_PREFIX: str = ""        # optional bucket-internal prefix
     # Comma-separated MIME-type allowlist for shared class files.
     ONLINE_CLASS_ALLOWED_MIME_TYPES: str = (
         "application/pdf,"
@@ -59,10 +102,23 @@ class Settings(BaseSettings):
     def allowed_mime_set(self) -> set[str]:
         return {m.strip() for m in self.ONLINE_CLASS_ALLOWED_MIME_TYPES.split(",") if m.strip()}
 
-    # ── Firebase Cloud Messaging (optional push notifications) ────────────────
-    # Set this to your FCM v1 service-account JSON path or leave blank to
-    # disable push entirely (in-app DB notifications still work).
-    FCM_SERVER_KEY: str = ""
+    # ── Firebase Cloud Messaging (Android / iOS / web push) ──────────────────
+    # Remote push is sent through the FCM v1 HTTP API. Two ways to provide the
+    # Firebase service-account credentials (a Google Cloud service account with
+    # the "Firebase Cloud Messaging API" enabled):
+    #   1. FCM_SERVICE_ACCOUNT_JSON    – path to the downloaded JSON file
+    #   2. FCM_SERVICE_ACCOUNT_B64     – base64 of the same JSON (useful on
+    #                                    platforms where secrets live in env)
+    # When neither is set, remote push is disabled and only the in-app DB
+    # inbox is written (safe default for development / tests).
+    FCM_SERVICE_ACCOUNT_JSON: str = ""
+    FCM_SERVICE_ACCOUNT_B64: str = ""
+    # Optional project id override; usually read from the service-account file.
+    FCM_PROJECT_ID: str = ""
+    # Default time-to-live applied to FCM messages.
+    FCM_TTL_SECONDS: int = 86400
+    # How many outbox rows the background delivery worker claims per run.
+    NOTIFICATION_PUSH_BATCH_SIZE: int = 100
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"

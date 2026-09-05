@@ -2043,6 +2043,40 @@ CREATE TABLE device_tokens (
   CONSTRAINT uq_device_tokens__user_id_token UNIQUE (user_id, token)
 );
 
+-- Push enqueue path: "all live tokens of these users" during a broadcast.
+CREATE INDEX idx_device_tokens_user_active
+  ON device_tokens (user_id)
+  WHERE is_active = TRUE;
+
+-- Durable push outbox — one row per (notification, live device token),
+-- drained by the FCM worker (NotificationService.deliver_pending).
+CREATE TABLE notification_deliveries (
+
+  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_id              UUID NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+  user_id                      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  device_token_id              UUID NOT NULL REFERENCES device_tokens(id) ON DELETE CASCADE,
+  platform                     VARCHAR(10) NOT NULL,            -- android | ios | web
+  status                       VARCHAR(20) NOT NULL DEFAULT 'PENDING',  -- PENDING|SENT|FAILED|SKIPPED
+  attempts                     SMALLINT NOT NULL DEFAULT 0,
+  last_error                   TEXT,
+  next_attempt_at              TIMESTAMPTZ,
+  created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at                      TIMESTAMPTZ
+);
+
+-- Worker scan: only pending rows whose backoff window has elapsed.
+CREATE INDEX idx_notif_deliveries_pending
+  ON notification_deliveries (status, next_attempt_at)
+  WHERE status = 'PENDING';
+
+-- Fast lookup when a notification row is deleted / audited.
+CREATE INDEX idx_notif_deliveries_notification
+  ON notification_deliveries (notification_id);
+
+CREATE INDEX idx_notif_deliveries_user
+  ON notification_deliveries (user_id);
+
 CREATE TABLE audit_logs (
 
   id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2866,7 +2900,7 @@ DECLARE
   v_modules  INTEGER;
   v_roles    INTEGER;
   v_plans    INTEGER;
-  v_baseline CONSTANT INTEGER := 24;
+  v_baseline CONSTANT INTEGER := 25;
 BEGIN
   SELECT count(*) INTO v_tables
     FROM information_schema.tables
@@ -2908,16 +2942,16 @@ BEGIN
   RAISE NOTICE ' Seed: plans       : %', v_plans;
   RAISE NOTICE '─────────────────────────────────────────────';
 
-  IF v_tables <> 132 THEN
-    RAISE EXCEPTION 'Expected 132 tables, found %', v_tables;
+  IF v_tables <> 133 THEN
+    RAISE EXCEPTION 'Expected 133 tables, found %', v_tables;
   END IF;
   IF v_unindexed > v_baseline THEN
     RAISE EXCEPTION 'Expected at most % unindexed foreign keys, found % — every new FK '
                     'needs an index or a deliberate reason not to have one',
       v_baseline, v_unindexed;
   END IF;
-  IF v_modules <> 16 OR v_roles <> 22 OR v_plans <> 4 THEN
-    RAISE EXCEPTION 'Seed incomplete: % modules (want 16), % roles (want 22), % plans (want 4)',
+  IF v_modules <> 17 OR v_roles <> 22 OR v_plans <> 4 THEN
+    RAISE EXCEPTION 'Seed incomplete: % modules (want 17), % roles (want 22), % plans (want 4)',
       v_modules, v_roles, v_plans;
   END IF;
 

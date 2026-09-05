@@ -7,6 +7,13 @@
  * WebRTC signalling; media itself flows peer-to-peer in a small mesh (fine
  * for a class-sized room where mostly the teacher broadcasts). Everything
  * here is transport — the room components own the UI.
+ *
+ * Scale limits (by design, documented for operators): a full mesh is
+ * n×(n−1) links and n-1 upload streams per sender, which saturates a typical
+ * uplink past ~6–8 active cameras. The room UI keeps students' cameras off
+ * by default, so teacher-broadcast classes work well beyond that, but
+ * multi-camera classes larger than ~8 participants need an SFU (e.g.
+ * LiveKit/mediasoup) in front of this signalling — see doc/deploy-coturn.md.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -56,6 +63,12 @@ export interface LiveRoom {
   clearBoard: () => void;
 }
 
+/**
+ * ICE fallback used until the server's welcome frame arrives. The backend can
+ * deliver deployment-specific servers (STUN + authenticated TURN relay — see
+ * doc/deploy-coturn.md) via the welcome payload's `ice_servers`, which is what
+ * gets peers through symmetric NATs and strict firewalls.
+ */
 const RTC_CONFIG: RTCConfiguration = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
 
 export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoom {
@@ -74,6 +87,8 @@ export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoo
   const [screenSharing, setScreenSharing] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
+  // Server-delivered ICE config (welcome frame); null until it arrives.
+  const iceServersRef = useRef<RTCIceServer[] | null>(null);
   const pcsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localRef = useRef<MediaStream | null>(null);
   const screenTrackRef = useRef<MediaStreamTrack | null>(null);
@@ -97,7 +112,7 @@ export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoo
   const createPeer = useCallback(
     (peer: PeerInfo, initiator: boolean) => {
       if (pcsRef.current.has(peer.id)) return pcsRef.current.get(peer.id)!;
-      const pc = new RTCPeerConnection(RTC_CONFIG);
+      const pc = new RTCPeerConnection(iceServersRef.current ? { iceServers: iceServersRef.current } : RTC_CONFIG);
       pcsRef.current.set(peer.id, pc);
       localRef.current?.getTracks().forEach((track) => pc.addTrack(track, localRef.current!));
       const remote = new MediaStream();
@@ -194,6 +209,11 @@ export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoo
         switch (msg.type) {
           case "welcome": {
             setRole((msg.you as PeerInfo).role);
+            // Capture TURN config BEFORE creating peers so the first offer
+            // already contains the relay candidates.
+            iceServersRef.current = ((msg.ice_servers as RTCIceServer[] | undefined) ?? []).length
+              ? (msg.ice_servers as RTCIceServer[])
+              : null;
             knownPeers = (msg.peers ?? []) as PeerInfo[];
             setPeers(knownPeers);
             setConnected(true);

@@ -11,6 +11,7 @@ period.
 
 from __future__ import annotations
 
+import logging
 import uuid
 from collections import Counter, defaultdict
 from datetime import date, datetime, time, timedelta, timezone
@@ -25,6 +26,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.models.academic import AcademicYear, Department, SchoolClass, Subject
+from app.models.enrollment import Enrollment
 from app.models.exam_controller import (
     ExamControllerGradeCard,
     ExamControllerGradeCardStatus,
@@ -98,6 +100,9 @@ from app.schemas.exam_controller import (
     ExamControllerSubjectOption,
 )
 from app.services.audit_service import AuditService
+from app.services.push_service import PushService
+
+logger = logging.getLogger(__name__)
 
 __all__ = ["ExamControllerService"]
 
@@ -2559,3 +2564,39 @@ class ExamControllerService:
         )
         db.add(notice)
         await db.flush()
+
+        # Push an in-app + FCM notification straight to the affected students
+        # (everyone enrolled in the publication's class, or the whole year for
+        # institution-wide publications). Best-effort: a notification failure
+        # must not roll back the publication itself.
+        try:
+            student_ids = list(
+                (
+                    await db.execute(
+                        select(Enrollment.student_id).where(
+                            Enrollment.tenant_id == tenant_id,
+                            Enrollment.academic_year_id == publication.academic_year_id,
+                            Enrollment.status == "ACTIVE",
+                            *([Enrollment.class_id == publication.class_id] if publication.class_id else []),
+                        )
+                    )
+                ).scalars().all()
+            )
+            if student_ids:
+                await PushService.create_in_app_notifications(
+                    db,
+                    tenant_id=tenant_id,
+                    user_ids=student_ids,
+                    title=f"Results released — {publication.title}",
+                    body=(
+                        "Exam Controller has released the results for "
+                        f"{publication.title}. View your grade card in the student portal."
+                    ),
+                    notif_type="EXAM_RESULT_RELEASED",
+                    data={
+                        "publication_id": str(publication.id),
+                        "publication_title": publication.title,
+                    },
+                )
+        except Exception as exc:  # noqa: BLE001 - best-effort, never block publication
+            logger.warning("Could not notify students of publication %s: %s", publication.id, exc)

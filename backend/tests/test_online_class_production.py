@@ -208,7 +208,7 @@ async def test_notifications_inbox_and_mark_read():
 
 
 @pytest.mark.asyncio
-async def test_admin_overview_metrics():
+async def test_admin_overview_metrics(monkeypatch):
     admin = SimpleNamespace(id=uuid.uuid4(), tenant_id=uuid.uuid4())
     db = MagicMock()
 
@@ -225,7 +225,11 @@ async def test_admin_overview_metrics():
     db.execute = AsyncMock(return_value=kpi_mock)
 
     from app.services.principal_service import PrincipalService
-    PrincipalService._tenant_today = AsyncMock(return_value=date(2026, 8, 27))
+    # monkeypatch (not bare assignment): a leaked patch would freeze "today"
+    # for every later test in the process and break the attendance suite.
+    monkeypatch.setattr(
+        PrincipalService, "_tenant_today", AsyncMock(return_value=date(2026, 8, 27))
+    )
 
     overview = await OnlineClassService.list_for_admin(db, admin)
     assert overview.summary.live_count == 2

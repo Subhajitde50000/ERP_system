@@ -25,7 +25,7 @@ from datetime import date, datetime, time
 from decimal import Decimal
 
 from sqlalchemy import BigInteger, Boolean, Date, Enum as SAEnum, ForeignKey, Index, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import ARRAY, JSONB, TIMESTAMP, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, INET, JSONB, TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -37,6 +37,41 @@ class AttendanceStatus(str, enum.Enum):
     ABSENT = "ABSENT"
     LATE = "LATE"
     EXCUSED = "EXCUSED"
+
+
+class LeaveStatus(str, enum.Enum):
+    """Shared ``leave_status`` PG enum — used by both staff and student leave."""
+
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+
+
+class ExamType(str, enum.Enum):
+    MCQ = "MCQ"
+    DESCRIPTIVE = "DESCRIPTIVE"
+    MIXED = "MIXED"
+    QUIZ = "QUIZ"
+
+
+class ExamMode(str, enum.Enum):
+    ONLINE = "ONLINE"
+    OFFLINE = "OFFLINE"
+
+
+class SlotType(str, enum.Enum):
+    CLASS = "CLASS"
+    BREAK = "BREAK"
+    LAB = "LAB"
+    ACTIVITY = "ACTIVITY"
+
+
+class EmploymentType(str, enum.Enum):
+    FULL_TIME = "FULL_TIME"
+    PART_TIME = "PART_TIME"
+    CONTRACT = "CONTRACT"
+    VISITING = "VISITING"
 
 
 class ExamStatus(str, enum.Enum):
@@ -116,8 +151,10 @@ class Exam(Base):
     subject_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("subjects.id"), nullable=False)
     class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id"), nullable=False)
     academic_year_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("academic_years.id"), nullable=False)
-    exam_type: Mapped[str] = mapped_column(String(20), nullable=False)
-    mode: Mapped[str] = mapped_column(String(20), nullable=False, default="ONLINE")
+    # PG enums (database.sql §3) — mapped with SAEnum so asyncpg receives the
+    # correct type cast on INSERT/UPDATE and reads come back as enum members.
+    exam_type: Mapped[ExamType] = mapped_column(SAEnum(ExamType, name="exam_type"), nullable=False)
+    mode: Mapped[ExamMode] = mapped_column(SAEnum(ExamMode, name="exam_mode"), nullable=False, default=ExamMode.ONLINE)
     total_marks: Mapped[int] = mapped_column(Integer, nullable=False)
     passing_marks: Mapped[int] = mapped_column(Integer, nullable=False)
     duration_minutes: Mapped[int] = mapped_column(Integer, nullable=False)
@@ -177,7 +214,7 @@ class ExamAttempt(Base):
     grade: Mapped[str | None] = mapped_column(String(5), nullable=True)
     status: Mapped[AttemptStatus] = mapped_column(SAEnum(AttemptStatus, name="attempt_status"), nullable=False, default=AttemptStatus.IN_PROGRESS)
     tab_switch_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    ip_address: Mapped[str | None] = mapped_column(INET, nullable=True)
     device_info: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
 
@@ -305,7 +342,7 @@ class TimetableSlot(Base):
     subject_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("subjects.id"), nullable=True)
     teacher_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     room_no: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    slot_type: Mapped[str] = mapped_column(String(20), nullable=False, default="CLASS")
+    slot_type: Mapped[SlotType] = mapped_column(SAEnum(SlotType, name="slot_type"), nullable=False, default=SlotType.CLASS)
     effective_from: Mapped[date] = mapped_column(Date, nullable=False)
     effective_to: Mapped[date | None] = mapped_column(Date, nullable=True)
 
@@ -319,7 +356,9 @@ class StaffProfile(Base):
     employee_code: Mapped[str] = mapped_column(String(50), nullable=False)
     designation: Mapped[str] = mapped_column(String(100), nullable=False)
     department_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("departments.id"), nullable=True)
-    employment_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    employment_type: Mapped[EmploymentType] = mapped_column(
+        SAEnum(EmploymentType, name="employment_type"), nullable=False
+    )
     date_of_joining: Mapped[date] = mapped_column(Date, nullable=False)
     date_of_leaving: Mapped[date | None] = mapped_column(Date, nullable=True)
     qualification: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -337,7 +376,9 @@ class StaffLeaveRequest(Base):
     to_date: Mapped[date] = mapped_column(Date, nullable=False)
     total_days: Mapped[Decimal] = mapped_column(Numeric(4, 1), nullable=False)
     reason: Mapped[str] = mapped_column(Text, nullable=False)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="PENDING")
+    status: Mapped[LeaveStatus] = mapped_column(
+        SAEnum(LeaveStatus, name="leave_status"), nullable=False, default=LeaveStatus.PENDING
+    )
     reviewed_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     reviewed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
     review_note: Mapped[str | None] = mapped_column(Text, nullable=True)
