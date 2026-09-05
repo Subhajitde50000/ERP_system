@@ -194,50 +194,76 @@ class LiveRoomManager:
     # ── Pub/sub plumbing ─────────────────────────────────────────────────────
 
     async def _listen(self) -> None:
-        """Deliver envelopes from other workers to this worker's sockets."""
-        assert self._redis is not None
-        pubsub = self._redis.pubsub()
-        await pubsub.psubscribe("live:room:*")
-        self._subscribed.set()
-        try:
-            async for message in pubsub.listen():
-                if message.get("type") != "pmessage":
-                    continue
-                try:
-                    envelope = json.loads(message["data"])
-                    if not isinstance(envelope, dict) or envelope.get("origin") == self._worker_id:
+        """Deliver envelopes from other workers to this worker's sockets with automatic reconnection."""
+        while self._started:
+            pubsub = None
+            try:
+                if self._redis is None and self._redis_factory is not None:
+                    try:
+                        self._redis = self._redis_factory()
+                        await self._redis.ping()
+                    except Exception:
+                        self._redis = None
+                        await asyncio.sleep(2)
                         continue
-                    room = uuid.UUID(message["channel"].decode().rsplit(":", 1)[-1])
-                except (ValueError, TypeError, json.JSONDecodeError):
+
+                if self._redis is None:
+                    await asyncio.sleep(2)
                     continue
-                if envelope.get("op") == "dm":
-                    await self._local_send(room, uuid.UUID(str(envelope.get("target"))), envelope.get("payload"))
-                else:
-                    await self._local_broadcast(room, envelope.get("payload"), envelope.get("exclude"))
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:  # noqa: BLE001 - the listener must never die silently
-            logger.error("live-room pub/sub listener crashed: %s", exc)
-        finally:
-            with contextlib.suppress(Exception):
-                await pubsub.punsubscribe("live:room:*")
-                await pubsub.aclose()
+
+                pubsub = self._redis.pubsub()
+                await pubsub.psubscribe("live:room:*")
+                self._subscribed.set()
+                async for message in pubsub.listen():
+                    if not self._started:
+                        break
+                    if message.get("type") != "pmessage":
+                        continue
+                    try:
+                        envelope = json.loads(message["data"])
+                        if not isinstance(envelope, dict) or envelope.get("origin") == self._worker_id:
+                            continue
+                        room = uuid.UUID(message["channel"].decode().rsplit(":", 1)[-1])
+                    except (ValueError, TypeError, json.JSONDecodeError):
+                        continue
+                    if envelope.get("op") == "dm":
+                        await self._local_send(room, uuid.UUID(str(envelope.get("target"))), envelope.get("payload"))
+                    else:
+                        await self._local_broadcast(room, envelope.get("payload"), envelope.get("exclude"))
+            except asyncio.CancelledError:
+                raise
+            except Exception as exc:  # noqa: BLE001 - reconnect on transient blip
+                self._warn_once("live-room pub/sub connection interrupted, reconnecting: %s", exc)
+                self._subscribed.clear()
+                await asyncio.sleep(2)
+            finally:
+                if pubsub is not None:
+                    with contextlib.suppress(Exception):
+                        await pubsub.punsubscribe("live:room:*")
+                        await pubsub.aclose()
 
     async def _heartbeat(self) -> None:
         """Keep this worker's liveness key fresh; TTL sweeps crashed workers."""
-        assert self._redis is not None
-        while True:
-            try:
-                await self._redis.set(
-                    f"live:worker:{self._worker_id}", "1", ex=self._WORKER_TTL_SECONDS
-                )
-            except asyncio.CancelledError:
-                raise
-            except Exception as exc:  # noqa: BLE001
-                self._warn_once("live-room heartbeat failed: %s", exc)
+        while self._started:
+            if self._redis is not None:
+                try:
+                    await self._redis.set(
+                        f"live:worker:{self._worker_id}", "1", ex=self._WORKER_TTL_SECONDS
+                    )
+                except asyncio.CancelledError:
+                    raise
+                except Exception as exc:  # noqa: BLE001
+                    self._warn_once("live-room heartbeat failed: %s", exc)
             await asyncio.sleep(self._HEARTBEAT_SECONDS)
 
     async def _publish(self, class_id: uuid.UUID, envelope: dict) -> None:
+        if self._redis is None and self._redis_factory is not None:
+            try:
+                self._redis = self._redis_factory()
+                await self._redis.ping()
+            except Exception:
+                self._redis = None
+                return
         if self._redis is None:
             return
         try:

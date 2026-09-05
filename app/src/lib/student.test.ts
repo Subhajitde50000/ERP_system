@@ -14,7 +14,7 @@ vi.mock("expo-secure-store", () => ({
 }));
 
 import { gradeCardText, type StudentExamResult } from "./student";
-import { webClassUrl } from "./online-class";
+import { resolveClassWebUrl, webClassUrl } from "./online-class";
 
 const base: StudentExamResult = {
   exam_id: "exam-1",
@@ -71,8 +71,20 @@ test("typed states are part of the result contract", () => {
 test("webClassUrl deep-links to the web classroom only when configured", () => {
   vi.stubEnv("EXPO_PUBLIC_WEB_URL", "https://erp.example.com/");
   expect(webClassUrl("class-7")).toBe("https://erp.example.com/student/online-classes/class-7");
+  expect(webClassUrl("class-7", "teacher")).toBe("https://erp.example.com/teacher/online-classes/class-7");
 
   vi.stubEnv("EXPO_PUBLIC_WEB_URL", "");
   expect(webClassUrl("class-7")).toBeNull();
+  vi.unstubAllEnvs();
+});
+
+test("resolveClassWebUrl provides fallbacks even when EXPO_PUBLIC_WEB_URL is not set", () => {
+  vi.stubEnv("EXPO_PUBLIC_WEB_URL", "https://erp.example.com");
+  expect(resolveClassWebUrl("class-8")).toBe("https://erp.example.com/student/online-classes/class-8");
+  expect(resolveClassWebUrl("class-8", "teacher")).toBe("https://erp.example.com/teacher/online-classes/class-8");
+
+  vi.stubEnv("EXPO_PUBLIC_WEB_URL", "");
+  const fallback = resolveClassWebUrl("class-8");
+  expect(fallback).toContain("/student/online-classes/class-8");
   vi.unstubAllEnvs();
 });

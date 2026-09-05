@@ -452,6 +452,10 @@ async def live_room(websocket: WebSocket, class_id: uuid.UUID, db: DB, token: st
                 # ICE config for this deployment; the client keeps its STUN
                 # fallback when TURN is not configured server-side.
                 "ice_servers": get_settings().ice_servers(),
+                "sfu": {
+                    "enabled": get_settings().SFU_ENABLED,
+                    "url": get_settings().SFU_URL,
+                },
                 "whiteboard": oc.whiteboard_strokes or [],
             }
         )

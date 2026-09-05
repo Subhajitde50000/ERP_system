@@ -55,6 +55,28 @@ services:
     networks:
       - erp_prod_network
 
+  # ─── Coturn WebRTC TURN/STUN Relay ─────────────────────────────────────────
+  coturn:
+    image: coturn/coturn:latest
+    container_name: erp_coturn_prod
+    restart: always
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "5349:5349/tcp"
+    environment:
+      TURN_PORT: 3478
+    command:
+      - "-n"
+      - "--log-file=stdout"
+      - "--lt-cred-mech"
+      - "--fingerprint"
+      - "--no-cli"
+      - "--user=${TURN_USERNAME:-erp-turn}:${TURN_CREDENTIAL:-prod-turn-secret}"
+      - "--realm=${PUBLIC_ROOT_DOMAIN:-xyz.com}"
+    networks:
+      - erp_prod_network
+
   # ─── Database Migrations ───────────────────────────────────────────────────
   migration:
     build:
@@ -96,6 +118,11 @@ services:
       GOOGLE_SMTP_PORT: ${GOOGLE_SMTP_PORT:-587}
       GOOGLE_SMTP_USER: ${GOOGLE_SMTP_USER:-}
       GOOGLE_SMTP_PASSWORD: ${GOOGLE_SMTP_PASSWORD:-}
+      TURN_URL: ${TURN_URL:-}
+      TURN_USERNAME: ${TURN_USERNAME:-}
+      TURN_CREDENTIAL: ${TURN_CREDENTIAL:-}
+      SFU_ENABLED: ${SFU_ENABLED:-false}
+      SFU_URL: ${SFU_URL:-}
     volumes:
       - backend_prod_uploads:/app/uploads
     depends_on:

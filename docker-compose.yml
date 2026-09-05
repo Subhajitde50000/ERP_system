@@ -39,6 +39,28 @@ services:
     networks:
       - erp_network
 
+  # ─── Coturn WebRTC TURN/STUN Relay ─────────────────────────────────────────
+  coturn:
+    image: coturn/coturn:latest
+    container_name: erp_coturn
+    restart: unless-stopped
+    ports:
+      - "3478:3478/udp"
+      - "3478:3478/tcp"
+      - "5349:5349/tcp"
+    environment:
+      TURN_PORT: 3478
+    command:
+      - "-n"
+      - "--log-file=stdout"
+      - "--lt-cred-mech"
+      - "--fingerprint"
+      - "--no-cli"
+      - "--user=${TURN_USERNAME:-erp-turn}:${TURN_CREDENTIAL:-dev-turn-password}"
+      - "--realm=xyz.com"
+    networks:
+      - erp_network
+
   # ─── Database Migrations & Initial Setup ───────────────────────────────────
   migration:
     build:
@@ -75,6 +97,9 @@ services:
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-console}
       EMAIL_FROM: ${EMAIL_FROM:-no-reply@xyz.com}
       EMAIL_FROM_NAME: ${EMAIL_FROM_NAME:-ERP Platform}
+      TURN_URL: ${TURN_URL:-turn:coturn:3478}
+      TURN_USERNAME: ${TURN_USERNAME:-erp-turn}
+      TURN_CREDENTIAL: ${TURN_CREDENTIAL:-dev-turn-password}
     ports:
       - "${PORT:-8000}:8000"
     volumes:

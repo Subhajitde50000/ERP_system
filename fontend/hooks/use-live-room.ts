@@ -61,6 +61,8 @@ export interface LiveRoom {
   screenSharing: boolean;
   drawStroke: (stroke: Stroke) => void;
   clearBoard: () => void;
+  isLargeClass: boolean;
+  sfuAvailable: boolean;
 }
 
 /**
@@ -69,7 +71,20 @@ export interface LiveRoom {
  * doc/deploy-coturn.md) via the welcome payload's `ice_servers`, which is what
  * gets peers through symmetric NATs and strict firewalls.
  */
-const RTC_CONFIG: RTCConfiguration = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+const defaultIceServers: RTCIceServer[] = [{ urls: "stun:stun.l.google.com:19302" }];
+if (
+  typeof process !== "undefined" &&
+  process.env.NEXT_PUBLIC_TURN_URL &&
+  process.env.NEXT_PUBLIC_TURN_USERNAME &&
+  process.env.NEXT_PUBLIC_TURN_CREDENTIAL
+) {
+  defaultIceServers.push({
+    urls: process.env.NEXT_PUBLIC_TURN_URL.split(",").map((u) => u.trim()),
+    username: process.env.NEXT_PUBLIC_TURN_USERNAME,
+    credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL,
+  });
+}
+const RTC_CONFIG: RTCConfiguration = { iceServers: defaultIceServers };
 
 export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoom {
   const [connected, setConnected] = useState(false);
@@ -85,6 +100,7 @@ export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoo
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const [screenSharing, setScreenSharing] = useState(false);
+  const [sfuAvailable, setSfuAvailable] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   // Server-delivered ICE config (welcome frame); null until it arrives.
@@ -114,7 +130,22 @@ export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoo
       if (pcsRef.current.has(peer.id)) return pcsRef.current.get(peer.id)!;
       const pc = new RTCPeerConnection(iceServersRef.current ? { iceServers: iceServersRef.current } : RTC_CONFIG);
       pcsRef.current.set(peer.id, pc);
-      localRef.current?.getTracks().forEach((track) => pc.addTrack(track, localRef.current!));
+      localRef.current?.getTracks().forEach((track) => {
+        const sender = pc.addTrack(track, localRef.current!);
+        // Adaptive bitrate: cap student video to 150 kbps so multi-student mesh doesn't saturate uplink
+        if (track.kind === "video" && sender && sender.getParameters) {
+          try {
+            const params = sender.getParameters();
+            if (params.encodings && params.encodings.length > 0) {
+              params.encodings[0].maxBitrate = 150000;
+              params.encodings[0].maxFramerate = 15;
+              sender.setParameters(params).catch(() => {});
+            }
+          } catch {
+            /* browser without sender parameters */
+          }
+        }
+      });
       const remote = new MediaStream();
       pc.ontrack = (event) => {
         remote.addTrack(event.track);
@@ -208,7 +239,10 @@ export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoo
         const msg = JSON.parse(event.data as string) as Record<string, never> & Record<string, unknown>;
         switch (msg.type) {
           case "welcome": {
-            setRole((msg.you as PeerInfo).role);
+            const myRole = (msg.you as PeerInfo).role;
+            setRole(myRole);
+            const sfuData = msg.sfu as { enabled?: boolean } | undefined;
+            if (sfuData?.enabled) setSfuAvailable(true);
             // Capture TURN config BEFORE creating peers so the first offer
             // already contains the relay candidates.
             iceServersRef.current = ((msg.ice_servers as RTCIceServer[] | undefined) ?? []).length
@@ -217,6 +251,11 @@ export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoo
             knownPeers = (msg.peers ?? []) as PeerInfo[];
             setPeers(knownPeers);
             setConnected(true);
+            // In large class mode (>6 peers), students default camera off to conserve bandwidth
+            if (myRole === "STUDENT" && knownPeers.length >= 6 && localRef.current) {
+              localRef.current.getVideoTracks().forEach((t) => { t.enabled = false; });
+              setCamOn(false);
+            }
             // The newcomer offers to everyone already in the room.
             for (const peer of knownPeers) createPeer(peer, true);
             break;
@@ -374,5 +413,7 @@ export function useLiveRoom(classId: string, onClassEnded?: () => void): LiveRoo
     screenSharing,
     drawStroke,
     clearBoard,
+    isLargeClass: peers.length >= 6,
+    sfuAvailable,
   };
 }

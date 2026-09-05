@@ -39,6 +39,11 @@ class Settings(BaseSettings):
     TURN_URL: str = ""
     TURN_USERNAME: str = ""
     TURN_CREDENTIAL: str = ""
+    # SFU (Selective Forwarding Unit) configuration (LiveKit / mediasoup / Janus)
+    SFU_ENABLED: bool = False
+    SFU_URL: str = ""
+    SFU_API_KEY: str = ""
+    SFU_API_SECRET: str = ""
     # Set to false on API-only workers; run one scheduler-enabled worker
     # (or a dedicated worker process) to own the background jobs.
     SCHEDULER_ENABLED: bool = True
@@ -49,13 +54,14 @@ class Settings(BaseSettings):
         STUN is enough on open networks; TURN (relay) is what gets calls
         through symmetric NATs and strict firewalls. TURN is only offered
         when fully configured — a half-configured relay would just produce
-        failing candidates.
+        failing candidates. Supports comma-separated URLs (e.g. turn: and turns:).
         """
         servers = [{"urls": "stun:stun.l.google.com:19302"}]
         if self.TURN_URL and self.TURN_USERNAME and self.TURN_CREDENTIAL:
+            urls = [u.strip() for u in self.TURN_URL.split(",") if u.strip()]
             servers.append(
                 {
-                    "urls": self.TURN_URL,
+                    "urls": urls if len(urls) > 1 else (urls[0] if urls else self.TURN_URL),
                     "username": self.TURN_USERNAME,
                     "credential": self.TURN_CREDENTIAL,
                 }
