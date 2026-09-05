@@ -522,6 +522,33 @@ CREATE TABLE departments (
   CONSTRAINT uq_departments__tenant_id_code UNIQUE (tenant_id, code)
 );
 
+CREATE TABLE class_grades (
+
+  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id                    UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  academic_year_id             UUID NOT NULL REFERENCES academic_years(id) ON DELETE CASCADE,
+  name                         VARCHAR(100) NOT NULL,
+  grade_number                 INTEGER NOT NULL CHECK (grade_number BETWEEN 1 AND 12),
+  stream                       VARCHAR(50),
+  is_active                    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_class_grades UNIQUE (tenant_id, academic_year_id, grade_number, stream)
+);
+
+CREATE TABLE class_programs (
+
+  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id                    UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  department_id                UUID NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+  academic_year_id             UUID NOT NULL REFERENCES academic_years(id) ON DELETE CASCADE,
+  program_name                 VARCHAR(200) NOT NULL,
+  program_code                 VARCHAR(30) NOT NULL,
+  semester_number              INTEGER NOT NULL CHECK (semester_number >= 1),
+  is_active                    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_class_programs UNIQUE (tenant_id, department_id, program_code, semester_number, academic_year_id)
+);
+
 CREATE TABLE classes (
 
   id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -534,9 +561,13 @@ CREATE TABLE classes (
   class_teacher_id             UUID REFERENCES users(id),
   room_no                      VARCHAR(20),
   is_active                    BOOLEAN NOT NULL DEFAULT TRUE,
+  grade_id                     UUID REFERENCES class_grades(id) ON DELETE SET NULL,
+  program_id                   UUID REFERENCES class_programs(id) ON DELETE SET NULL,
+  section_label                VARCHAR(20),
   created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_classes__tenant_id_department_id_academic_year_id UNIQUE (tenant_id, department_id, academic_year_id, code)
 );
+
 
 CREATE TABLE subjects (
 
@@ -2411,9 +2442,17 @@ CREATE INDEX IF NOT EXISTS idx_book_issues_tenant_due_active ON book_issues (ten
 CREATE INDEX IF NOT EXISTS idx_books_tenant_id ON books (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_books_tenant_title ON books (tenant_id, title);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_books_tenant_isbn ON books (tenant_id, isbn) WHERE isbn IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_class_grades_academic_year_id ON class_grades (academic_year_id);
+CREATE INDEX IF NOT EXISTS idx_class_grades_tenant_id ON class_grades (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_class_programs_academic_year_id ON class_programs (academic_year_id);
+CREATE INDEX IF NOT EXISTS idx_class_programs_department_id ON class_programs (department_id);
+CREATE INDEX IF NOT EXISTS idx_class_programs_tenant_id ON class_programs (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_classes_academic_year_id ON classes (academic_year_id);
 CREATE INDEX IF NOT EXISTS idx_classes_class_teacher_id ON classes (class_teacher_id);
 CREATE INDEX IF NOT EXISTS idx_classes_department_id ON classes (department_id);
+CREATE INDEX IF NOT EXISTS idx_classes_grade_id ON classes (grade_id);
+CREATE INDEX IF NOT EXISTS idx_classes_program_id ON classes (program_id);
+
 CREATE INDEX IF NOT EXISTS idx_companies_tenant_id ON companies (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_content_access_logs_content_id ON content_access_logs (content_id);
 CREATE INDEX IF NOT EXISTS idx_content_access_logs_user_id ON content_access_logs (user_id);
@@ -2542,6 +2581,12 @@ CREATE INDEX IF NOT EXISTS idx_purchase_orders_created_by ON purchase_orders (cr
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_vendor_id ON purchase_orders (vendor_id);
 CREATE INDEX IF NOT EXISTS idx_question_options_question_id ON question_options (question_id);
 CREATE INDEX IF NOT EXISTS idx_questions_section_id ON questions (section_id);
+
+CREATE INDEX IF NOT EXISTS idx_questions_bank_item_id ON questions (bank_item_id);
+CREATE INDEX IF NOT EXISTS idx_qbank_created_by ON question_bank_items (tenant_id, created_by);
+CREATE INDEX IF NOT EXISTS idx_qbank_tenant_subject ON question_bank_items (tenant_id, subject_id);
+CREATE INDEX IF NOT EXISTS idx_qbank_type_diff ON question_bank_items (tenant_id, question_type, difficulty);
+
 CREATE INDEX IF NOT EXISTS idx_result_publications_academic_year_id ON result_publications (academic_year_id);
 CREATE INDEX IF NOT EXISTS idx_result_publications_class_id ON result_publications (class_id);
 CREATE INDEX IF NOT EXISTS idx_result_publications_published_by ON result_publications (published_by);
@@ -2942,9 +2987,10 @@ BEGIN
   RAISE NOTICE ' Seed: plans       : %', v_plans;
   RAISE NOTICE '─────────────────────────────────────────────';
 
-  IF v_tables <> 133 THEN
-    RAISE EXCEPTION 'Expected 133 tables, found %', v_tables;
+  IF v_tables <> 135 THEN
+    RAISE EXCEPTION 'Expected 135 tables, found %', v_tables;
   END IF;
+
   IF v_unindexed > v_baseline THEN
     RAISE EXCEPTION 'Expected at most % unindexed foreign keys, found % — every new FK '
                     'needs an index or a deliberate reason not to have one',
