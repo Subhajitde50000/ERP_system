@@ -152,14 +152,14 @@ blank/error; verify grade-card PDF/image export and marks breakdown on web and m
 - Multi-worker deployments (e.g. 8–60 Uvicorn workers) now cleanly fan out chat messages, SDP offers/answers, ICE candidate exchanges, whiteboard mutations, and participant presence across workers.
 - Verified with 13 automated unit & integration tests passing in `backend/tests/test_live_room_and_scheduler.py`.
 
-### B6. Uploads are local-disk only with weak production guarantees
-Files land in `backend/uploads/` served by StaticFiles. This (a) doesn't survive
-container redeploys / multi-instance setups, (b) has no signed-URL access control —
-`/uploads` is mounted **publicly**, so anyone with a file URL can view student
-submissions/documents, (c) no antivirus/content scanning beyond MIME allowlist.
-
-**Fix:** move to S3/object storage with private buckets + short-lived signed URLs,
-per-tenant path prefixes, and validate magic bytes not just MIME strings.
+### B6. Uploads are local-disk only with weak production guarantees [FIXED]
+**Status: FIXED**
+- **S3 / MinIO Object Storage Enabled**: Fully wired `STORAGE_BACKEND=s3` into `docker-compose.prod.yml` and `docker-compose.yml`, backed by `boto3`. In development, added a local MinIO S3 service (`minio/minio:latest`) with auto-provisioning bucket initializer (`minio/mc`).
+- **Stateless Production Containers**: Removed the fragile local `backend_prod_uploads` volume from production compose; files are written to durable S3/object storage (AWS S3, MinIO, Cloudflare R2, Ceph).
+- **Non-Blocking Async Uploads**: Offloaded synchronous `boto3.client.put_object` to an `asyncio` thread-pool executor so large uploads/recordings never block the FastAPI event loop.
+- **MinIO Path-Style Addressing**: Added `S3_FORCE_PATH_STYLE` config option for compatibility with MinIO and self-hosted object stores.
+- **Fail-Fast Startup Validation**: Added `validate_storage_config()` in `app/main.py` startup to ensure missing S3 configurations fail immediately with actionable instructions rather than failing during customer uploads.
+- **Private Signed URLs & Magic-Byte Validation**: All files are served via short-lived HMAC-signed URLs (`/api/v1/files/{key}?exp=...&sig=...`), stored under tenant-prefixed keys (`{tenant_id}/{namespace}/{uuid}_{filename}`), and validated against binary signatures (magic bytes) to block executable payloads and webshells.
 
 ### B7. Mobile app cannot reach a real backend
 `EXPO_PUBLIC_API_URL` defaults to `http://localhost:8000`, which on a physical phone is

@@ -89,6 +89,9 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY_ID: str = ""
     S3_SECRET_ACCESS_KEY: str = ""
     S3_KEY_PREFIX: str = ""        # optional bucket-internal prefix
+    # Use path-style URLs (required for MinIO / self-hosted stores).
+    # Set to false for AWS S3 / Cloudflare R2 (virtual-hosted-style).
+    S3_FORCE_PATH_STYLE: bool = False
     # Comma-separated MIME-type allowlist for shared class files.
     ONLINE_CLASS_ALLOWED_MIME_TYPES: str = (
         "application/pdf,"

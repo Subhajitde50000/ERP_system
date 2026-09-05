@@ -271,17 +271,22 @@ class Storage:
         if self._s3 is None:
             try:
                 import boto3  # noqa: PLC0415 - deliberately lazy
+                from botocore.config import Config as BotocoreConfig  # noqa: PLC0415
             except ImportError as exc:  # pragma: no cover - depends on deploy
                 raise RuntimeError(
                     "STORAGE_BACKEND=s3 requires the boto3 package (pip install boto3)"
                 ) from exc
             settings = get_settings()
+            # MinIO (and other self-hosted stores) require path-style URLs:
+            # http://minio:9000/{bucket}/key  instead of  http://{bucket}.minio:9000/key
+            addressing = "path" if settings.S3_FORCE_PATH_STYLE else "auto"
             self._s3 = boto3.client(
                 "s3",
                 region_name=settings.S3_REGION or None,
                 endpoint_url=settings.S3_ENDPOINT_URL or None,
                 aws_access_key_id=settings.S3_ACCESS_KEY_ID or None,
                 aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY or None,
+                config=BotocoreConfig(s3={"addressing_style": addressing}),
             )
         return self._s3
 
@@ -323,9 +328,22 @@ class Storage:
     async def _write(self, key: str, content: BinaryIO | bytes, max_bytes: int) -> int:
         if self.backend == "s3":
             data = self._as_bytes(content, max_bytes)
-            self._client().put_object(
-                Bucket=get_settings().S3_BUCKET, Key=f"{self.s3_prefix}{key}",
-                Body=data, ContentType="application/octet-stream",
+            settings = get_settings()
+            bucket = settings.S3_BUCKET
+            s3_key = f"{self.s3_prefix}{key}"
+            client = self._client()
+            # boto3 is synchronous — run in a thread-pool executor so we never
+            # block the event loop during upload (critical for large recordings).
+            import asyncio  # noqa: PLC0415 - stdlib, always available
+            loop = asyncio.get_running_loop()
+            await loop.run_in_executor(
+                None,
+                lambda: client.put_object(
+                    Bucket=bucket,
+                    Key=s3_key,
+                    Body=data,
+                    ContentType="application/octet-stream",
+                ),
             )
             return len(data)
 
@@ -453,3 +471,38 @@ class Storage:
 
 #: The single instance every upload site shares — one policy, one code path.
 storage = Storage()
+
+
+def validate_storage_config() -> None:
+    """Crash loudly at startup if the storage backend is misconfigured.
+
+    Called from app.main on_startup so a missing S3_BUCKET is surfaced
+    immediately — not silently at the first upload request hours later.
+    """
+    settings = get_settings()
+    backend = settings.STORAGE_BACKEND.lower()
+    if backend not in ("local", "s3"):
+        raise RuntimeError(
+            f"STORAGE_BACKEND={settings.STORAGE_BACKEND!r} is not recognised. "
+            "Valid values are 'local' and 's3'."
+        )
+    if backend == "s3":
+        if not settings.S3_BUCKET:
+            raise RuntimeError(
+                "STORAGE_BACKEND=s3 requires S3_BUCKET to be set. "
+                "Add it to your .env file or Docker Compose environment variables. "
+                "See backend/.env.example for the full S3/MinIO configuration block."
+            )
+        logger.info(
+            "storage: s3 backend bucket=%s endpoint=%s prefix=%s path_style=%s",
+            settings.S3_BUCKET,
+            settings.S3_ENDPOINT_URL or "(AWS default)",
+            settings.S3_KEY_PREFIX or "(none)",
+            settings.S3_FORCE_PATH_STYLE,
+        )
+    else:
+        logger.info(
+            "storage: local backend root=%s signed_url_ttl=%ds",
+            settings.UPLOAD_FILE_ROOT,
+            settings.UPLOAD_SIGNED_URL_TTL_SECONDS,
+        )

@@ -120,10 +120,14 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
 from app.services.fcm_client import get_fcm_client
 from app.services.online_class_service import live_rooms
 from app.services.scheduler_service import start_scheduler, stop_scheduler
+from app.services.storage_service import validate_storage_config
 
 
 @app.on_event("startup")
 async def on_startup():
+    # Validate storage backend config early — crashes with a clear message if
+    # STORAGE_BACKEND=s3 is set without the required S3_BUCKET (and friends).
+    validate_storage_config()
     # Cross-worker live-room fan-out (Redis pub/sub) before anything serves.
     await live_rooms.start()
     await start_scheduler()
