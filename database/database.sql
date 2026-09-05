@@ -1,4 +1,40 @@
 -- ============================================================================
+--  ⚠️  ARCHIVED — DO NOT USE FOR SCHEMA CHANGES
+-- ============================================================================
+--
+--  This file is a HISTORICAL REFERENCE only.
+--
+--  As of migration d9e8f7a6b5c4 (2026-09-05), Alembic is the single source
+--  of truth for the ERP database schema.  ALL future schema changes must be
+--  made through Alembic migrations:
+--
+--    1. Edit the relevant ORM model in  backend/app/models/
+--    2. Generate a migration:
+--         cd backend
+--         alembic revision --autogenerate -m "describe_your_change"
+--    3. Review the generated file in  backend/app/alembic/versions/
+--    4. Verify zero drift:
+--         python scripts/check_schema_drift.py
+--    5. Commit both the model change and the migration file together.
+--
+--  DO NOT apply this file to any database.  The Alembic chain
+--  (d606addfec08 → … → d9e8f7a6b5c4) produces a schema that is a strict
+--  superset of what this file creates, with all documented drift resolved.
+--
+--  Why is this file kept?
+--  ----------------------
+--  It documents the original hand-authored DDL intent (107 tables, 54 enums,
+--  58 indexes) and serves as a human-readable architectural reference.
+--  Tables that exist here but have no ORM model yet (transport, placement,
+--  HR/payroll, admissions, inventory) are tracked in
+--  backend/app/alembic/env.py:_UNMANAGED_TABLES so Alembic ignores them
+--  during autogenerate until ORM models are added.
+--
+--  Last known state: verified on PostgreSQL 17.10, committed 2026-08-02.
+--  Drift-resolution migration applied: d9e8f7a6b5c4, 2026-09-05.
+-- ============================================================================
+
+-- ============================================================================
 --  ERP + LMS Platform — Complete PostgreSQL Schema
 --  Multi-tenant School / College ERP + Learning Management System
 -- ============================================================================

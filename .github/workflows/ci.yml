@@ -74,6 +74,24 @@ jobs:
         run: |
           pytest -v
 
+      # ── Schema-drift gate ─────────────────────────────────────────────────
+      # Applies all pending Alembic migrations to the CI database, then
+      # compares the live schema against the ORM metadata.  A non-empty diff
+      # means a developer changed a model without writing a migration — fail fast.
+      - name: Install psycopg2 (sync driver for drift check)
+        run: pip install psycopg2-binary==2.9.10
+
+      - name: Run Schema Drift Check
+        env:
+          # Sync URL — psycopg2 dialect required by Alembic autogenerate
+          DATABASE_URL: postgresql+psycopg2://erp_user:erp_password@localhost:5432/erp_test_db
+          REDIS_URL: redis://localhost:6379/0
+          JWT_SECRET_KEY: ci-test-secret-key-1234567890abcdef
+          APP_ENV: testing
+          EMAIL_PROVIDER: console
+        run: |
+          python scripts/check_schema_drift.py
+
   # ─── Frontend Validation & Tests ──────────────────────────────────────────
   frontend-ci:
     name: Frontend (Next.js & Vitest)

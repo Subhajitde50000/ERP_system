@@ -243,4 +243,15 @@ __all__ = [
     "OnlineClassMutedStudent",
     "OnlineClassParticipant",
     "OnlineClassStatus",
+    # notification module — push delivery outbox + device registry
+    "DeviceToken",
+    "NotificationDelivery",
+    # enrollment / teacher-subject assignments
+    "Enrollment",
+    "TeacherSubject",
+    # parent portal
+    "DEFAULT_PARENT_ACCESS_SCOPE",
+    "PARENT_ACCESS_MODULES",
+    "LinkStatus",
+    "ParentStudentLink",
 ]

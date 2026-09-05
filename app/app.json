@@ -8,7 +8,7 @@
     "scheme": "erp-student",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
+      "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.erpcampus.mobile",
       "buildNumber": "1"
     },

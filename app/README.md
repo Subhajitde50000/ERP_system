@@ -71,13 +71,25 @@ The website itself is unchanged. Other role apps (Hostel Warden, …) come later
    ```
 
 2. Point the app at the FastAPI backend (defaults to `http://localhost:8000`,
-   the same default as the website). Create `.env.local` if needed:
+   the same default as the website). Create `.env.local` from the example:
 
    ```bash
-   EXPO_PUBLIC_API_URL=http://<backend-host>:8000
+   cp .env.example .env.local
+   # then edit .env.local and set EXPO_PUBLIC_API_URL to your backend host
    ```
 
-3. Start the app
+   On an Android emulator, `http://localhost:8000` works out of the box.
+   On a physical device, use your machine's LAN IP: `http://192.168.x.x:8000`.
+
+3. *(One-time, for EAS builds)* Link the app to your Expo account:
+
+   ```bash
+   npm install -g eas-cli
+   eas login
+   eas init   # fills extra.eas.projectId in app.json — commit the result
+   ```
+
+4. Start the app
 
    ```bash
    npx expo start
@@ -136,7 +148,7 @@ npm i -g eas-cli && eas login && eas init            # fills extra.eas.projectId
 eas build --profile development --platform android
 
 # internal testing build against staging/prod API
-EPO_PUBLIC_API_URL=https://api.staging.example.com \
+EXPO_PUBLIC_API_URL=https://api.staging.example.com \
 eas build --profile preview --platform android
 
 # store build — API URLs come from EAS secrets, never from the repo
