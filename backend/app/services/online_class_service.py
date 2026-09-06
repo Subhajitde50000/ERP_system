@@ -31,12 +31,12 @@ from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import HTTPException, WebSocket, status
-from sqlalchemy import and_, delete, func, or_, select, update
+from sqlalchemy import String, and_, cast, delete, func, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
 from app.models.academic import Department, SchoolClass, Subject
-from app.models.enrollment import Enrollment
+from app.models.enrollment import Enrollment, EnrollmentStatus
 from app.models.hod import AttendanceRecord
 from app.models.online_class import (
     OnlineAttendanceStatus,
@@ -1319,7 +1319,7 @@ class OnlineClassService:
                         Enrollment.tenant_id == student.tenant_id,
                         Enrollment.student_id == student.id,
                         Enrollment.academic_year_id == current_year.id,
-                        Enrollment.status == "ACTIVE",
+                        cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     )
                 )
             )

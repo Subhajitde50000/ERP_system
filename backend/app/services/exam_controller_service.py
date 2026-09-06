@@ -20,13 +20,13 @@ from typing import Iterable, Sequence
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy import String, and_, case, cast, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from app.models.academic import AcademicYear, Department, SchoolClass, Subject
-from app.models.enrollment import Enrollment
+from app.models.enrollment import Enrollment, EnrollmentStatus
 from app.models.exam_controller import (
     ExamControllerGradeCard,
     ExamControllerGradeCardStatus,
@@ -2576,7 +2576,7 @@ class ExamControllerService:
                         select(Enrollment.student_id).where(
                             Enrollment.tenant_id == tenant_id,
                             Enrollment.academic_year_id == publication.academic_year_id,
-                            Enrollment.status == "ACTIVE",
+                            cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                             *([Enrollment.class_id == publication.class_id] if publication.class_id else []),
                         )
                     )

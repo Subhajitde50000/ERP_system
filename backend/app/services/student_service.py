@@ -22,11 +22,11 @@ from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, case, func, or_, select
+from sqlalchemy import String, and_, case, cast, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.academic import AcademicYear, Department, SchoolClass, Subject
-from app.models.enrollment import Enrollment
+from app.models.enrollment import Enrollment, EnrollmentStatus
 from app.models.exam_controller import (
     ExamControllerGradeCard,
     ExamControllerGradeCardStatus,
@@ -2878,7 +2878,7 @@ class StudentService:
                 .join(Enrollment, and_(Enrollment.student_id == User.id, Enrollment.tenant_id == student.tenant_id))
                 .where(
                     Enrollment.class_id == assignment.class_id,
-                    Enrollment.status == "ACTIVE",
+                    cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     User.tenant_id == student.tenant_id,
                     User.id != student.id,
                 )

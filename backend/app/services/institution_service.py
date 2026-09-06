@@ -19,7 +19,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import String, cast, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,7 +28,7 @@ from app.models.academic import AcademicYear, Department, SchoolClass, Subject, 
 from app.models.billing import Subscription, TenantModule, TenantSetting
 from app.models.principal import StaffProfile
 from app.models.catalog import Module, Plan
-from app.models.enrollment import Enrollment, TeacherSubject
+from app.models.enrollment import Enrollment, EnrollmentStatus, TeacherSubject
 from app.models.role import Role, RoleAssignment
 from app.models.tenant import Tenant
 from app.models.user import User
@@ -1364,7 +1364,7 @@ class InstitutionService:
                     select(Enrollment).where(
                         Enrollment.student_id == student_id,
                         Enrollment.tenant_id == tenant_id,
-                        Enrollment.status == "ACTIVE",
+                        cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     )
                 )).scalar_one_or_none()
                 if active_enr is not None:
@@ -1716,7 +1716,7 @@ class InstitutionService:
     async def _count_enrolled_by_class(db, tenant_id) -> dict:
         res = await db.execute(
             select(Enrollment.class_id, func.count(Enrollment.id))
-            .where(Enrollment.tenant_id == tenant_id, Enrollment.status == "ACTIVE")
+            .where(Enrollment.tenant_id == tenant_id, cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value)
             .group_by(Enrollment.class_id)
         )
         return {row[0]: row[1] for row in res.all()}
@@ -1750,7 +1750,7 @@ class InstitutionService:
             return {}
         res = await db.execute(
             select(Enrollment, SchoolClass).join(SchoolClass, SchoolClass.id == Enrollment.class_id)
-            .where(Enrollment.tenant_id == tenant_id, Enrollment.student_id.in_(student_ids), Enrollment.status == "ACTIVE")
+            .where(Enrollment.tenant_id == tenant_id, Enrollment.student_id.in_(student_ids), cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value)
         )
         out: dict = {}
         for enr, cls in res.all():
