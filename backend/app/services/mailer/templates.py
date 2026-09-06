@@ -2,8 +2,8 @@
 Mailer — Email content, defined exactly once
 
 Every transactional email in the product lives here, keyed by event name.
-Neither provider owns copy: Google renders these strings into MIME, Klaviyo
-ships them as event properties. Change the wording here and both change.
+The provider does not own copy: each transport sends these rendered strings directly.
+Change the wording here and every email changes.
 
 The HTML shell (`_layout`) is also shared, so a branding tweak is a one-line
 edit rather than an edit per template.

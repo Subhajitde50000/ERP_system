@@ -149,31 +149,28 @@ class Settings(BaseSettings):
 
     # ── Email ─────────────────────────────────────────────────────────────────
     # Which transport actually sends mail:
-    #   google  → Gmail / Workspace SMTP   (app/services/mailer/providers/google.py)
-    #   klaviyo → Klaviyo Events API       (app/services/mailer/providers/klaviyo.py)
+    #   google    → Gmail / Google Workspace SMTP (deployment testing)
+    #   zeptomail → Zoho ZeptoMail HTTPS API (production)
     #   console → log only, never delivers (safe default for dev/tests)
-    # A provider that is commented out in mailer/registry.py is ignored here.
     EMAIL_PROVIDER: str = "console"
-    # Envelope identity — shared by both providers.
+    # Envelope identity.
     EMAIL_FROM: str = ""
     EMAIL_FROM_NAME: str = "xyz.com ERP"
     EMAIL_REPLY_TO: str = ""
     EMAIL_TIMEOUT_SECONDS: int = 20
 
-    # -- Google (SMTP) --
-    # GOOGLE_SMTP_PASSWORD must be a 16-char App Password, not the account
-    # password: https://myaccount.google.com/apppasswords
+    # -- Google SMTP (deployment testing) --
+    # Use an App Password, never the Google account password.
     GOOGLE_SMTP_HOST: str = "smtp.gmail.com"
-    GOOGLE_SMTP_PORT: int = 587          # 587 = STARTTLS, 465 = implicit TLS
+    GOOGLE_SMTP_PORT: int = 587
     GOOGLE_SMTP_USER: str = ""
     GOOGLE_SMTP_PASSWORD: str = ""
 
-    # -- Klaviyo (Events API) --
-    # Private key (pk_...) with Events:write + Profiles:write scopes.
-    KLAVIYO_API_KEY: str = ""
-    KLAVIYO_API_REVISION: str = "2024-10-15"
-    # Metric name prefix — the flow trigger becomes e.g. "ERP owner.verify_email"
-    KLAVIYO_METRIC_PREFIX: str = "ERP"
+    # -- Zoho ZeptoMail (HTTPS API) --
+    # Agent-specific Send Mail Token from ZeptoMail > SMTP/API > API.
+    ZEPTO_MAIL_SEND_TOKEN: str = ""
+    # Use https://api.zeptomail.in/v1.1/email for an India data centre.
+    ZEPTO_MAIL_API_URL: str = "https://api.zeptomail.com/v1.1/email"
 
 
 @lru_cache

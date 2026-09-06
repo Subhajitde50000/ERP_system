@@ -1,14 +1,14 @@
 """
-Mailer package — one email system, two interchangeable providers.
+Mailer package — Google SMTP for test deployments and ZeptoMail for production.
 
     app/services/mailer/
     ├── base.py                 shared contract: validation, errors, results
     ├── templates.py            all email copy, written once
-    ├── registry.py             ◀── switch Google ⇄ Klaviyo here
+    ├── registry.py             provider selection
     ├── service.py              queue_email / send_email / deliver_outbox
     └── providers/
-        ├── google.py           Gmail SMTP  — deliver() only
-        ├── klaviyo.py          Klaviyo API — deliver() only
+        ├── google.py           Google SMTP — deliver() only
+        ├── zeptomail.py        ZeptoMail HTTPS API — deliver() only
         └── console.py          dev fallback — deliver() only
 
 Callers import from this package and never from a provider module.

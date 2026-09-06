@@ -11,7 +11,7 @@ Deliberately NOT in a provider:
   - result shape & logging        → `SendResult` + `send()`
 
 So "add a provider" means "write one async function", and a bug fixed in the
-shared path is fixed for Google and Klaviyo at the same time.
+shared path is fixed for every transport at the same time.
 """
 
 from __future__ import annotations
@@ -31,9 +31,7 @@ class MailMessage:
     """
     One outbound email, already rendered and provider-neutral.
 
-    `text` and `html` are both carried because the two providers consume
-    different halves: SMTP builds a multipart/alternative MIME body from both,
-    Klaviyo ships them as event properties for the template to reference.
+    `text` and `html` are both carried so all clients have a usable fallback.
     """
 
     to: str
@@ -43,7 +41,6 @@ class MailMessage:
     event: str = "generic"
     tenant_id: Any | None = None
     # Structured values behind the rendered copy (name, urls, plan, …).
-    # Klaviyo flows bind to these; SMTP ignores them.
     context: dict[str, Any] = field(default_factory=dict)
     # Stable id used for provider-side de-duplication on retry.
     idempotency_key: str | None = None

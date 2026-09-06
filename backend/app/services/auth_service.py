@@ -13,6 +13,57 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import HTTPException, Request, status
+
+# ── Per-account login lockout (Redis) ────────────────────────────────────────
+# 5 failures within the window → account locked for LOCKOUT_SECONDS.
+# Uses Redis so the counter is shared across all Uvicorn workers.
+# Degrades silently (no lockout) when Redis is unavailable.
+_LOCKOUT_MAX_ATTEMPTS = 5
+_LOCKOUT_WINDOW_SECONDS = 300   # 5-minute sliding window for counting failures
+_LOCKOUT_SECONDS = 900          # 15-minute freeze after max failures
+
+async def _get_redis():
+    """Return a Redis client, or None if Redis is unreachable."""
+    try:
+        from redis.asyncio import from_url
+        client = from_url(get_settings().REDIS_URL, decode_responses=True)
+        await client.ping()
+        return client
+    except Exception:
+        return None
+
+def _lockout_key(tenant_id, identifier: str) -> str:
+    return f"erp:login_fail:{tenant_id}:{identifier}"
+
+async def _check_and_record_failure(tenant_id, identifier: str, success: bool) -> None:
+    """Increment failure counter on bad login; clear it on success."""
+    redis = await _get_redis()
+    if redis is None:
+        return
+    key = _lockout_key(tenant_id, identifier)
+    if success:
+        await redis.delete(key)
+        return
+    pipe = redis.pipeline()
+    pipe.incr(key)
+    pipe.expire(key, _LOCKOUT_WINDOW_SECONDS)
+    await pipe.execute()
+
+async def _assert_not_locked(tenant_id, identifier: str) -> None:
+    """Raise HTTP 429 if the account is currently locked out."""
+    redis = await _get_redis()
+    if redis is None:
+        return
+    key = _lockout_key(tenant_id, identifier)
+    val = await redis.get(key)
+    if val and int(val) >= _LOCKOUT_MAX_ATTEMPTS:
+        ttl = await redis.ttl(key)
+        wait = max(ttl, 1)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Account temporarily locked after too many failed attempts. "
+                   f"Try again in {wait // 60 + 1} minute(s).",
+        )
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -301,6 +352,9 @@ class AuthService:
         user_res = await db.execute(user_stmt)
         user = user_res.scalar_one_or_none()
 
+        # Block locked-out accounts before running bcrypt (fast-fail, saves CPU)
+        await _assert_not_locked(tenant.id, identifier)
+
         # A syntactically valid bcrypt hash that never matches any real password.
         # passlib requires a well-formed hash to return False rather than raise.
         # Generated once with hash_password("sentinel-never-matches").
@@ -309,6 +363,8 @@ class AuthService:
         password_ok = verify_password(password, stored_hash)
 
         if not user or not password_ok:
+            # Record failure; counter drives the lockout threshold
+            await _check_and_record_failure(tenant.id, identifier, success=False)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials",
@@ -319,6 +375,9 @@ class AuthService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User account is inactive",
             )
+
+        # Login succeeded — clear the failure counter
+        await _check_and_record_failure(tenant.id, identifier, success=True)
 
         # 3. Load Roles & Permissions
         roles, permissions, primary_role = await _load_tenant_user_permissions(

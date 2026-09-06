@@ -9,7 +9,7 @@ The rest of the application only ever calls:
                 context={"name": n, "verify_url": url})   # row in outbox
     await send_email("owner.verify_email", to=email, context={...})  # immediate
 
-Neither call knows or cares whether Google or Klaviyo is active. Switching
+Neither call knows or cares which provider is active. Switching
 providers changes nothing in any caller.
 
 Why queue by default: provisioning runs in ONE transaction (SYSTEM-FLOW §2.1).

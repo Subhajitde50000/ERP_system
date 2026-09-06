@@ -23,10 +23,8 @@ slowapi==0.1.9
 # Redis (async)
 redis[hiredis]==5.2.1
 
-# Email
-# google provider  → SMTP transport
+# Email — Google SMTP for deployment testing; ZeptoMail HTTPS API for production
 aiosmtplib==3.0.2
-# klaviyo provider → Events API over HTTP (also used by the test client)
 httpx==0.28.1
 
 # Background jobs (app/services/scheduler_service.py: retention sweep, outbox

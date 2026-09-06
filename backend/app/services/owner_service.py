@@ -120,7 +120,7 @@ class OwnerService:
             f"?token={raw_token}"
         )
         # Queued in the outbox inside this transaction, then delivered by the
-        # active provider (Google SMTP or Klaviyo — see mailer/registry.py).
+        # active provider (ZeptoMail in production; see mailer/registry.py).
         # In dev/no-mailer mode the raw token is also returned to the caller so
         # the flow can be completed end-to-end.
         queue_email(
