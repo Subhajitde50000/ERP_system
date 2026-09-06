@@ -249,10 +249,10 @@ def safe_filename(filename: str) -> str:
 
 
 class Storage:
-    """Local-disk or S3 backend with identical semantics."""
+    """Local-disk, Cloudflare R2, or S3 backend with identical semantics."""
 
     def __init__(self) -> None:
-        self._s3 = None  # lazy boto3 client (only when STORAGE_BACKEND=s3)
+        self._s3 = None  # lazy S3-compatible client (R2 or S3)
 
     # ── Configuration ─────────────────────────────────────────────────────
 
@@ -264,6 +264,31 @@ class Storage:
     def root(self) -> Path:
         return PROJECT_ROOT / get_settings().UPLOAD_FILE_ROOT
 
+    @property
+    def is_object_store(self) -> bool:
+        return self.backend in ("r2", "s3")
+
+    def _object_config(self) -> tuple[str, str, str, str, str, str]:
+        """Return bucket, region, endpoint, credentials, and key prefix."""
+        settings = get_settings()
+        if self.backend == "r2":
+            return (
+                settings.R2_BUCKET,
+                "auto",
+                settings.R2_ENDPOINT_URL,
+                settings.R2_ACCESS_KEY_ID,
+                settings.R2_SECRET_ACCESS_KEY,
+                settings.R2_KEY_PREFIX,
+            )
+        return (
+            settings.S3_BUCKET,
+            settings.S3_REGION,
+            settings.S3_ENDPOINT_URL,
+            settings.S3_ACCESS_KEY_ID,
+            settings.S3_SECRET_ACCESS_KEY,
+            settings.S3_KEY_PREFIX,
+        )
+
     def _client(self):
         """boto3 client, created on first use. Import errors surface loudly —
         a deployment that asks for S3 without the dependency must not silently
@@ -274,18 +299,19 @@ class Storage:
                 from botocore.config import Config as BotocoreConfig  # noqa: PLC0415
             except ImportError as exc:  # pragma: no cover - depends on deploy
                 raise RuntimeError(
-                    "STORAGE_BACKEND=s3 requires the boto3 package (pip install boto3)"
+                    "STORAGE_BACKEND=r2 or s3 requires boto3 (pip install boto3)"
                 ) from exc
-            settings = get_settings()
+            bucket, region, endpoint, access_key, secret_key, _ = self._object_config()
             # MinIO (and other self-hosted stores) require path-style URLs:
             # http://minio:9000/{bucket}/key  instead of  http://{bucket}.minio:9000/key
-            addressing = "path" if settings.S3_FORCE_PATH_STYLE else "auto"
+            settings = get_settings()
+            addressing = "path" if self.backend == "s3" and settings.S3_FORCE_PATH_STYLE else "auto"
             self._s3 = boto3.client(
                 "s3",
-                region_name=settings.S3_REGION or None,
-                endpoint_url=settings.S3_ENDPOINT_URL or None,
-                aws_access_key_id=settings.S3_ACCESS_KEY_ID or None,
-                aws_secret_access_key=settings.S3_SECRET_ACCESS_KEY or None,
+                region_name=region or None,
+                endpoint_url=endpoint or None,
+                aws_access_key_id=access_key or None,
+                aws_secret_access_key=secret_key or None,
                 config=BotocoreConfig(s3={"addressing_style": addressing}),
             )
         return self._s3
@@ -326,10 +352,9 @@ class Storage:
         return StoredFile(key=key, size=size, mime=mime)
 
     async def _write(self, key: str, content: BinaryIO | bytes, max_bytes: int) -> int:
-        if self.backend == "s3":
+        if self.is_object_store:
             data = self._as_bytes(content, max_bytes)
-            settings = get_settings()
-            bucket = settings.S3_BUCKET
+            bucket, _, _, _, _, _ = self._object_config()
             s3_key = f"{self.s3_prefix}{key}"
             client = self._client()
             # boto3 is synchronous — run in a thread-pool executor so we never
@@ -391,7 +416,7 @@ class Storage:
     @property
     def s3_prefix(self) -> str:
         """Optional key prefix inside the bucket (multi-tenant bucket layouts)."""
-        return get_settings().S3_KEY_PREFIX or ""
+        return self._object_config()[5]
 
     def _local_path(self, key: str) -> Path:
         """Resolve a key under the local root, refusing traversal attempts."""
@@ -411,10 +436,10 @@ class Storage:
         if not key:
             return ""
         expires_in = ttl if ttl is not None else get_settings().UPLOAD_SIGNED_URL_TTL_SECONDS
-        if self.backend == "s3":
+        if self.is_object_store:
             return self._client().generate_presigned_url(
                 "get_object",
-                Params={"Bucket": get_settings().S3_BUCKET, "Key": f"{self.s3_prefix}{key}"},
+                Params={"Bucket": self._object_config()[0], "Key": f"{self.s3_prefix}{key}"},
                 ExpiresIn=expires_in,
             )
         exp = int(time.time()) + expires_in
@@ -446,7 +471,7 @@ class Storage:
         files router to redirect on the s3 backend)."""
         return self._client().generate_presigned_url(
             "get_object",
-            Params={"Bucket": get_settings().S3_BUCKET, "Key": f"{self.s3_prefix}{normalize_key(key)}"},
+            Params={"Bucket": self._object_config()[0], "Key": f"{self.s3_prefix}{normalize_key(key)}"},
             ExpiresIn=ttl if ttl is not None else get_settings().UPLOAD_SIGNED_URL_TTL_SECONDS,
         )
 
@@ -457,9 +482,9 @@ class Storage:
         if not key:
             return
         try:
-            if self.backend == "s3":
+            if self.is_object_store:
                 self._client().delete_object(
-                    Bucket=get_settings().S3_BUCKET, Key=f"{self.s3_prefix}{key}"
+                    Bucket=self._object_config()[0], Key=f"{self.s3_prefix}{key}"
                 )
             else:
                 self._local_path(key).unlink(missing_ok=True)
@@ -476,17 +501,36 @@ storage = Storage()
 def validate_storage_config() -> None:
     """Crash loudly at startup if the storage backend is misconfigured.
 
-    Called from app.main on_startup so a missing S3_BUCKET is surfaced
+    Called from app.main on_startup so missing object-storage settings surface
     immediately — not silently at the first upload request hours later.
     """
     settings = get_settings()
     backend = settings.STORAGE_BACKEND.lower()
-    if backend not in ("local", "s3"):
+    if backend not in ("local", "r2", "s3"):
         raise RuntimeError(
             f"STORAGE_BACKEND={settings.STORAGE_BACKEND!r} is not recognised. "
-            "Valid values are 'local' and 's3'."
+            "Valid values are 'local', 'r2', and 's3'."
         )
-    if backend == "s3":
+    if backend == "r2":
+        required = {
+            "R2_BUCKET": settings.R2_BUCKET,
+            "R2_ENDPOINT_URL": settings.R2_ENDPOINT_URL,
+            "R2_ACCESS_KEY_ID": settings.R2_ACCESS_KEY_ID,
+            "R2_SECRET_ACCESS_KEY": settings.R2_SECRET_ACCESS_KEY,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            raise RuntimeError(
+                "STORAGE_BACKEND=r2 requires: " + ", ".join(missing) + ". "
+                "See doc/cloudflare-r2-storage.md."
+            )
+        logger.info(
+            "storage: r2 backend bucket=%s endpoint=%s prefix=%s",
+            settings.R2_BUCKET,
+            settings.R2_ENDPOINT_URL,
+            settings.R2_KEY_PREFIX or "(none)",
+        )
+    elif backend == "s3":
         if not settings.S3_BUCKET:
             raise RuntimeError(
                 "STORAGE_BACKEND=s3 requires S3_BUCKET to be set. "

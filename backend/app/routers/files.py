@@ -84,7 +84,7 @@ async def download(
     key = normalize_key(key)
     storage.verify(key, exp, sig)  # 403 on expired/forged links
 
-    if storage.backend == "s3":
+    if storage.is_object_store:
         # Offload the bytes to object storage; workers stay stateless.
         return RedirectResponse(storage.presign(key), status_code=307)
 

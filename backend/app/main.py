@@ -80,7 +80,7 @@ app = FastAPI(
     docs_url="/docs" if settings.APP_DEBUG else None,
     redoc_url="/redoc" if settings.APP_DEBUG else None,
 )
-# B6: uploads live under this root (STORAGE_BACKEND=local) but are NEVER
+# B6: local uploads live under this root (STORAGE_BACKEND=local) but are NEVER
 # publicly mounted — every byte is served through the signed-URL files router.
 (PROJECT_ROOT / "uploads").mkdir(parents=True, exist_ok=True)
 

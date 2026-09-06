@@ -75,12 +75,19 @@ class Settings(BaseSettings):
     # Maximum file upload size for class materials / recordings (MB).
     ONLINE_CLASS_UPLOAD_MAX_MB: int = 25
     # ── File storage (B6): private, tenant-prefixed, signed-URL access ──────
-    # "local" = private disk under UPLOAD_FILE_ROOT (single instance);
-    # "s3"    = object storage (S3/R2/MinIO, multi-instance + durable).
-    STORAGE_BACKEND: str = "local"
+    # "r2"    = Cloudflare R2 (primary production backend);
+    # "s3"    = Amazon S3 / compatible bucket (optional deployment switch);
+    # "local" = private disk under UPLOAD_FILE_ROOT (local development only).
+    STORAGE_BACKEND: str = "r2"
     UPLOAD_FILE_ROOT: str = "uploads"
     # How long vended file links stay valid (S3 presigned URLs share this).
     UPLOAD_SIGNED_URL_TTL_SECONDS: int = 900
+    # Cloudflare R2 settings. All four values are required for STORAGE_BACKEND=r2.
+    R2_BUCKET: str = ""
+    R2_ENDPOINT_URL: str = ""  # https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_KEY_PREFIX: str = ""
     # S3 backend settings. S3_BUCKET is required when STORAGE_BACKEND=s3;
     # credentials may be omitted when the workload runs on an IAM role.
     S3_BUCKET: str = ""
