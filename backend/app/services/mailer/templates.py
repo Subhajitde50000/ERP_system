@@ -196,6 +196,47 @@ def _owner_password_reset(ctx: dict[str, Any]) -> Rendered:
     )
 
 
+@template("tenant.password_reset")
+def _tenant_password_reset(ctx: dict[str, Any]) -> Rendered:
+    """Password reset email for institution users (teachers, students, parents…).
+
+    Context keys:
+        name            str  — user display name (optional, falls back to "Hi,")
+        reset_url       str  — full HTTPS reset link including raw token
+        expires_minutes int  — token lifetime shown to the user (default 30)
+        institution     str  — institution name (optional, adds context)
+    """
+    url = str(ctx.get("reset_url", ""))
+    minutes = str(ctx.get("expires_minutes", 30))
+    institution = str(ctx.get("institution", "")).strip()
+    hi = _greeting(ctx)
+    context_line = f" for your {escape(institution)} account" if institution else ""
+    return Rendered(
+        subject=f"Reset your password{' — ' + institution if institution else ''}",
+        text=(
+            f"{hi}\n\n"
+            f"We received a password reset request{context_line}:\n"
+            f"{url}\n\n"
+            f"This link expires in {minutes} minutes.\n"
+            "If you did not request a reset, no action is needed — "
+            "your password has not changed."
+        ),
+        html=_layout(
+            "Reset your password",
+            (
+                f"{escape(hi)} we received a password reset request"
+                f"{context_line}."
+            ),
+            [_button(url, "Choose a new password")],
+            (
+                f"This link expires in {escape(minutes)} minutes. "
+                "If you did not request a reset, no action is needed and "
+                "your password stays the same."
+            ),
+        ),
+    )
+
+
 @template("tenant.provisioned")
 def _tenant_provisioned(ctx: dict[str, Any]) -> Rendered:
     tenant = str(ctx.get("tenant_name", "your institution"))

@@ -36,6 +36,7 @@ from app.services.jwt_service import (
     create_platform_access_token,
     create_tenant_access_token,
 )
+from app.services.mailer import queue_email
 from app.utils.security import (
     generate_secure_token,
     hash_password,
@@ -477,8 +478,26 @@ class AuthService:
         user.password_reset_token = hash_token(raw_token)
         user.password_reset_expires = datetime.now(timezone.utc) + timedelta(minutes=30)
         await db.flush()
-        # TODO: enqueue outbox event with raw_token so mailer can send the link
-        # e.g. https://{slug}.xyz.com/reset-password?token={raw_token}
+
+        # Build the tenant-scoped reset URL: https://{slug}.{root_domain}/reset-password?token=...
+        root = settings.PUBLIC_ROOT_DOMAIN or "xyz.com"
+        reset_url = f"https://{tenant.slug}.{root}/reset-password?token={raw_token}"
+
+        # Queue the reset email inside the same transaction — the outbox worker
+        # delivers it after the session commits (same pattern as owner.forgot_password).
+        if user.email:
+            queue_email(
+                db,
+                "tenant.password_reset",
+                to=user.email,
+                context={
+                    "name": user.name,
+                    "reset_url": reset_url,
+                    "expires_minutes": 30,
+                    "institution": tenant.name,
+                },
+                tenant_id=tenant.id,
+            )
 
     @staticmethod
     async def verify_reset_token(token: str, db: AsyncSession) -> None:

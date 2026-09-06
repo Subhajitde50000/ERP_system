@@ -59,6 +59,7 @@ def test_every_outbox_event_has_a_template():
         "owner.verify_email",
         "platform_owner.verify_email",
         "owner.password_reset",
+        "tenant.password_reset",
         "tenant.provisioned",
         "staff.invited",
     }
