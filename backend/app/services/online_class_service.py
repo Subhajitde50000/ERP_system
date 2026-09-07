@@ -724,7 +724,7 @@ class OnlineClassService:
                     Enrollment.tenant_id == oc.tenant_id,
                     Enrollment.class_id == oc.class_id,
                     Enrollment.academic_year_id == current_year.id,
-                    Enrollment.status == "ACTIVE",
+                    cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                 )
             )
         ).scalars().all()
