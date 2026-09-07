@@ -75,10 +75,11 @@ class Settings(BaseSettings):
     # Maximum file upload size for class materials / recordings (MB).
     ONLINE_CLASS_UPLOAD_MAX_MB: int = 25
     # ── File storage (B6): private, tenant-prefixed, signed-URL access ──────
-    # "r2"    = Cloudflare R2 (primary production backend);
+    # "auto"  = local outside production; Cloudflare R2 in production;
+    # "r2"    = Cloudflare R2 (explicit production backend);
     # "s3"    = Amazon S3 / compatible bucket (optional deployment switch);
     # "local" = private disk under UPLOAD_FILE_ROOT (local development only).
-    STORAGE_BACKEND: str = "r2"
+    STORAGE_BACKEND: str = "auto"
     UPLOAD_FILE_ROOT: str = "uploads"
     # How long vended file links stay valid (S3 presigned URLs share this).
     UPLOAD_SIGNED_URL_TTL_SECONDS: int = 900

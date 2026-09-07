@@ -1,9 +1,28 @@
 # Cloudflare R2 Storage
 
-Cloudflare R2 is the primary production storage backend. Uploads, downloads,
-presigned links, and deletes use R2 through its S3-compatible HTTPS API. The
-application keeps a separate S3 configuration block so a deployer can move to
-Amazon S3 or another S3-compatible service without code changes.
+Cloudflare R2 is the primary production storage backend. With the default
+`STORAGE_BACKEND=auto`, development and test deployments use private local
+storage while `APP_ENV=production` uses R2. Uploads, downloads, presigned links,
+and deletes use R2 through its S3-compatible HTTPS API. The application keeps a
+separate S3 configuration block so a deployer can move to Amazon S3 or another
+S3-compatible service without code changes.
+
+## Automatic environment selection
+
+```bash
+STORAGE_BACKEND=auto
+APP_ENV=development  # resolves to local storage
+```
+
+Production resolves to R2 automatically:
+
+```bash
+STORAGE_BACKEND=auto
+APP_ENV=production   # resolves to r2 storage
+```
+
+Set `STORAGE_BACKEND=local`, `r2`, or `s3` only when an explicit override is
+needed. `auto` is recommended for normal local and production deployments.
 
 ## Primary R2 configuration
 

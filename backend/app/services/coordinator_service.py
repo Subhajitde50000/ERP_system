@@ -38,6 +38,7 @@ from app.models.principal import (
     NoticePriority,
     NoticeRead,
     NoticeScope,
+    SlotType,
     StaffProfile,
     TimetableSlot,
 )
@@ -1551,7 +1552,7 @@ class CoordinatorService:
             )
             .where(
                 TimetableSlot.tenant_id == tenant_id,
-                TimetableSlot.slot_type != "BREAK",
+                TimetableSlot.slot_type != SlotType.BREAK,
                 TimetableSlot.teacher_id.is_not(None),
                 TimetableSlot.effective_from <= today,
                 or_(
@@ -1593,7 +1594,7 @@ class CoordinatorService:
             select(TimetableSlot.teacher_id)
             .where(
                 TimetableSlot.tenant_id == tenant_id,
-                TimetableSlot.slot_type != "BREAK",
+                TimetableSlot.slot_type != SlotType.BREAK,
                 TimetableSlot.teacher_id.is_not(None),
             )
             .distinct()
@@ -1642,7 +1643,7 @@ class CoordinatorService:
             select(TimetableSlot.teacher_id, TimetableSlot.day_of_week, TimetableSlot.period_number)
             .where(
                 TimetableSlot.tenant_id == tenant_id,
-                TimetableSlot.slot_type != "BREAK",
+                TimetableSlot.slot_type != SlotType.BREAK,
                 TimetableSlot.teacher_id.is_not(None),
                 TimetableSlot.effective_from <= today,
                 or_(
