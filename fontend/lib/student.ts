@@ -292,6 +292,13 @@ export interface StudentResultAnswer {
   feedback: string | null;
 }
 
+/** Typed result lifecycle — mirrors StudentExamResult.RESULT_* on the backend. */
+export type StudentResultState =
+  | "NOT_ATTEMPTED"
+  | "IN_PROGRESS"
+  | "UNDER_EVALUATION"
+  | "AVAILABLE";
+
 export interface StudentExamResult {
   exam_id: string;
   title: string;
@@ -299,6 +306,7 @@ export interface StudentExamResult {
   total_marks: number;
   passing_marks: number;
   status: string;
+  result_state?: StudentResultState;
   total_score: number | null;
   percentage: number | null;
   grade: string | null;

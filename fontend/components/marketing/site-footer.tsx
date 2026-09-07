@@ -3,7 +3,7 @@ import { GraduationCap } from "lucide-react";
 
 /**
  * Public site footer — shared by every marketing page. Multi-column like a real
- * company site, with product, solution, company and resource links.
+ * company site, with product, solution, company, legal, and resource links.
  */
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
@@ -34,6 +34,15 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
     ],
   },
   {
+    title: "Legal & Trust",
+    links: [
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Refund Policy", href: "/refund-policy" },
+      { label: "Security Overview", href: "/security" },
+    ],
+  },
+  {
     title: "Account",
     links: [
       { label: "Sign in", href: "/account/login" },
@@ -48,7 +57,7 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-border bg-primary text-slate-300">
       <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:px-10">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
+        <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(5,1fr)]">
           <div className="max-w-xs">
             <Link href="/" className="flex items-center gap-2" aria-label="xyz.com home">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-primary">
@@ -81,12 +90,18 @@ export function SiteFooter() {
           ))}
         </div>
 
-        <div className="mt-12 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} xyz.com Technologies. Education, connected.</span>
-          <div className="flex items-center gap-5">
-            <Link href="/contact" className="hover:text-white">Privacy</Link>
-            <Link href="/contact" className="hover:text-white">Terms</Link>
-            <Link href="/contact" className="hover:text-white">Data processing</Link>
+        <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col gap-1">
+            <span>© {new Date().getFullYear()} xyz.com Technologies Private Limited. Education, connected.</span>
+            <span className="text-[11px] text-slate-500">
+              CIN: U72900KA2024PTC189421 · GSTIN: 29AABCX1234F1Z9 · Bengaluru, Karnataka, India
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-5">
+            <Link href="/privacy" className="hover:text-white transition">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-white transition">Terms of Service</Link>
+            <Link href="/refund-policy" className="hover:text-white transition">Refund & Cancellation</Link>
+            <Link href="/contact" className="hover:text-white transition">Contact</Link>
           </div>
         </div>
       </div>

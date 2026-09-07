@@ -86,11 +86,12 @@ class AccessTokenResponse(Wire):
 
 
 class RefreshRequest(BaseModel):
-    refresh_token: str = Field(..., min_length=1)
+    refresh_token: str | None = Field(default=None)
 
 
 class LogoutRequest(BaseModel):
-    refresh_token: str = Field(..., min_length=1)
+    refresh_token: str | None = Field(default=None)
+
 
 
 # ── Profile ──────────────────────────────────────────────────────────────────

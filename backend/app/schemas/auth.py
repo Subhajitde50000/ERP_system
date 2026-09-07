@@ -38,15 +38,15 @@ class TenantLoginRequest(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    """Body for POST .../auth/refresh"""
+    """Body for POST .../auth/refresh (optional if refresh_token cookie is present)"""
 
-    refresh_token: str = Field(..., min_length=1)
+    refresh_token: str | None = Field(default=None)
 
 
 class LogoutRequest(BaseModel):
-    """Body for POST .../auth/logout"""
+    """Body for POST .../auth/logout (optional if refresh_token cookie is present)"""
 
-    refresh_token: str = Field(..., min_length=1)
+    refresh_token: str | None = Field(default=None)
 
 
 class ForgotPasswordRequest(BaseModel):

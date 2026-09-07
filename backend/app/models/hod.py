@@ -27,6 +27,14 @@ class AssignmentStatus(str, enum.Enum):
     CLOSED = "CLOSED"
 
 
+class AssignmentType(str, enum.Enum):
+    """PG enum ``assignment_type`` (database.sql §3) behind ``assignments.type``."""
+
+    REGULAR = "REGULAR"
+    MILESTONE = "MILESTONE"
+    GROUP = "GROUP"
+
+
 class SubmissionStatus(str, enum.Enum):
     SUBMITTED = "SUBMITTED"
     UNDER_REVIEW = "UNDER_REVIEW"
@@ -67,7 +75,11 @@ class Assignment(Base):
     class_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id"), nullable=False)
     academic_year_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("academic_years.id"), nullable=False)
     teacher_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    assignment_type: Mapped[str] = mapped_column("type", String(20), nullable=False)
+    # Attribute name differs from the column ("type" is a Python keyword);
+    # SAEnum matches the PG enum type so asyncpg gets the right cast.
+    assignment_type: Mapped[AssignmentType] = mapped_column(
+        "type", SAEnum(AssignmentType, name="assignment_type"), nullable=False
+    )
     total_marks: Mapped[int] = mapped_column(Integer, nullable=False)
     passing_marks: Mapped[int] = mapped_column(Integer, nullable=False)
     due_date: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)

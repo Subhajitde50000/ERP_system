@@ -189,10 +189,9 @@ export async function login(
   };
 }
 
-/** Log an institution user out and clear all stored tokens. */
+/** Log an institution user out and clear all stored tokens and cookies. */
 export async function logout(signal?: AbortSignal): Promise<void> {
   const refreshToken = loadRefreshToken();
-  if (!refreshToken) return;
   try {
     await apiFetch<null>(
       TENANT_LOGOUT,
@@ -202,10 +201,12 @@ export async function logout(signal?: AbortSignal): Promise<void> {
           "Content-Type": "application/json",
           Authorization: `Bearer ${_accessToken ?? ""}`,
         },
-        body: JSON.stringify({ refresh_token: refreshToken }),
+        body: JSON.stringify(refreshToken ? { refresh_token: refreshToken } : {}),
       },
       signal,
     );
+  } catch {
+    // Teardown best-effort
   } finally {
     setAccessToken(null);
     clearRefreshToken();
@@ -213,19 +214,18 @@ export async function logout(signal?: AbortSignal): Promise<void> {
 }
 
 /**
- * Silently refresh the access token using the stored refresh token.
+ * Silently refresh the access token using the httpOnly cookie or stored refresh token.
  * Returns the new access token, or null if the session has expired.
  * Call this on page load before any protected fetch.
  */
 export async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = loadRefreshToken();
-  if (!refreshToken) return null;
 
   try {
     const data = await apiFetch<{ access_token: string }>(TENANT_REFRESH, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
+      body: JSON.stringify(refreshToken ? { refresh_token: refreshToken } : {}),
     });
     setAccessToken(data.access_token);
     return data.access_token;
@@ -236,6 +236,7 @@ export async function refreshAccessToken(): Promise<string | null> {
     return null;
   }
 }
+
 
 // ── Password reset (tenant users) ─────────────────────────────────────────────
 

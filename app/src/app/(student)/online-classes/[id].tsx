@@ -1,7 +1,8 @@
 /**
  * Student class detail — waiting room, live participation (chat, raise hand,
- * materials) and automatic attendance. Video streams play in the web console;
- * joining here still records your attendance.
+ * materials) and automatic attendance. Audio/video joins via the web console
+ * (deep-linked from the InClass screen); staying connected here still records
+ * attendance.
  */
 
 import { useEffect, useState } from "react";
@@ -22,8 +23,11 @@ import {
   fetchStudentClassView,
   joinOnlineClass,
   leaveOnlineClass,
+  resolveClassWebUrl,
+  webClassUrl,
   type OnlineClassDetail,
 } from "@/lib/online-class";
+import * as WebBrowser from "expo-web-browser";
 import { Colors, Radius } from "@/theme";
 
 export default function StudentOnlineClassDetailPage() {
@@ -120,6 +124,15 @@ function InClass({ classId, detail, onLeft }: { classId: string; detail: OnlineC
   const history = useResource(() => fetchStudentChatHistory(classId), [classId]);
   const chat = useLiveChat(classId, !ended, () => setEnded(true));
 
+  async function handleOpenLiveClass() {
+    const url = resolveClassWebUrl(classId, "student");
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      await Linking.openURL(url);
+    }
+  }
+
   if (ended) {
     return (
       <>
@@ -137,8 +150,9 @@ function InClass({ classId, detail, onLeft }: { classId: string; detail: OnlineC
 
       <Card style={styles.stack}>
         <Text style={styles.note}>
-          🎥 {detail.teacher_name}&apos;s video plays in the web console. While you stay here, your join/leave time is recorded for attendance and you can chat and raise your hand.
+          🎥 Live classroom runs with full video, audio & whiteboard. Tapping below opens the live stream while your attendance and chat remain active here.
         </Text>
+        <Button onPress={handleOpenLiveClass}>Join Live Audio & Video</Button>
         <View style={styles.row}>
           <TouchableOpacity
             style={[styles.handButton, handRaised && styles.handButtonActive]}

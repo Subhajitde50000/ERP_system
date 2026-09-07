@@ -4,6 +4,7 @@ ERP Backend — Main FastAPI Application Entrypoint
 
 import re
 import sys
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -11,7 +12,6 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from fastapi import FastAPI, Request, status
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -42,36 +42,54 @@ from app.routers import (
     library_router,
     hostel_router,
     online_class_router,
+    notifications_router,
+    push_tokens_router,
+    files_router,
 )
 from app.schemas.common import ErrorDetail
+from app.services.fcm_client import get_fcm_client
+from app.services.online_class_service import live_rooms
+from app.services.scheduler_service import start_scheduler, stop_scheduler
+from app.services.storage_service import validate_storage_config
 
 settings = get_settings()
 
-# ── Rate Limiter ─────────────────────────────────────────────────────────────
-# Keyed on the real client IP so a shared school NAT doesn't lock everyone out
-# at the account level. Per-account lockout is enforced in the service layer.
+# ── Lifespan ──────────────────────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    validate_storage_config()
+    await live_rooms.start()
+    await start_scheduler()
+    yield
+    await stop_scheduler()
+    await live_rooms.stop()
+    try:
+        await get_fcm_client().aclose()
+    except Exception:  # pragma: no cover - teardown best-effort
+        pass
+
+
+# ── Rate Limiter ──────────────────────────────────────────────────────────────
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
     title="ERP Platform API",
     description="Multi-Tenant ERP System Backend",
     version="1.0.0",
+    lifespan=lifespan,
     docs_url="/docs" if settings.APP_DEBUG else None,
     redoc_url="/redoc" if settings.APP_DEBUG else None,
 )
-uploads_directory = PROJECT_ROOT / "uploads"
-uploads_directory.mkdir(parents=True, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_directory), name="uploads")
+# B6: local uploads live under this root (STORAGE_BACKEND=local) but are NEVER
+# publicly mounted — every byte is served through the signed-URL files router.
+(PROJECT_ROOT / "uploads").mkdir(parents=True, exist_ok=True)
 
-# Attach limiter to app state so the decorator can find it
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, lambda request, exc: _rate_limit_exceeded_handler(request, exc))
 
-# ── Middleware Stack ─────────────────────────────────────────────────────────
-# Order matters: RequestID first so every subsequent log entry has an ID.
+# ── Middleware Stack ──────────────────────────────────────────────────────────
 app.add_middleware(RequestIDMiddleware)
 
-# Support subdomains for both localhost (Method 2) and production/custom root domains
 escaped_root = re.escape(settings.PUBLIC_ROOT_DOMAIN or "xyz.com")
 cors_regex = rf"https?://([a-z0-9-]+\.)*({escaped_root}|localhost|127\.0\.0\.1)(:[0-9]+)?"
 
@@ -85,7 +103,21 @@ app.add_middleware(
 )
 
 
-# ── Global Exception Handler ─────────────────────────────────────────────────
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if settings.APP_ENV == "production":
+        response.headers["Strict-Transport-Security"] = (
+            "max-age=63072000; includeSubDomains; preload"
+        )
+    return response
+
+
+# ── Global Exception Handler ──────────────────────────────────────────────────
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(
@@ -99,20 +131,7 @@ async def global_exception_handler(request: Request, exc: Exception) -> JSONResp
     )
 
 
-from app.services.scheduler_service import start_scheduler, stop_scheduler
-
-
-@app.on_event("startup")
-async def on_startup():
-    start_scheduler()
-
-
-@app.on_event("shutdown")
-async def on_shutdown():
-    stop_scheduler()
-
-
-# ── Health Check ─────────────────────────────────────────────────────────────
+# ── Health Check ──────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])
 async def health_check():
     return {"status": "healthy", "environment": settings.APP_ENV}
@@ -141,3 +160,6 @@ app.include_router(parent_router, prefix=api_prefix)
 app.include_router(library_router, prefix=api_prefix)
 app.include_router(hostel_router, prefix=api_prefix)
 app.include_router(online_class_router, prefix=api_prefix)
+app.include_router(notifications_router, prefix=api_prefix)
+app.include_router(push_tokens_router, prefix=api_prefix)
+app.include_router(files_router, prefix=api_prefix)

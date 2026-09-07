@@ -11,16 +11,37 @@ Mirrors database.sql + class_hierarchy_migration.sql:
   subjects        — tied to a class; subject_type THEORY/PRACTICAL/ELECTIVE/PROJECT
 """
 
+import enum
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, ForeignKey, Index, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    Date,
+    Enum as SAEnum,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.database import Base
+
+
+class SubjectType(str, enum.Enum):
+    """PG enum ``subject_type`` (database.sql §3)."""
+
+    THEORY = "THEORY"
+    PRACTICAL = "PRACTICAL"
+    ELECTIVE = "ELECTIVE"
+    PROJECT = "PROJECT"
 
 
 class AcademicYear(Base):
@@ -213,8 +234,9 @@ class Subject(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     code: Mapped[str] = mapped_column(String(30), nullable=False)
-    # THEORY | PRACTICAL | ELECTIVE | PROJECT
-    subject_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    # THEORY | PRACTICAL | ELECTIVE | PROJECT (PG enum — SAEnum keeps the
+    # asyncpg INSERT cast aligned with the database type).
+    subject_type: Mapped[SubjectType] = mapped_column(SAEnum(SubjectType, name="subject_type"), nullable=False)
     credits: Mapped[int | None] = mapped_column(Integer, nullable=True)
     max_marks: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
     passing_marks: Mapped[int] = mapped_column(Integer, nullable=False, default=35)

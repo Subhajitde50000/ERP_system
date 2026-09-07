@@ -4,9 +4,10 @@
  */
 
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Linking, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { CheckCircle2, Send } from "lucide-react-native";
+import * as WebBrowser from "expo-web-browser";
 
 import { AsyncState } from "@/components/principal-ui";
 import { Button } from "@/components/button";
@@ -22,6 +23,7 @@ import {
   endOnlineClass,
   fetchAttendanceReport,
   fetchOnlineClassDetail,
+  resolveClassWebUrl,
   startOnlineClass,
 } from "@/lib/online-class";
 import { Colors, Radius } from "@/theme";
@@ -111,6 +113,19 @@ export default function TeacherOnlineClassDetailPage() {
                 </Card>
 
                 <ChatBlock messages={chat.messages} connected={chat.connected} onSend={chat.sendMessage} />
+
+                <Button
+                  onPress={async () => {
+                    const url = resolveClassWebUrl(id, "teacher");
+                    try {
+                      await WebBrowser.openBrowserAsync(url);
+                    } catch {
+                      await Linking.openURL(url);
+                    }
+                  }}
+                >
+                  Launch Live Classroom (Video & Screen Share)
+                </Button>
 
                 <Button
                   loading={false}

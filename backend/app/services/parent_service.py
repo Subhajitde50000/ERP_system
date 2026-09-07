@@ -59,7 +59,7 @@ import uuid
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, distinct, func, or_, select
+from sqlalchemy import String, and_, cast, distinct, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,10 +67,9 @@ from app.config import get_settings
 from app.models.academic import AcademicYear, Department, SchoolClass
 from app.models.billing import TenantModule
 from app.models.catalog import Plan
-from app.models.enrollment import Enrollment
+from app.models.enrollment import Enrollment, EnrollmentStatus
 from app.models.hod import AttendanceRecord, MentorAssignment
 from app.models.lms import AttendanceLeave, LeaveStatus
-from app.models.online_class import Notification
 from app.models.parent import (
     DEFAULT_PARENT_ACCESS_SCOPE,
     PARENT_ACCESS_MODULES,
@@ -109,6 +108,7 @@ from app.schemas.student import StudentDashboard
 from app.services.audit_service import AuditService
 from app.services.mailer import queue_email
 from app.services.principal_service import PrincipalService, _value
+from app.services.push_service import PushService
 from app.services.student_service import StudentService
 from app.utils.security import generate_secure_token, hash_password, hash_token
 
@@ -397,7 +397,7 @@ class ParentService:
                 .where(
                     Enrollment.tenant_id == tenant_id,
                     Enrollment.student_id.in_(student_ids),
-                    Enrollment.status == "ACTIVE",
+                    cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                 )
                 # Newest wins if a student somehow has two active rows this year;
                 # mirrors StudentService.context_for_user.
@@ -704,7 +704,7 @@ class ParentService:
                         Enrollment.class_id == SchoolClass.id,
                         Enrollment.tenant_id == parent.tenant_id,
                         Enrollment.student_id == child.id,
-                        Enrollment.status == "ACTIVE",
+                        cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     ),
                 )
                 .where(SchoolClass.tenant_id == parent.tenant_id)
@@ -889,7 +889,7 @@ class ParentService:
                 .where(
                     Enrollment.tenant_id == parent.tenant_id,
                     Enrollment.student_id == child.id,
-                    Enrollment.status == "ACTIVE",
+                    cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                 )
                 .order_by(Enrollment.created_at.desc())
                 .limit(1)
@@ -952,20 +952,20 @@ class ParentService:
             ) from exc
 
         # Tell the child an absence was filed for them, so the family is not
-        # running two different stories past the class teacher.
-        db.add(
-            Notification(
-                id=uuid.uuid4(),
-                tenant_id=parent.tenant_id,
-                user_id=child.id,
-                title="Leave request filed by your guardian",
-                body=(
-                    f"{parent.name} requested leave from {payload.from_date:%d %b %Y} "
-                    f"to {payload.to_date:%d %b %Y}."
-                ),
-                type="parent.leave.filed",
-                data={"leave_id": str(leave.id)},
-            )
+        # running two different stories past the class teacher. Uses the shared
+        # notification service so the child also receives a push on their
+        # registered devices (in-app row + FCM outbox in one call).
+        await PushService.create_in_app_notifications(
+            db,
+            tenant_id=parent.tenant_id,
+            user_ids=[child.id],
+            title="Leave request filed by your guardian",
+            body=(
+                f"{parent.name} requested leave from {payload.from_date:%d %b %Y} "
+                f"to {payload.to_date:%d %b %Y}."
+            ),
+            notif_type="parent.leave.filed",
+            data={"leave_id": str(leave.id)},
         )
         AuditService.record(
             db,
@@ -1447,7 +1447,7 @@ class ParentLinkService:
                     .where(
                         Enrollment.tenant_id == tenant.id,
                         Enrollment.student_id == child.id,
-                        Enrollment.status == "ACTIVE",
+                        cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     )
                     .order_by(Enrollment.created_at.desc())
                     .limit(1)
@@ -1648,7 +1648,7 @@ class ParentLinkService:
                     select(Enrollment.student_id).where(
                         Enrollment.tenant_id == admin.tenant_id,
                         Enrollment.class_id == class_id,
-                        Enrollment.status == "ACTIVE",
+                        cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     )
                 )
             )
@@ -1739,7 +1739,7 @@ class ParentLinkService:
                     and_(
                         Enrollment.student_id == User.id,
                         Enrollment.tenant_id == admin.tenant_id,
-                        Enrollment.status == "ACTIVE",
+                        cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     ),
                 )
                 .outerjoin(SchoolClass, SchoolClass.id == Enrollment.class_id)

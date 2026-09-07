@@ -23,6 +23,7 @@ import {
   saveInstitutionSlug,
   clearInstitutionSlug as removeInstitutionSlug,
 } from "./auth";
+import { registerDevicePush, unregisterDevicePush } from "./push-registry";
 
 export interface InstitutionUser {
   id: string;
@@ -135,11 +136,26 @@ export function InstitutionAuthProvider({ children }: { children: ReactNode }) {
     hydrate();
   }, [hydrate]);
 
+  // Keep this device registered for push while a user is signed in. Runs after
+  // hydration and after every login; safe to repeat — registration is an
+  // idempotent upsert and degrades silently on runtimes without Firebase
+  // (Expo Go / web), where push simply stays off.
+  useEffect(() => {
+    if (user) void registerDevicePush();
+  }, [user]);
+
   const logout = useCallback(async () => {
     try {
-      await tenantLogout();
+      // Tell the backend this device no longer wants push before the tokens
+      // are cleared. Best-effort internally — a failed unregister only leaves
+      // a stale token that FCM will mark dead on the next delivery attempt.
+      await unregisterDevicePush();
     } finally {
-      setUser(null);
+      try {
+        await tenantLogout();
+      } finally {
+        setUser(null);
+      }
     }
   }, []);
 

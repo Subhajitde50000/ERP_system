@@ -8,11 +8,12 @@ sign up (Name, Email, Password) → verify email → platform dashboard.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.database import get_db
 from app.dependencies.auth import get_current_platform_owner
 from app.models.platform_owner import PlatformOwner
@@ -36,6 +37,8 @@ from app.services.owner_service import OwnerService
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
+settings = get_settings()
+
 
 
 @router.post(
@@ -85,30 +88,56 @@ async def resend_verification(
 async def owner_login(
     payload: OwnerLoginRequest,
     request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Sign an owner in. Requires a verified email."""
     data = await OwnerService.login(db, payload.email, payload.password, request)
+    # Set secure httpOnly cookie
+    response.set_cookie(
+        key="erp_owner_refresh_token",
+        value=data.tokens.refresh_token,
+        httponly=True,
+        secure=settings.APP_ENV == "production",
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        path="/",
+    )
     return APIResponse(success=True, data=data, message="Login successful")
 
 
 @router.post("/logout", response_model=APIResponse[None])
 async def owner_logout(
-    payload: LogoutRequest,
+    payload: LogoutRequest | None,
+    request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
     owner: Annotated[PlatformOwner, Depends(get_current_platform_owner)],
 ):
-    await OwnerService.logout(db, payload.refresh_token)
+    token = (payload.refresh_token if payload and payload.refresh_token else None) or request.cookies.get("erp_owner_refresh_token") or request.cookies.get("refresh_token")
+    if token:
+        await OwnerService.logout(db, token)
+    response.delete_cookie(key="erp_owner_refresh_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
     return APIResponse(success=True, data=None, message="Logout successful")
 
 
 @router.post("/refresh", response_model=APIResponseAccessToken)
 async def owner_refresh(
-    payload: RefreshRequest,
+    payload: RefreshRequest | None,
+    request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    data = await OwnerService.refresh(db, payload.refresh_token)
+    token = (payload.refresh_token if payload and payload.refresh_token else None) or request.cookies.get("erp_owner_refresh_token") or request.cookies.get("refresh_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Refresh token is required via request body or httpOnly cookie",
+        )
+    data = await OwnerService.refresh(db, token)
     return APIResponse(success=True, data=data, message="Token refreshed")
+
 
 
 @router.get("/me", response_model=APIResponseOwner)

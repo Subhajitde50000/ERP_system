@@ -26,7 +26,7 @@ engine = create_async_engine(
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
-    echo=settings.APP_DEBUG,
+    echo=False,  # never log every SQL statement; use a query profiler when needed
 )
 
 # ── Session factory ────────────────────────────────────────────────────────────

@@ -51,6 +51,7 @@ export default function ParentLayout() {
           <Stack.Screen name="results" />
           <Stack.Screen name="assignments" />
           <Stack.Screen name="notices" />
+          <Stack.Screen name="notifications" />
           <Stack.Screen name="fees" />
           <Stack.Screen name="me" />
         </Stack>

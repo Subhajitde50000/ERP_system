@@ -16,6 +16,7 @@ before writing, exactly like the HOD department fence.
 from __future__ import annotations
 
 import csv
+import logging
 import io
 import json
 import uuid
@@ -87,6 +88,7 @@ from app.schemas.student import (
 from app.schemas.teacher import (
     AttendanceRosterEntry,
     AttendanceSessionUpsert,
+    TeacherAnswerOption,
     TeacherAnswerRow,
     TeacherAssignmentCreate,
     TeacherAssignmentDetail,
@@ -152,9 +154,11 @@ from app.schemas.teacher import (
     TeachingAssignment,
 )
 from app.services.audit_service import AuditService
-from app.services.principal_service import PrincipalService
 from app.services.principal_service import PrincipalService, _value
+from app.services.push_service import PushService
 
+
+logger = logging.getLogger(__name__)
 
 _PENDING_SUBMISSION_STATUSES = (
     SubmissionStatus.SUBMITTED,
@@ -2254,19 +2258,33 @@ class TeacherService:
         question_ids = [question.id for _a, question in answers]
         option_texts: dict[uuid.UUID, str] = {}
         correct_texts: dict[uuid.UUID, str] = {}
+        # Full option list per question so the grading panel can render the
+        # complete answer key — every option, which one is correct and which
+        # one the student picked — instead of a bare selected/correct pair.
+        options_by_question: dict[uuid.UUID, list[TeacherAnswerOption]] = {}
         if option_ids or question_ids:
             option_rows = (
                 await db.execute(
-                    select(QuestionOption).where(
+                    select(QuestionOption)
+                    .where(
                         or_(
                             QuestionOption.id.in_(option_ids or [uuid.uuid4()]),
-                            and_(QuestionOption.question_id.in_(question_ids or [uuid.uuid4()]), QuestionOption.is_correct.is_(True)),
+                            QuestionOption.question_id.in_(question_ids or [uuid.uuid4()]),
                         )
                     )
+                    .order_by(QuestionOption.question_id, QuestionOption.sort_order)
                 )
             ).scalars().all()
             for option in option_rows:
                 option_texts[option.id] = option.text
+                options_by_question.setdefault(option.question_id, []).append(
+                    TeacherAnswerOption(
+                        id=option.id,
+                        text=option.text,
+                        is_correct=option.is_correct,
+                        sort_order=option.sort_order,
+                    )
+                )
                 if option.is_correct:
                     correct_texts[option.question_id] = option.text
         pending = await TeacherService._pending_grading_by_attempt(db, teacher.tenant_id, [attempt.id])
@@ -2282,7 +2300,9 @@ class TeacherService:
                     selected_option_id=answer.selected_option_id,
                     selected_option_text=option_texts.get(answer.selected_option_id) if answer.selected_option_id else None,
                     correct_option_text=correct_texts.get(question.id),
+                    options=options_by_question.get(question.id, []),
                     text_answer=answer.text_answer,
+                    matched_pairs=answer.matched_pairs,
                     score=float(answer.score) if answer.score is not None else None,
                     feedback=answer.feedback,
                     is_auto_graded=answer.is_auto_graded,
@@ -2725,10 +2745,27 @@ class TeacherService:
 
     @staticmethod
     async def transition_assignment(
-        db: AsyncSession, teacher: User, assignment_id: uuid.UUID, action: str
+        db: AsyncSession,
+        teacher: User,
+        assignment_id: uuid.UUID,
+        action: str,
+        *,
+        request_resubmission: bool = True,
     ) -> TeacherAssignmentDetail:
+        """DRAFT→PUBLISHED, PUBLISHED→CLOSED, CLOSED→PUBLISHED (reopen).
+
+        Reopen additionally hands un-reviewed work back to students: the latest
+        SUBMITTED / UNDER_REVIEW submission of every student (per milestone
+        scope) is moved to RESUBMIT_REQUESTED so the assignment re-appears in
+        their pending list with a resubmit action.  Already-reviewed submissions
+        (APPROVED / REJECTED) and older versions are never touched.  Teachers
+        who only want to accept work from students who never submitted can pass
+        ``request_resubmission=False``.
+        """
         assignment = await TeacherService._owned_assignment(db, teacher, assignment_id)
         state = _value(assignment.status) or "DRAFT"
+        reopened_submissions: list[uuid.UUID] = []
+        notified_students: set[uuid.UUID] = set()
         if action == "publish":
             if state != AssignmentStatus.DRAFT.value:
                 raise HTTPException(status.HTTP_409_CONFLICT, detail="Only drafts can be published")
@@ -2737,6 +2774,37 @@ class TeacherService:
             if state != AssignmentStatus.CLOSED.value:
                 raise HTTPException(status.HTTP_409_CONFLICT, detail="Only closed assignments can be reopened")
             assignment.status = AssignmentStatus.PUBLISHED
+            if request_resubmission:
+                # One statement: newest un-reviewed version per (student,
+                # milestone) scope — the same scope submit_assignment gates on.
+                # DISTINCT ON groups NULL milestone_id with NULL (assignment-
+                # level submissions), matching SQL "not distinct" semantics.
+                rows = (
+                    await db.execute(
+                        update(Submission)
+                        .where(
+                            Submission.id.in_(
+                                select(Submission.id)
+                                .where(
+                                    Submission.tenant_id == teacher.tenant_id,
+                                    Submission.assignment_id == assignment.id,
+                                    Submission.status.in_(
+                                        (SubmissionStatus.SUBMITTED, SubmissionStatus.UNDER_REVIEW)
+                                    ),
+                                )
+                                .distinct(Submission.student_id, Submission.milestone_id)
+                                .order_by(
+                                    Submission.student_id, Submission.milestone_id, Submission.version.desc()
+                                )
+                            )
+                        )
+                        .values(status=SubmissionStatus.RESUBMIT_REQUESTED)
+                        .returning(Submission.id, Submission.student_id)
+                        .execution_options(synchronize_session=False)
+                    )
+                ).all()
+                reopened_submissions = [row[0] for row in rows]
+                notified_students = {row[1] for row in rows}
         else:
             if state != AssignmentStatus.PUBLISHED.value:
                 raise HTTPException(status.HTTP_409_CONFLICT, detail="Only published assignments can be closed")
@@ -2750,8 +2818,34 @@ class TeacherService:
             entity="Assignment",
             entity_id=assignment.id,
             tenant_id=teacher.tenant_id,
-            new_value={"status": assignment.status.value},
+            new_value={
+                "status": assignment.status.value,
+                **(
+                    {"resubmission_requested": len(reopened_submissions)}
+                    if action == "reopen"
+                    else {}
+                ),
+            },
         )
+        if notified_students:
+            # Best-effort nudge — a notification problem must never fail the
+            # reopen.  Group submissions notify the lead submitter, mirroring
+            # the review notification in review_submission.
+            try:
+                await PushService.create_in_app_notifications(
+                    db,
+                    tenant_id=teacher.tenant_id,
+                    user_ids=list(notified_students),
+                    title="Assignment reopened",
+                    body=f'"{assignment.title}" is open again — you may review your work and resubmit.',
+                    notif_type="ASSIGNMENT_REOPENED",
+                    data={
+                        "assignment_id": str(assignment.id),
+                        "resubmission": True,
+                    },
+                )
+            except Exception as exc:  # noqa: BLE001 - notification must not fail a reopen
+                logger.warning("Failed to notify students after reopening assignment %s: %s", assignment.id, exc)
         return await TeacherService.assignment_detail(db, teacher, assignment_id)
 
     @staticmethod
@@ -3628,6 +3722,31 @@ class TeacherService:
             old_value={"status": old_status},
             new_value={"status": submission.status.value, "score": payload.score},
         )
+
+        # Notify the submitting student that their work was reviewed. For
+        # group submissions the lead submitter is the student_id on the row;
+        # milestones/group members already see the status change in-app.
+        decision_label = {
+            "APPROVED": "approved",
+            "REJECTED": "rejected",
+            "CHANGES_REQUESTED": "sent back with change requests",
+        }.get(payload.decision, payload.decision.lower())
+        try:
+            await PushService.create_in_app_notifications(
+                db,
+                tenant_id=teacher.tenant_id,
+                user_ids=[submission.student_id],
+                title="Your submission was reviewed",
+                body=f'Your submission for "{assignment.title}" was {decision_label}.',
+                notif_type="ASSIGNMENT_REVIEWED",
+                data={
+                    "assignment_id": str(assignment.id),
+                    "submission_id": str(submission.id),
+                    "decision": payload.decision,
+                },
+            )
+        except Exception as exc:  # noqa: BLE001 - notification must not fail a review
+            logger.warning("Failed to notify student after review: %s", exc)
         return await TeacherService._submission_detail(
             db, teacher.tenant_id, submission, assignment, user, enrollment, milestone
         )
@@ -4010,7 +4129,7 @@ class TeacherService:
         )
         db.add(notice)
         await db.flush()
-        await PrincipalService._save_notice_attachments(db, notice.id, payload.attachments)
+        await PrincipalService._save_notice_attachments(db, notice.tenant_id, notice.id, payload.attachments)
         AuditService.record(
             db,
             actor=teacher,

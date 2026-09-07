@@ -179,6 +179,18 @@ export function OwnerSignupForm() {
           Create account
           {status.kind !== "submitting" && <ArrowRight className="h-4 w-4" aria-hidden="true" />}
         </Button>
+
+        <p className="text-center text-[11px] leading-relaxed text-[#64748B]">
+          By creating an account, you agree to our{" "}
+          <Link href="/terms" target="_blank" className="font-semibold text-accent hover:underline">
+            Terms of Service
+          </Link>{" "}
+          and acknowledge our{" "}
+          <Link href="/privacy" target="_blank" className="font-semibold text-accent hover:underline">
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </form>
 
       <p className="mt-6 border-t border-[#E2E8F0] pt-4 text-center text-[12px] text-[#475569]">

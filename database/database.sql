@@ -1,4 +1,40 @@
 -- ============================================================================
+--  ⚠️  ARCHIVED — DO NOT USE FOR SCHEMA CHANGES
+-- ============================================================================
+--
+--  This file is a HISTORICAL REFERENCE only.
+--
+--  As of migration d9e8f7a6b5c4 (2026-09-05), Alembic is the single source
+--  of truth for the ERP database schema.  ALL future schema changes must be
+--  made through Alembic migrations:
+--
+--    1. Edit the relevant ORM model in  backend/app/models/
+--    2. Generate a migration:
+--         cd backend
+--         alembic revision --autogenerate -m "describe_your_change"
+--    3. Review the generated file in  backend/app/alembic/versions/
+--    4. Verify zero drift:
+--         python scripts/check_schema_drift.py
+--    5. Commit both the model change and the migration file together.
+--
+--  DO NOT apply this file to any database.  The Alembic chain
+--  (d606addfec08 → … → d9e8f7a6b5c4) produces a schema that is a strict
+--  superset of what this file creates, with all documented drift resolved.
+--
+--  Why is this file kept?
+--  ----------------------
+--  It documents the original hand-authored DDL intent (107 tables, 54 enums,
+--  58 indexes) and serves as a human-readable architectural reference.
+--  Tables that exist here but have no ORM model yet (transport, placement,
+--  HR/payroll, admissions, inventory) are tracked in
+--  backend/app/alembic/env.py:_UNMANAGED_TABLES so Alembic ignores them
+--  during autogenerate until ORM models are added.
+--
+--  Last known state: verified on PostgreSQL 17.10, committed 2026-08-02.
+--  Drift-resolution migration applied: d9e8f7a6b5c4, 2026-09-05.
+-- ============================================================================
+
+-- ============================================================================
 --  ERP + LMS Platform — Complete PostgreSQL Schema
 --  Multi-tenant School / College ERP + Learning Management System
 -- ============================================================================
@@ -522,6 +558,33 @@ CREATE TABLE departments (
   CONSTRAINT uq_departments__tenant_id_code UNIQUE (tenant_id, code)
 );
 
+CREATE TABLE class_grades (
+
+  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id                    UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  academic_year_id             UUID NOT NULL REFERENCES academic_years(id) ON DELETE CASCADE,
+  name                         VARCHAR(100) NOT NULL,
+  grade_number                 INTEGER NOT NULL CHECK (grade_number BETWEEN 1 AND 12),
+  stream                       VARCHAR(50),
+  is_active                    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_class_grades UNIQUE (tenant_id, academic_year_id, grade_number, stream)
+);
+
+CREATE TABLE class_programs (
+
+  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id                    UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+  department_id                UUID NOT NULL REFERENCES departments(id) ON DELETE CASCADE,
+  academic_year_id             UUID NOT NULL REFERENCES academic_years(id) ON DELETE CASCADE,
+  program_name                 VARCHAR(200) NOT NULL,
+  program_code                 VARCHAR(30) NOT NULL,
+  semester_number              INTEGER NOT NULL CHECK (semester_number >= 1),
+  is_active                    BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_class_programs UNIQUE (tenant_id, department_id, program_code, semester_number, academic_year_id)
+);
+
 CREATE TABLE classes (
 
   id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -534,9 +597,13 @@ CREATE TABLE classes (
   class_teacher_id             UUID REFERENCES users(id),
   room_no                      VARCHAR(20),
   is_active                    BOOLEAN NOT NULL DEFAULT TRUE,
+  grade_id                     UUID REFERENCES class_grades(id) ON DELETE SET NULL,
+  program_id                   UUID REFERENCES class_programs(id) ON DELETE SET NULL,
+  section_label                VARCHAR(20),
   created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT uq_classes__tenant_id_department_id_academic_year_id UNIQUE (tenant_id, department_id, academic_year_id, code)
 );
+
 
 CREATE TABLE subjects (
 
@@ -2043,6 +2110,40 @@ CREATE TABLE device_tokens (
   CONSTRAINT uq_device_tokens__user_id_token UNIQUE (user_id, token)
 );
 
+-- Push enqueue path: "all live tokens of these users" during a broadcast.
+CREATE INDEX idx_device_tokens_user_active
+  ON device_tokens (user_id)
+  WHERE is_active = TRUE;
+
+-- Durable push outbox — one row per (notification, live device token),
+-- drained by the FCM worker (NotificationService.deliver_pending).
+CREATE TABLE notification_deliveries (
+
+  id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  notification_id              UUID NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+  user_id                      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  device_token_id              UUID NOT NULL REFERENCES device_tokens(id) ON DELETE CASCADE,
+  platform                     VARCHAR(10) NOT NULL,            -- android | ios | web
+  status                       VARCHAR(20) NOT NULL DEFAULT 'PENDING',  -- PENDING|SENT|FAILED|SKIPPED
+  attempts                     SMALLINT NOT NULL DEFAULT 0,
+  last_error                   TEXT,
+  next_attempt_at              TIMESTAMPTZ,
+  created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  sent_at                      TIMESTAMPTZ
+);
+
+-- Worker scan: only pending rows whose backoff window has elapsed.
+CREATE INDEX idx_notif_deliveries_pending
+  ON notification_deliveries (status, next_attempt_at)
+  WHERE status = 'PENDING';
+
+-- Fast lookup when a notification row is deleted / audited.
+CREATE INDEX idx_notif_deliveries_notification
+  ON notification_deliveries (notification_id);
+
+CREATE INDEX idx_notif_deliveries_user
+  ON notification_deliveries (user_id);
+
 CREATE TABLE audit_logs (
 
   id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -2377,9 +2478,17 @@ CREATE INDEX IF NOT EXISTS idx_book_issues_tenant_due_active ON book_issues (ten
 CREATE INDEX IF NOT EXISTS idx_books_tenant_id ON books (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_books_tenant_title ON books (tenant_id, title);
 CREATE UNIQUE INDEX IF NOT EXISTS uq_books_tenant_isbn ON books (tenant_id, isbn) WHERE isbn IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_class_grades_academic_year_id ON class_grades (academic_year_id);
+CREATE INDEX IF NOT EXISTS idx_class_grades_tenant_id ON class_grades (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_class_programs_academic_year_id ON class_programs (academic_year_id);
+CREATE INDEX IF NOT EXISTS idx_class_programs_department_id ON class_programs (department_id);
+CREATE INDEX IF NOT EXISTS idx_class_programs_tenant_id ON class_programs (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_classes_academic_year_id ON classes (academic_year_id);
 CREATE INDEX IF NOT EXISTS idx_classes_class_teacher_id ON classes (class_teacher_id);
 CREATE INDEX IF NOT EXISTS idx_classes_department_id ON classes (department_id);
+CREATE INDEX IF NOT EXISTS idx_classes_grade_id ON classes (grade_id);
+CREATE INDEX IF NOT EXISTS idx_classes_program_id ON classes (program_id);
+
 CREATE INDEX IF NOT EXISTS idx_companies_tenant_id ON companies (tenant_id);
 CREATE INDEX IF NOT EXISTS idx_content_access_logs_content_id ON content_access_logs (content_id);
 CREATE INDEX IF NOT EXISTS idx_content_access_logs_user_id ON content_access_logs (user_id);
@@ -2508,6 +2617,12 @@ CREATE INDEX IF NOT EXISTS idx_purchase_orders_created_by ON purchase_orders (cr
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_vendor_id ON purchase_orders (vendor_id);
 CREATE INDEX IF NOT EXISTS idx_question_options_question_id ON question_options (question_id);
 CREATE INDEX IF NOT EXISTS idx_questions_section_id ON questions (section_id);
+
+CREATE INDEX IF NOT EXISTS idx_questions_bank_item_id ON questions (bank_item_id);
+CREATE INDEX IF NOT EXISTS idx_qbank_created_by ON question_bank_items (tenant_id, created_by);
+CREATE INDEX IF NOT EXISTS idx_qbank_tenant_subject ON question_bank_items (tenant_id, subject_id);
+CREATE INDEX IF NOT EXISTS idx_qbank_type_diff ON question_bank_items (tenant_id, question_type, difficulty);
+
 CREATE INDEX IF NOT EXISTS idx_result_publications_academic_year_id ON result_publications (academic_year_id);
 CREATE INDEX IF NOT EXISTS idx_result_publications_class_id ON result_publications (class_id);
 CREATE INDEX IF NOT EXISTS idx_result_publications_published_by ON result_publications (published_by);
@@ -2866,7 +2981,7 @@ DECLARE
   v_modules  INTEGER;
   v_roles    INTEGER;
   v_plans    INTEGER;
-  v_baseline CONSTANT INTEGER := 24;
+  v_baseline CONSTANT INTEGER := 25;
 BEGIN
   SELECT count(*) INTO v_tables
     FROM information_schema.tables
@@ -2908,16 +3023,17 @@ BEGIN
   RAISE NOTICE ' Seed: plans       : %', v_plans;
   RAISE NOTICE '─────────────────────────────────────────────';
 
-  IF v_tables <> 132 THEN
-    RAISE EXCEPTION 'Expected 132 tables, found %', v_tables;
+  IF v_tables <> 135 THEN
+    RAISE EXCEPTION 'Expected 135 tables, found %', v_tables;
   END IF;
+
   IF v_unindexed > v_baseline THEN
     RAISE EXCEPTION 'Expected at most % unindexed foreign keys, found % — every new FK '
                     'needs an index or a deliberate reason not to have one',
       v_baseline, v_unindexed;
   END IF;
-  IF v_modules <> 16 OR v_roles <> 22 OR v_plans <> 4 THEN
-    RAISE EXCEPTION 'Seed incomplete: % modules (want 16), % roles (want 22), % plans (want 4)',
+  IF v_modules <> 17 OR v_roles <> 22 OR v_plans <> 4 THEN
+    RAISE EXCEPTION 'Seed incomplete: % modules (want 17), % roles (want 22), % plans (want 4)',
       v_modules, v_roles, v_plans;
   END IF;
 

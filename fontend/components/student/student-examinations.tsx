@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, Clock, Play, Send } from "lucide-react";
+import { CheckCircle2, Clock, Download, Play, Send } from "lucide-react";
 
 import { Card, PageHeader, labelClass } from "@/components/admin/ui";
 import { useResource } from "@/hooks/use-resource";
@@ -511,11 +511,111 @@ export function StudentExamResultPage() {
     [examId],
   );
 
-  const isPendingRelease = Boolean(
-    resource.error && resource.error.toLowerCase().includes("not released")
-  );
+  const [exportBusy, setExportBusy] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const gradeCardRef = useRef<HTMLDivElement | null>(null);
 
-  if (isPendingRelease) {
+  /**
+   * Grade-card export: render the score card to a PNG via html2canvas and
+   * download it. Loaded dynamically so the ~180 KB library never enters the
+   * main bundle — only browsers that actually click "Download" pay for it.
+   */
+  async function downloadGradeCard() {
+    const node = gradeCardRef.current;
+    if (!node) return;
+    setExportBusy(true);
+    setExportError(null);
+    try {
+      const html2canvas = (await import("html2canvas")).default;
+      const canvas = await html2canvas(node, {
+        backgroundColor: "#ffffff", // grade card must not export with a transparent background
+        useCORS: true,              // avatars/logos from other origins, if any
+        scale: 2,                   // crisp text on high-DPI screens
+        logging: false,
+      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+      if (!blob) throw new Error("The grade card could not be rendered to an image.");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `grade-card-${resource.data?.exam_id ?? examId}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      // Give the browser a tick to start the download before revoking.
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    } catch (caught) {
+      console.error("Grade-card export failed", caught);
+      setExportError(
+        caught instanceof Error ? caught.message : "Could not export the grade card. Please try again.",
+      );
+    } finally {
+      setExportBusy(false);
+    }
+  }
+
+  // Typed lifecycle from the API; the string fallback keeps older backends
+  // (which answer 404 "Results are not released yet") on the right screen.
+  const state =
+    resource.data?.result_state ??
+    (resource.error && resource.error.toLowerCase().includes("not released")
+      ? ("UNDER_EVALUATION" as const)
+      : undefined);
+
+  if (state === "NOT_ATTEMPTED") {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <PageHeader title="Exam result" subtitle="Nothing to show for this exam yet." />
+        <Card className="py-8 text-center">
+          <Clock className="mx-auto h-12 w-12 text-muted-foreground" aria-hidden="true" />
+          <h2 className="mt-3 font-display text-xl font-bold text-primary">You haven&apos;t attempted this exam</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            There is no submitted attempt for this exam on your record. If you believe this is a
+            mistake, please contact your class teacher.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Link
+              href="/student/examinations"
+              className="inline-flex h-11 items-center rounded-field bg-accent px-5 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover"
+            >
+              Back to examinations
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (state === "IN_PROGRESS") {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <PageHeader title="Exam result" subtitle="Your attempt is still open." />
+        <Card className="py-8 text-center">
+          <Clock className="mx-auto h-12 w-12 text-accent" aria-hidden="true" />
+          <h2 className="mt-3 font-display text-xl font-bold text-primary">Your attempt is still in progress</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Results appear here once you submit your paper and your teacher releases them.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Link
+              href={`/student/examinations/${examId}`}
+              className="inline-flex h-11 items-center rounded-field bg-accent px-5 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover"
+            >
+              Continue exam
+            </Link>
+            <Link
+              href="/student/examinations"
+              className="inline-flex h-11 items-center rounded-field border border-border px-5 text-sm font-semibold text-muted-foreground hover:border-accent hover:text-accent"
+            >
+              Back to examinations
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (state === "UNDER_EVALUATION") {
     return (
       <div className="mx-auto max-w-2xl">
         <PageHeader title="Exam submitted" subtitle="Your answers have been successfully recorded." />
@@ -523,7 +623,8 @@ export function StudentExamResultPage() {
           <CheckCircle2 className="mx-auto h-12 w-12 text-success-text" />
           <h2 className="mt-3 font-display text-xl font-bold text-primary">Exam Submitted Successfully!</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Your attempt has been submitted. Your teacher will evaluate your answers and release the results soon.
+            Your attempt has been submitted and is <strong>under evaluation</strong>. Your teacher
+            will release the results soon.
           </p>
           <div className="mx-auto mt-4 max-w-md rounded-field bg-muted/60 p-4 text-xs text-muted-foreground">
             Once results are released by your teacher, your score, grade, and answer review will appear right here.
@@ -553,39 +654,56 @@ export function StudentExamResultPage() {
       <AsyncState loading={resource.loading} error={resource.error} onRetry={resource.reload} loadingLabel="Loading your result…">
         {resource.data ? (
           <div className="space-y-5">
+            <div className="flex items-end justify-between gap-3">
+              <h2 className="font-display text-lg font-bold text-primary">Grade card</h2>
+              <button
+                type="button"
+                onClick={downloadGradeCard}
+                disabled={exportBusy}
+                className="inline-flex h-9 items-center gap-1.5 rounded-field border border-border px-3 text-xs font-semibold text-primary transition hover:border-accent hover:text-accent disabled:opacity-60"
+              >
+                <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                {exportBusy ? "Preparing…" : "Download grade card"}
+              </button>
+            </div>
+            {exportError ? (
+              <p role="alert" className="text-sm text-destructive-text">{exportError}</p>
+            ) : null}
             <Card>
-              <h2 className="font-display text-lg font-bold text-primary">{resource.data.title}</h2>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {resource.data.subject_name} · {statusLabel(resource.data.status)} · submitted {resource.data.submitted_at ? dateTime(resource.data.submitted_at) : "—"}
-              </p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-field bg-muted p-4 text-center">
-                  <p className="text-2xl font-bold text-primary">{resource.data.total_score ?? "—"}</p>
-                  <p className="text-xs text-muted-foreground">of {resource.data.total_marks} marks</p>
-                </div>
-                <div className="rounded-field bg-muted p-4 text-center">
-                  <p className="text-2xl font-bold text-primary">{resource.data.percentage !== null ? percent(resource.data.percentage) : "—"}</p>
-                  <p className="text-xs text-muted-foreground">percentage</p>
-                </div>
-                <div className="rounded-field bg-muted p-4 text-center">
-                  <p className={`text-2xl font-bold ${
-                    resource.data.total_score !== null && resource.data.total_score >= resource.data.passing_marks
-                      ? "text-success-text"
-                      : "text-muted-foreground"
-                  }`}>
-                    {resource.data.grade ?? (resource.data.total_score !== null
-                      ? resource.data.total_score >= resource.data.passing_marks
-                        ? "PASS"
-                        : "FAIL"
-                      : "—")}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{resource.data.grade ? "grade" : `pass mark ${resource.data.passing_marks}`}</p>
+              <div ref={gradeCardRef} className="bg-white p-5">
+                <h2 className="font-display text-lg font-bold text-primary">{resource.data.title}</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {resource.data.subject_name} · {statusLabel(resource.data.status)} · submitted {resource.data.submitted_at ? dateTime(resource.data.submitted_at) : "—"}
+                </p>
+                <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                  <div className="rounded-field bg-muted p-4 text-center">
+                    <p className="text-2xl font-bold text-primary">{resource.data.total_score ?? "—"}</p>
+                    <p className="text-xs text-muted-foreground">of {resource.data.total_marks} marks</p>
+                  </div>
+                  <div className="rounded-field bg-muted p-4 text-center">
+                    <p className="text-2xl font-bold text-primary">{resource.data.percentage !== null ? percent(resource.data.percentage) : "—"}</p>
+                    <p className="text-xs text-muted-foreground">percentage</p>
+                  </div>
+                  <div className="rounded-field bg-muted p-4 text-center">
+                    <p className={`text-2xl font-bold ${
+                      resource.data.total_score !== null && resource.data.total_score >= resource.data.passing_marks
+                        ? "text-success-text"
+                        : "text-muted-foreground"
+                    }`}>
+                      {resource.data.grade ?? (resource.data.total_score !== null
+                        ? resource.data.total_score >= resource.data.passing_marks
+                          ? "PASS"
+                          : "FAIL"
+                        : "—")}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{resource.data.grade ? "grade" : `pass mark ${resource.data.passing_marks}`}</p>
+                  </div>
                 </div>
               </div>
             </Card>
             {resource.data.answers.length ? (
               <Card>
-                <h2 className="font-display text-base font-bold text-primary">Answer review</h2>
+                <h2 className="font-display text-base font-bold text-primary">Marks breakdown</h2>
                 {!resource.data.show_answers ? (
                   <p className="mt-1 text-xs text-muted-foreground">Your teacher has hidden the correct answers for now — only your own answers and scores are shown.</p>
                 ) : null}
@@ -601,8 +719,8 @@ export function StudentExamResultPage() {
                           answer.score !== null && answer.score === answer.marks
                             ? "text-success-text"
                             : answer.score !== null && answer.score < answer.marks
-                            ? "text-destructive-text"
-                            : "text-primary"
+                              ? "text-destructive-text"
+                              : "text-primary"
                         }`}>{answer.selected_option_text ?? answer.text_answer ?? "(unanswered)"}</span>
                       </p>
                       {answer.correct_option_text && (answer.score === null || answer.score < answer.marks) ? (
