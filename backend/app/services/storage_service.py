@@ -258,7 +258,11 @@ class Storage:
 
     @property
     def backend(self) -> str:
-        return get_settings().STORAGE_BACKEND.lower()
+        settings = get_settings()
+        configured = settings.STORAGE_BACKEND.strip().lower()
+        if configured == "auto":
+            return "r2" if settings.APP_ENV.strip().lower() == "production" else "local"
+        return configured
 
     @property
     def root(self) -> Path:
@@ -505,11 +509,11 @@ def validate_storage_config() -> None:
     immediately — not silently at the first upload request hours later.
     """
     settings = get_settings()
-    backend = settings.STORAGE_BACKEND.lower()
+    backend = storage.backend
     if backend not in ("local", "r2", "s3"):
         raise RuntimeError(
             f"STORAGE_BACKEND={settings.STORAGE_BACKEND!r} is not recognised. "
-            "Valid values are 'local', 'r2', and 's3'."
+            "Valid values are 'auto', 'local', 'r2', and 's3'."
         )
     if backend == "r2":
         required = {
