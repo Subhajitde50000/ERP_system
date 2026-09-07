@@ -18,7 +18,7 @@ from typing import Iterable
 from zoneinfo import ZoneInfo
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import String, and_, cast, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -1552,7 +1552,7 @@ class CoordinatorService:
             )
             .where(
                 TimetableSlot.tenant_id == tenant_id,
-                TimetableSlot.slot_type != SlotType.BREAK,
+                cast(TimetableSlot.slot_type, String) != SlotType.BREAK.value,
                 TimetableSlot.teacher_id.is_not(None),
                 TimetableSlot.effective_from <= today,
                 or_(
@@ -1594,7 +1594,7 @@ class CoordinatorService:
             select(TimetableSlot.teacher_id)
             .where(
                 TimetableSlot.tenant_id == tenant_id,
-                TimetableSlot.slot_type != SlotType.BREAK,
+                cast(TimetableSlot.slot_type, String) != SlotType.BREAK.value,
                 TimetableSlot.teacher_id.is_not(None),
             )
             .distinct()
@@ -1643,7 +1643,7 @@ class CoordinatorService:
             select(TimetableSlot.teacher_id, TimetableSlot.day_of_week, TimetableSlot.period_number)
             .where(
                 TimetableSlot.tenant_id == tenant_id,
-                TimetableSlot.slot_type != SlotType.BREAK,
+                cast(TimetableSlot.slot_type, String) != SlotType.BREAK.value,
                 TimetableSlot.teacher_id.is_not(None),
                 TimetableSlot.effective_from <= today,
                 or_(
