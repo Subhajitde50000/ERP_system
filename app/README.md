@@ -172,7 +172,20 @@ managed by EAS so store uploads never collide.
    Android adaptive set, monochrome, splash, favicon).
 3. **Store assets** — `assets/store/feature-graphic.png` (1024×500) and
    `assets/store/icon-512.png` are generated deterministically:
-   `python3 - <<'EOF'` snippet in `doc/bugfix-b6-b7.md` §B7 regenerates them.
+   ```bash
+   python3 - <<'EOF'
+   from PIL import Image, ImageDraw, ImageFont
+   SLATE, ACCENT, WHITE = (15,23,42), (37,99,235), (255,255,255)
+   BOLD="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"; REG="/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+   fg=Image.new("RGB",(1024,500)); d=ImageDraw.Draw(fg)
+   for y in range(500):
+       t=y/499; c=tuple(int(SLATE[i]+(ACCENT[i]-SLATE[i])*(t*.85)) for i in range(3)); d.line([(0,y),(1024,y)],fill=c)
+   d.text((64,150),"ERP Campus",font=ImageFont.truetype(BOLD,84),fill=WHITE)
+   d.text((68,262),"School  •  College  •  Institute management",font=ImageFont.truetype(REG,34),fill=(226,232,240))
+   d.rounded_rectangle((64,340,560,352),radius=6,fill=ACCENT); fg.save("assets/store/feature-graphic.png")
+   Image.open("assets/images/icon.png").convert("RGBA").resize((512,512),Image.LANCZOS).save("assets/store/icon-512.png")
+   EOF
+   ```
 4. **Screenshots** — required per store (phone + 7"/10" tablet for Play).
    Capture from the `preview` build; do not reuse marketing renders.
 5. **Listings** — title ≤ 30 chars, short description ≤ 80, full description
