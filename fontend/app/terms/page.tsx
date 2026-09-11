@@ -5,9 +5,9 @@ import { FileCheck, Shield, Database } from "lucide-react";
 import { MarketingShell, Section, SectionHeading } from "@/components/marketing/marketing-shell";
 
 export const metadata: Metadata = {
-  title: "Terms of Service — xyz.com ERP & Learning Platform",
+  title: "Terms of Service — shikshasync.me ERP & Learning Platform",
   description:
-    "Terms and conditions governing the use of xyz.com educational software, cloud services, and subscriptions operated by xyz.com Technologies Private Limited.",
+    "Terms and conditions governing the use of shikshasync.me educational software, cloud services, and subscriptions operated by shikshasync.me Technologies Private Limited.",
 };
 
 export default function TermsOfServicePage() {
@@ -17,7 +17,7 @@ export default function TermsOfServicePage() {
         <SectionHeading
           eyebrow="Legal & Terms"
           title="Terms of Service"
-          lede="These Terms of Service constitute a legally binding agreement between xyz.com Technologies Private Limited and your educational institution or individual account."
+          lede="These Terms of Service constitute a legally binding agreement between shikshasync.me Technologies Private Limited and your educational institution or individual account."
         />
         <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
@@ -87,7 +87,7 @@ export default function TermsOfServicePage() {
                       At a Glance: Key Tenets of Our Partnership
                     </h3>
                     <p className="mt-2 text-xs leading-6 text-slate-600">
-                      By registering an account, ordering a plan, or accessing xyz.com, you agree to these Terms. You confirm you are authorized to bind your institution. We pledge continuous tenant isolation, strict customer data ownership, and transparent statutory invoicing.
+                      By registering an account, ordering a plan, or accessing shikshasync.me, you agree to these Terms. You confirm you are authorized to bind your institution. We pledge continuous tenant isolation, strict customer data ownership, and transparent statutory invoicing.
                     </p>
                   </div>
                 </div>
@@ -99,7 +99,7 @@ export default function TermsOfServicePage() {
                   1. Acceptance of Terms & User Roles
                 </h2>
                 <p>
-                  These Terms of Service (&ldquo;Terms&rdquo;) govern access to the software-as-a-service application suite, mobile apps, and developer interfaces provided by <strong>xyz.com Technologies Private Limited</strong> (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;).
+                  These Terms of Service (&ldquo;Terms&rdquo;) govern access to the software-as-a-service application suite, mobile apps, and developer interfaces provided by <strong>shikshasync.me Technologies Private Limited</strong> (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;).
                 </p>
                 <p>
                   Our services are provided to distinct user categories:
@@ -132,7 +132,7 @@ export default function TermsOfServicePage() {
                   2. Platform Description & Service Tiers
                 </h2>
                 <p>
-                  xyz.com provides an integrated ERP, Learning Management System (LMS), and communication platform designed for schools, colleges, and multi-campus trusts. Core features include student admissions, timetable scheduling, attendance tracking, examination management, automated grading, fee collection, and parent communication channels.
+                  shikshasync.me provides an integrated ERP, Learning Management System (LMS), and communication platform designed for schools, colleges, and multi-campus trusts. Core features include student admissions, timetable scheduling, attendance tracking, examination management, automated grading, fee collection, and parent communication channels.
                 </p>
                 <p>
                   Features available to your institution depend on the active subscription plan (Starter, Professional, Enterprise, or tailored bespoke modules) configured in your subscription agreement.
@@ -160,7 +160,7 @@ export default function TermsOfServicePage() {
                   <li className="flex items-start gap-2.5">
                     <Shield className="h-4 w-4 text-accent shrink-0 mt-1" />
                     <span>
-                      <strong>Notification of Breach:</strong> You agree to immediately notify xyz.com at <a href="mailto:security@xyz.com" className="text-accent underline">security@xyz.com</a> upon discovering any unauthorized account access or security compromise.
+                      <strong>Notification of Breach:</strong> You agree to immediately notify shikshasync.me at <a href="mailto:security@shikshasync.me" className="text-accent underline">security@shikshasync.me</a> upon discovering any unauthorized account access or security compromise.
                     </span>
                   </li>
                 </ul>
@@ -207,13 +207,13 @@ export default function TermsOfServicePage() {
                   <div className="rounded-card border border-border bg-white p-4">
                     <h3 className="font-semibold text-primary">A. Your Institution Owns 100% of Your Data</h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      The institution retains exclusive ownership, title, copyright, and intellectual property rights in all data uploaded to the platform, including student rosters, exam results, faculty records, curriculum materials, and parent communications. xyz.com claims zero ownership over your data.
+                      The institution retains exclusive ownership, title, copyright, and intellectual property rights in all data uploaded to the platform, including student rosters, exam results, faculty records, curriculum materials, and parent communications. shikshasync.me claims zero ownership over your data.
                     </p>
                   </div>
                   <div className="rounded-card border border-border bg-white p-4">
-                    <h3 className="font-semibold text-primary">B. xyz.com Retains Software IP</h3>
+                    <h3 className="font-semibold text-primary">B. shikshasync.me Retains Software IP</h3>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      xyz.com Technologies Private Limited retains all right, title, and interest in and to the platform, including user interfaces, designs, software algorithms, APIs, database schemas, trademarks, logos, and accompanying documentation.
+                      shikshasync.me Technologies Private Limited retains all right, title, and interest in and to the platform, including user interfaces, designs, software algorithms, APIs, database schemas, trademarks, logos, and accompanying documentation.
                     </p>
                   </div>
                   <div className="rounded-card border border-border bg-white p-4">
@@ -295,7 +295,7 @@ export default function TermsOfServicePage() {
                     Neither party shall be liable to the other for indirect, incidental, special, consequential, or punitive damages, including loss of profits, revenue, or academic goodwill.
                   </p>
                   <p>
-                    The aggregate liability of xyz.com Technologies Private Limited arising out of or related to these Terms shall not exceed the total fees actually paid by the customer in the twelve (12) months preceding the incident giving rise to liability.
+                    The aggregate liability of shikshasync.me Technologies Private Limited arising out of or related to these Terms shall not exceed the total fees actually paid by the customer in the twelve (12) months preceding the incident giving rise to liability.
                   </p>
                 </div>
               </section>
@@ -321,7 +321,7 @@ export default function TermsOfServicePage() {
               {/* Contact Information Footer */}
               <div className="border-t border-border pt-6 text-xs text-muted-foreground space-y-2">
                 <p>
-                  Questions about these Terms? Reach our legal counsel at <a href="mailto:legal@xyz.com" className="font-semibold text-accent hover:underline">legal@xyz.com</a>.
+                  Questions about these Terms? Reach our legal counsel at <a href="mailto:legal@shikshasync.me" className="font-semibold text-accent hover:underline">legal@shikshasync.me</a>.
                 </p>
                 <div className="flex gap-4 pt-2">
                   <Link href="/privacy" className="font-semibold text-accent hover:underline">

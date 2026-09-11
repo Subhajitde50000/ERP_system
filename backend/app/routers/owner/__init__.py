@@ -1,4 +1,4 @@
-"""Platform owner (customer account) routers — the xyz.com account-holder API.
+"""Platform owner (customer account) routers — the shikshasync.me account-holder API.
 
 Aggregates the five owner-facing concerns into one mounted router under
 /api/v1/owner: auth, the dashboard (My Institutions + billing summary), billing

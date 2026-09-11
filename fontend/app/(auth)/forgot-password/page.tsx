@@ -8,7 +8,7 @@ import { resolveTenant } from "@/lib/tenant";
 
 export const metadata: Metadata = {
   title: "Reset password",
-  description: "Reset your xyz.com account password.",
+  description: "Reset your shikshasync.me account password.",
 };
 
 /** Forgot password — same palette and layout as login (design §7). */

@@ -221,7 +221,7 @@ export function ServiceRequestForm() {
         {state === "submitting" ? "Sending request…" : "Book a consultation"}
       </button>
       <p className="text-center text-xs leading-5 text-muted-foreground">
-        By submitting, you agree that xyz.com may contact you about this request. No tenant account is created from this form.
+        By submitting, you agree that shikshasync.me may contact you about this request. No tenant account is created from this form.
       </p>
     </form>
   );

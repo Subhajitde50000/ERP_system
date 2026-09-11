@@ -6,7 +6,7 @@ import { Logo } from "@/components/auth/logo";
 
 export const metadata: Metadata = {
   title: "Support",
-  description: "Get help signing in to xyz.com.",
+  description: "Get help signing in to shikshasync.me.",
 };
 
 const CHANNELS = [

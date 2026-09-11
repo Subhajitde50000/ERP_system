@@ -34,7 +34,7 @@ export const ROOT_DOMAIN_LABEL = ROOT_DOMAIN;
  *
  * Rules:
  *  - On localhost / 127.0.0.1 → always returns "localhost:<port>"
- *  - On a real subdomain like abc.xyz.com → returns "xyz.com" (last 2 parts)
+ *  - On a real subdomain like abc.shikshasync.me → returns "shikshasync.me" (last 2 parts)
  *  - Server-side (no window) → falls back to NEXT_PUBLIC_ROOT_DOMAIN env
  */
 function getRootDomain(): string {
@@ -47,7 +47,7 @@ function getRootDomain(): string {
       return port ? `localhost:${port}` : "localhost";
     }
 
-    // On a subdomain (e.g. abc.xyz.com) extract the root (xyz.com)
+    // On a subdomain (e.g. abc.shikshasync.me) extract the root (shikshasync.me)
     const parts = hostname.split(".");
     if (parts.length >= 2) {
       return parts.slice(-2).join(".");
@@ -59,7 +59,7 @@ function getRootDomain(): string {
 }
 
 /**
- * A tenant's public host — `green.localhost:3000` in dev, `green.xyz.com` in prod.
+ * A tenant's public host — `green.localhost:3000` in dev, `green.shikshasync.me` in prod.
  *
  * Uses getRootDomain() so it always reflects the actual running environment,
  * not a potentially stale compiled env value.
@@ -78,7 +78,7 @@ export function tenantUrl(slug: string, path = ""): string {
 
 
 
-/** The platform console's own host — `app.xyz.com`. */
+/** The platform console's own host — `app.shikshasync.me`. */
 export const PLATFORM_HOST = `app.${ROOT_DOMAIN}`;
 
 /**

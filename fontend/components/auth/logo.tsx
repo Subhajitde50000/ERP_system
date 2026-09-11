@@ -1,7 +1,7 @@
 import { GraduationCap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/** xyz.com wordmark — light variant for the dark panel, dark for white surfaces. */
+/** shikshasync.me wordmark — light variant for the dark panel, dark for white surfaces. */
 export function Logo({
   variant = "dark",
   className,
@@ -31,7 +31,7 @@ export function Logo({
           variant === "light" ? "text-white" : "text-primary",
         )}
       >
-        xyz.com
+        shikshasync.me
       </span>
     </div>
   );

@@ -1,4 +1,4 @@
-# xyz.com ERP Mobile App — Store Submission Checklist
+# shikshasync.me ERP Mobile App — Store Submission Checklist
 
 Complete every item here before submitting to Google Play or the App Store.
 

@@ -70,8 +70,8 @@ jobs:
           tags: ${{ steps.meta-frontend.outputs.tags }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.xyz.com' }}
-            NEXT_PUBLIC_ROOT_DOMAIN=${{ vars.PUBLIC_ROOT_DOMAIN || 'xyz.com' }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.shikshasync.me' }}
+            NEXT_PUBLIC_ROOT_DOMAIN=${{ vars.PUBLIC_ROOT_DOMAIN || 'shikshasync.me' }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -7,7 +7,7 @@ import type { MetadataRoute } from "next";
  * institution consoles, platform administration, and internal API routes.
  */
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://xyz.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://shikshasync.me";
 
   return {
     rules: [

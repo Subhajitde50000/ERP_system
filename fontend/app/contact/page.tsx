@@ -6,14 +6,14 @@ import { MarketingShell, Section, SectionHeading } from "@/components/marketing/
 import { ServiceRequestForm } from "@/components/marketing/service-request-form";
 
 export const metadata: Metadata = {
-  title: "Contact & Legal Entity — xyz.com",
+  title: "Contact & Legal Entity — shikshasync.me",
   description:
-    "Book a consultation, reach customer support, or review registered corporate entity and statutory grievance officer details for xyz.com Technologies Private Limited.",
+    "Book a consultation, reach customer support, or review registered corporate entity and statutory grievance officer details for shikshasync.me Technologies Private Limited.",
 };
 
 const CHANNELS = [
   { icon: Phone, label: "Sales & demos", value: "+91 80 4718 0000", hint: "Mon–Sat, 9:00–18:00 IST" },
-  { icon: Mail, label: "General & Sales Email", value: "hello@xyz.com", hint: "We reply within one business day" },
+  { icon: Mail, label: "General & Sales Email", value: "hello@shikshasync.me", hint: "We reply within one business day" },
   { icon: MessageCircle, label: "Existing customer support", value: "From your dashboard → Support", hint: "Signed-in owners can raise tickets" },
   { icon: MapPin, label: "Corporate Office", value: "Bengaluru, Karnataka, India", hint: "Remote-first team across India" },
 ];
@@ -68,7 +68,7 @@ export default function ContactPage() {
                 <div className="space-y-2 text-xs text-slate-700">
                   <div className="flex justify-between py-1 border-b border-slate-100">
                     <span className="text-muted-foreground">Legal Entity Name:</span>
-                    <span className="font-semibold text-primary">xyz.com Technologies Private Limited</span>
+                    <span className="font-semibold text-primary">shikshasync.me Technologies Private Limited</span>
                   </div>
                   <div className="flex justify-between py-1 border-b border-slate-100">
                     <span className="text-muted-foreground">CIN:</span>
@@ -106,11 +106,11 @@ export default function ContactPage() {
                   <p><strong>Designation:</strong> Grievance Redressal & Privacy Officer</p>
                   <p>
                     <strong>Email:</strong>{" "}
-                    <a href="mailto:grievance@xyz.com" className="text-accent font-semibold hover:underline">
-                      grievance@xyz.com
+                    <a href="mailto:grievance@shikshasync.me" className="text-accent font-semibold hover:underline">
+                      grievance@shikshasync.me
                     </a>
                   </p>
-                  <p><strong>Escalation:</strong> legal@xyz.com</p>
+                  <p><strong>Escalation:</strong> legal@shikshasync.me</p>
                   <p className="text-[11px] text-muted-foreground pt-1">
                     Statutory SLA: Acknowledgment within 48 hours; resolution within 30 days.
                   </p>

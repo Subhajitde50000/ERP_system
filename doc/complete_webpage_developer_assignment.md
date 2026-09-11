@@ -65,7 +65,7 @@
 
 ## 2. Platform Layer Pages
 
-> These pages live at `app.xyz.com` — not institution subdomains  
+> These pages live at `app.shikshasync.me` — not institution subdomains  
 > Backend: **Dev-A** | Frontend: **Dev-C**  
 > Next.js route prefix: `app/(platform)/`
 
@@ -143,7 +143,7 @@
 
 ## 3. Institution Admin Pages
 
-> Route prefix: `[slug].xyz.com` → `app/(institution)/admin/`  
+> Route prefix: `[slug].shikshasync.me` → `app/(institution)/admin/`  
 > Backend: **Dev-A** (structure APIs) + **Dev-B** (module APIs)  
 > Frontend: **Dev-C**
 

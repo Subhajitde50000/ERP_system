@@ -8,10 +8,10 @@ import "./globals.css";
  */
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://xyz.com"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://shikshasync.me"),
   title: {
-    default: "xyz.com · Education, connected",
-    template: "%s · xyz.com",
+    default: "shikshasync.me · Education, connected",
+    template: "%s · shikshasync.me",
   },
   description:
     "Secure, multi-tenant ERP + LMS for schools and colleges. Attendance, exams, assignments, fees, hostel and more.",
@@ -27,17 +27,17 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "xyz.com · Education, connected",
+    title: "shikshasync.me · Education, connected",
     description:
       "Secure, multi-tenant ERP + LMS for schools and colleges. Attendance, exams, assignments, fees, hostel and more.",
-    url: "https://xyz.com",
-    siteName: "xyz.com",
+    url: "https://shikshasync.me",
+    siteName: "shikshasync.me",
     locale: "en_IN",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "xyz.com · Education, connected",
+    title: "shikshasync.me · Education, connected",
     description:
       "Secure, multi-tenant ERP + LMS for schools and colleges. Attendance, exams, assignments, fees, hostel and more.",
   },

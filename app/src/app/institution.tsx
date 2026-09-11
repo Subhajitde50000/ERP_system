@@ -71,7 +71,7 @@ export default function InstitutionScreen() {
   function handleContactAdmin() {
     Alert.alert(
       "Find Your Institution Code",
-      "Your Institution Code is the unique identifier for your campus.\n\n• Check your institution's web portal address: if it is https://green-college.xyz.com, your code is 'green-college'.\n• Check your admission letter or welcome email.\n• Contact your campus IT helpdesk or student office for assistance.",
+      "Your Institution Code is the unique identifier for your campus.\n\n• Check your institution's web portal address: if it is https://green-college.shikshasync.me, your code is 'green-college'.\n• Check your admission letter or welcome email.\n• Contact your campus IT helpdesk or student office for assistance.",
       [{ text: "Got it" }]
     );
   }

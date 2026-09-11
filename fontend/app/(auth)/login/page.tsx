@@ -9,11 +9,11 @@ import { resolveTenant } from "@/lib/tenant";
 
 export const metadata: Metadata = {
   title: "Sign in",
-  description: "Sign in to your xyz.com institution account.",
+  description: "Sign in to your shikshasync.me institution account.",
 };
 
 /**
- * Login page — xyz.com ERP + LMS
+ * Login page — shikshasync.me ERP + LMS
  * Split-screen layout per login_page_design.md §5.
  *
  * The tenant is resolved server-side from the Host header so the correct
@@ -29,16 +29,16 @@ export default async function LoginPage({
   const tenant = await resolveTenant(headerList.get("host"), params.tenant);
 
   /*
-   * `xyz.com` (the apex domain) and bare localhost resolve to no institution.
-   * Under the account-holder model, `xyz.com/login` is the *owner* platform
+   * `shikshasync.me` (the apex domain) and bare localhost resolve to no institution.
+   * Under the account-holder model, `shikshasync.me/login` is the *owner* platform
    * login — the door Rahul uses to manage every institution he owns. (Staff
    * — Super Admin, Support, Sales — still sign in at `/platform/login`, reached
-   * in production by rewriting `app.xyz.com/login`.)
+   * in production by rewriting `app.shikshasync.me/login`.)
    *
    * Previously this redirected to the staff console, but that door is for the
    * platform's own employees, not for customers. Send apex-domain visitors to
    * their account login instead. Institution members still sign in at their
-   * own subdomain, e.g. `green.xyz.com/login`.
+   * own subdomain, e.g. `green.shikshasync.me/login`.
    */
   if (tenant.isPlatform) redirect("/account/login");
 

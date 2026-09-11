@@ -1,5 +1,5 @@
 /**
- * Platform owner (customer account) contracts — the xyz.com account-holder
+ * Platform owner (customer account) contracts — the shikshasync.me account-holder
  * who owns one or more institutions. This is the AWS / Shopify / Zoho model:
  * sign up once, manage every institution from a single platform dashboard.
  */

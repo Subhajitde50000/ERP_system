@@ -73,7 +73,7 @@ services:
       - "--fingerprint"
       - "--no-cli"
       - "--user=${TURN_USERNAME:-erp-turn}:${TURN_CREDENTIAL:-prod-turn-secret}"
-      - "--realm=${PUBLIC_ROOT_DOMAIN:-xyz.com}"
+      - "--realm=${PUBLIC_ROOT_DOMAIN:-shikshasync.me}"
     networks:
       - erp_prod_network
 

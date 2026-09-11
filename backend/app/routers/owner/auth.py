@@ -1,7 +1,7 @@
 """
 Routers — Owner auth (signup, email verification, login, refresh, logout).
 
-These are the xyz.com "Platform Login" door described in the system flow:
+These are the shikshasync.me "Platform Login" door described in the system flow:
 sign up (Name, Email, Password) → verify email → platform dashboard.
 """
 

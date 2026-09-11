@@ -150,8 +150,8 @@ class Settings(BaseSettings):
 
     # ── Signup / provisioning ─────────────────────────────────────────────────
     # Root domain used to build login URLs and subdomain checks, e.g.
-    # https://green.xyz.com/login — defaults to xyz.com.
-    PUBLIC_ROOT_DOMAIN: str = "xyz.com"
+    # https://green.shikshasync.me/login — defaults to shikshasync.me.
+    PUBLIC_ROOT_DOMAIN: str = "shikshasync.me"
     TRIAL_DAYS: int = 14
     TENANT_DEFAULT_TIMEZONE: str = "Asia/Kolkata"
 
@@ -163,7 +163,7 @@ class Settings(BaseSettings):
     EMAIL_PROVIDER: str = "console"
     # Envelope identity.
     EMAIL_FROM: str = ""
-    EMAIL_FROM_NAME: str = "xyz.com ERP"
+    EMAIL_FROM_NAME: str = "shikshasync.me ERP"
     EMAIL_REPLY_TO: str = ""
     EMAIL_TIMEOUT_SECONDS: int = 20
 

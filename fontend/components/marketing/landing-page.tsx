@@ -22,10 +22,10 @@ const CAPABILITIES = [
 ];
 
 const STEPS = [
-  { n: "01", title: "Create your account", copy: "Sign up at xyz.com with your name, email and password — one account for every institution you own." },
+  { n: "01", title: "Create your account", copy: "Sign up at shikshasync.me with your name, email and password — one account for every institution you own." },
   { n: "02", title: "Verify & open the dashboard", copy: "Confirm your email and land on your platform dashboard: institutions, billing and support." },
-  { n: "03", title: "Create an institution", copy: "Choose a plan, claim a subdomain like green.xyz.com, and pay. Provisioning is automatic." },
-  { n: "04", title: "Run daily ERP", copy: "Open green.xyz.com for attendance, exams, fees and more — a separate, secure login for your team." },
+  { n: "03", title: "Create an institution", copy: "Choose a plan, claim a subdomain like green.shikshasync.me, and pay. Provisioning is automatic." },
+  { n: "04", title: "Run daily ERP", copy: "Open green.shikshasync.me for attendance, exams, fees and more — a separate, secure login for your team." },
 ];
 
 export function LandingPage() {
@@ -44,7 +44,7 @@ export function LandingPage() {
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-[#475569]">
               Attendance, exams, fees, hostel, LMS and more — on one secure, multi-tenant platform.
-              Run a single campus or a whole group, and manage them all from one xyz.com account.
+              Run a single campus or a whole group, and manage them all from one shikshasync.me account.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/signup" className="inline-flex h-12 items-center justify-center gap-2 rounded-field bg-accent px-5 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover">
@@ -85,7 +85,7 @@ export function LandingPage() {
         <SectionHeading
           eyebrow="The platform"
           title="Run the day. Support every learner. See what matters."
-          lede="xyz.com connects the work usually spread across paper, spreadsheets and disconnected apps — without asking your teams to change everything at once."
+          lede="shikshasync.me connects the work usually spread across paper, spreadsheets and disconnected apps — without asking your teams to change everything at once."
         />
         <div className="mt-10 grid gap-5 md:grid-cols-3">
           {CAPABILITIES.map((c) => (
@@ -144,7 +144,7 @@ export function LandingPage() {
         <SectionHeading
           eyebrow="Built for every institution"
           title="One platform, shaped to how you work."
-          lede="Whether you run a single school or a multi-campus group, xyz.com adapts to your structure — not the other way around."
+          lede="Whether you run a single school or a multi-campus group, shikshasync.me adapts to your structure — not the other way around."
         />
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {AUDIENCES.map((a) => (
@@ -173,7 +173,7 @@ export function LandingPage() {
           <SectionHeading
             eyebrow="How it works"
             title="From sign-up to your first class in minutes."
-            lede="The account-holder model that powers xyz.com: create an account once, then own and manage as many institutions as you need."
+            lede="The account-holder model that powers shikshasync.me: create an account once, then own and manage as many institutions as you need."
             tone="light"
           />
           <ol className="mt-12 grid gap-6 md:grid-cols-4">

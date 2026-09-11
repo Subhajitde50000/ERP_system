@@ -90,7 +90,7 @@ app.add_exception_handler(RateLimitExceeded, lambda request, exc: _rate_limit_ex
 # ── Middleware Stack ──────────────────────────────────────────────────────────
 app.add_middleware(RequestIDMiddleware)
 
-escaped_root = re.escape(settings.PUBLIC_ROOT_DOMAIN or "xyz.com")
+escaped_root = re.escape(settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me")
 cors_regex = rf"https?://([a-z0-9-]+\.)*({escaped_root}|localhost|127\.0\.0\.1)(:[0-9]+)?"
 
 app.add_middleware(

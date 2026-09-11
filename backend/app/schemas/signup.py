@@ -94,7 +94,7 @@ class PriceQuoteResponse(BaseModel):
 class OwnerDraft(Wire):
     """Platform account owner captured before institution checkout.
 
-    This is the xyz.com account (AWS/Shopify style). One owner can later
+    This is the shikshasync.me account (AWS/Shopify style). One owner can later
     create and manage many institutions from the platform dashboard.
     """
 

@@ -70,7 +70,7 @@ export function ReviewStep({
 
   const rows: { label: string; value: string }[] = [
     { label: "Institution", value: draft.institution.name },
-    { label: "URL", value: `${draft.urlSlug || "…"}.xyz.com` },
+    { label: "URL", value: `${draft.urlSlug || "…"}.shikshasync.me` },
     { label: "Plan", value: draft.planSlug === "custom" ? "Custom Plan" : planName },
   ];
 

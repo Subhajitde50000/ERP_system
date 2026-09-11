@@ -426,7 +426,7 @@ sources.
 
 **A family that has never logged in.** Office creates the link with an email → row is
 `PENDING_CLAIM`, `parent_id` `NULL`, code minted, email queued. Guardian opens
-`/{slug}.xyz.com/guardian-access`, types code + roll number, optionally *Checks the invitation*
+`/{slug}.shikshasync.me/guardian-access`, types code + roll number, optionally *Checks the invitation*
 (which prints only the child, class, relation and expiry), sets a password ≥ 10, submits.
 `activate_with_code` locks the row (`SELECT … FOR UPDATE`, so two guardians with one slip cannot both
 win), refuses a mismatched roll (422) or an existing email (409 with "sign in and claim the code from

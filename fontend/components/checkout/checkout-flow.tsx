@@ -462,7 +462,7 @@ function RegistrationStep({
         subtitle={
           isOwnerSession
             ? "Configure institution identity and admin credentials. This institution will be linked to your platform account."
-            : "Sign up once at xyz.com. This owner account can create and manage multiple institutions, billing, invoices and support."
+            : "Sign up once at shikshasync.me. This owner account can create and manage multiple institutions, billing, invoices and support."
         }
       />
       <form
@@ -498,7 +498,7 @@ function RegistrationStep({
 
             <div className="rounded-field border border-accent-border bg-accent-light px-4 py-3 text-sm text-[#3730A3]">
               Your platform account is the owner account. After email verification, sign in at
-              xyz.com/login to open My Institutions, Billing, Subscriptions, Invoices,
+              shikshasync.me/login to open My Institutions, Billing, Subscriptions, Invoices,
               Support Tickets and Profile. Daily ERP users still sign in at the
               institution subdomain.
             </div>

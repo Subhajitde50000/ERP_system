@@ -24,7 +24,7 @@ class TenantLoginRequest(BaseModel):
     """
     Body for POST /tenant/auth/login.
     The slug identifies which institution this login belongs to.
-    The frontend extracts it from the subdomain (abc.xyz.com → slug = 'abc').
+    The frontend extracts it from the subdomain (abc.shikshasync.me → slug = 'abc').
     identifier accepts either an email address or a student roll number.
     """
 

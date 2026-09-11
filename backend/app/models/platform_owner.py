@@ -1,7 +1,7 @@
 """
 ORM Model — platform_owners
 
-The **customer / account-holder** — the person who signs up at xyz.com, pays
+The **customer / account-holder** — the person who signs up at shikshasync.me, pays
 the bills and owns one or more institutions. Think of this as the AWS / Shopify
 / Zoho "account": Rahul (rahul@gmail.com) logs in once and manages every
 institution he owns from a single platform dashboard.
@@ -9,7 +9,7 @@ institution he owns from a single platform dashboard.
 This is deliberately a *third* identity table, distinct from:
 
   • `platform_users` — the platform's own **staff** (Super Admin, Support,
-    Sales, Finance). They run xyz.com; they do not pay for it.
+    Sales, Finance). They run shikshasync.me; they do not pay for it.
   • `users`           — institution-bound members (Teacher, Student,
     INSTITUTION_ADMIN …). They live inside one tenant.
 

@@ -2782,7 +2782,7 @@ ON CONFLICT (key) DO NOTHING;
 -- ── 6.2  Roles (22: 4 platform + 18 institution) ───────────────────────────
 -- `module_key` marks a role that only appears once its module is enabled.
 INSERT INTO roles (name, label, scope_level, is_platform, is_optional, module_key, description) VALUES
-  -- Platform (4) — these live on app.xyz.com, not on a tenant subdomain
+  -- Platform (4) — these live on app.shikshasync.me, not on a tenant subdomain
   ('SUPER_ADMIN',          'Super Admin',           'PLATFORM',    TRUE,  FALSE, NULL,        'Full platform control: tenants, plans, billing, platform users.'),
   ('SUPPORT_STAFF',        'Support Staff',         'PLATFORM',    TRUE,  FALSE, NULL,        'Reads any institution to resolve tickets. Cannot modify tenant data.'),
   ('SALES_EXECUTIVE',      'Sales Executive',       'PLATFORM',    TRUE,  FALSE, NULL,        'Trials, conversions and subscription management.'),
@@ -2830,8 +2830,8 @@ ON CONFLICT (slug) DO NOTHING;
 
 -- ── 6.4  Platform settings ─────────────────────────────────────────────────
 INSERT INTO platform_settings (key, value) VALUES
-  ('product_name',      'xyz.com'),
-  ('support_email',     'support@xyz.com'),
+  ('product_name',      'shikshasync.me'),
+  ('support_email',     'support@shikshasync.me'),
   ('default_timezone',  'Asia/Kolkata'),
   ('default_currency',  'INR'),
   ('trial_length_days', '14'),

@@ -1,4 +1,4 @@
-# 🎓 xyz.com — Multi-Tenant ERP + LMS for Schools & Universities
+# 🎓 shikshasync.me — Multi-Tenant ERP + LMS for Schools & Universities
 
 <div align="center">
 
@@ -19,7 +19,7 @@
 
 ## 📖 Overview
 
-**xyz.com** is a fully featured, multi-tenant SaaS ERP platform built for educational institutions — schools, colleges, and universities. Inspired by the **AWS / Shopify / Zoho account model**, a single *platform owner* account can create and manage **many institutions**, each provisioned as an isolated tenant on its own subdomain (e.g. `greenwood.xyz.com`).
+**shikshasync.me** is a fully featured, multi-tenant SaaS ERP platform built for educational institutions — schools, colleges, and universities. Inspired by the **AWS / Shopify / Zoho account model**, a single *platform owner* account can create and manage **many institutions**, each provisioned as an isolated tenant on its own subdomain (e.g. `greenwood.shikshasync.me`).
 
 Every tenant receives the complete **16-module product** with its own staff, students, parents, data partition, and subscription state — from **14-day free trial → paid plan**.
 
@@ -142,7 +142,7 @@ Every tenant receives the complete **16-module product** with its own staff, stu
 | Database | **PostgreSQL 16** — UUID PKs, shared schema, row-level tenant isolation |
 | Cache / messaging | **Redis 7** — sessions, cache, pub/sub for live classes |
 | File storage | Local disk `backend/uploads/` → **AWS S3** (production) |
-| Reverse proxy | **Nginx** (wildcard subdomain routing `*.xyz.com`) |
+| Reverse proxy | **Nginx** (wildcard subdomain routing `*.shikshasync.me`) |
 | Container | **Docker** + Docker Compose (dev & prod configs) |
 | CI/CD | **GitHub Actions** (ci.yml + deploy.yml) |
 
@@ -236,7 +236,7 @@ All tokens are **HS256 JWTs** signed with one secret but distinguished by a `typ
 |---|---|---|---|
 | `platform` | `platform_users` | `/platform/login` | Super Admin, Support, Sales, Finance |
 | `owner` | `platform_owners` | `/account/login` | Institution owners |
-| `tenant` | `users` (tenant-scoped) | `{slug}.xyz.com/login` | 18 institution roles |
+| `tenant` | `users` (tenant-scoped) | `{slug}.shikshasync.me/login` | 18 institution roles |
 
 ### Token Lifecycle
 
@@ -553,9 +553,9 @@ chmod +x scripts/*.sh
 ### SSL / HTTPS (Wildcard Certificate)
 
 ```bash
-# Issue wildcard certificate for *.xyz.com
+# Issue wildcard certificate for *.shikshasync.me
 sudo certbot certonly --manual --preferred-challenges=dns \
-  -d "xyz.com" -d "*.xyz.com"
+  -d "shikshasync.me" -d "*.shikshasync.me"
 ```
 
 ### CI/CD — GitHub Actions
@@ -638,7 +638,7 @@ npm test
 | `JWT_SECRET_KEY` | Strong random secret for signing JWTs |
 | `APP_ENV` | `development` / `production` |
 | `APP_DEBUG` | `true` exposes `/docs`, `/redoc`, full stack traces |
-| `PUBLIC_ROOT_DOMAIN` | Default: `xyz.com` (for subdomain tenant routing) |
+| `PUBLIC_ROOT_DOMAIN` | Default: `shikshasync.me` (for subdomain tenant routing) |
 | `TRIAL_DAYS` | Default: `14` |
 | `EMAIL_PROVIDER` | `console` / `google` / `zeptomail` |
 | `EMAIL_FROM` | Envelope sender address |

@@ -1,4 +1,4 @@
-# xyz.com — ERP + LMS Web App
+# shikshasync.me — ERP + LMS Web App
 
 Login experience for the multi-tenant ERP + LMS platform, built to
 `login_page_design.md` (v1.0).
@@ -36,7 +36,7 @@ the `?tenant=` query override:
 
 | URL | Renders |
 |---|---|
-| `/login` | Platform console (`app.xyz.com` roles) |
+| `/login` | Platform console (`app.shikshasync.me` roles) |
 | `/login?tenant=abc-college` | ABC College · Google Workspace SSO |
 | `/login?tenant=dps-school` | DPS School · admission-number placeholder |
 | `/login?tenant=nova-university` | Nova University · Entra ID SSO |
@@ -180,7 +180,7 @@ Environment variables (see `.env.example`):
 
 ```
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_ROOT_DOMAIN=xyz.com
+NEXT_PUBLIC_ROOT_DOMAIN=shikshasync.me
 ```
 
 ---
@@ -1051,7 +1051,7 @@ HTML — 54 checks, 0 leaks, positive control passing.
 
 The eight Super Admin pages, C-SA-01…08. They live under `app/(platform)/`
 and are served at `/platform/*` locally; in production the assignment doc §2
-puts them on **`app.xyz.com`**, a different origin from the institution
+puts them on **`app.shikshasync.me`**, a different origin from the institution
 subdomains. `lib/tenant.ts` already treats `app` as a reserved slug, so the
 split is real, not cosmetic.
 

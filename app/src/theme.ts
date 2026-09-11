@@ -1,5 +1,5 @@
 /**
- * xyz.com ERP + LMS design tokens — ported 1:1 from fontend/tailwind.config.ts
+ * shikshasync.me ERP + LMS design tokens — ported 1:1 from fontend/tailwind.config.ts
  * so the mobile app renders the exact same palette, radii and shadows as
  * the website. Every brand colour lives here so all modules stay consistent.
  */

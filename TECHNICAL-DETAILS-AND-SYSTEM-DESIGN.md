@@ -1,4 +1,4 @@
-# xyz.com ERP + LMS — Full Technical Details & System Design
+# shikshasync.me ERP + LMS — Full Technical Details & System Design
 
 **Document type:** End-to-end engineering reference (codebase-scanned, September 2026)
 **Repository:** `Subhajitde5000/ERP_system` — branch `arena/01a06338-erp-system`
@@ -8,10 +8,10 @@
 
 ## 1. What This Product Is
 
-xyz.com is a **multi-tenant SaaS ERP + LMS for schools, colleges and universities**.
+shikshasync.me is a **multi-tenant SaaS ERP + LMS for schools, colleges and universities**.
 One *platform owner* account (the customer / institution proprietor, AWS-Shopify-Zoho
 account model) can own **many institutions**, and each institution is an isolated
-**tenant** provisioned on its own subdomain (e.g. `green.xyz.com`). Every tenant gets
+**tenant** provisioned on its own subdomain (e.g. `green.shikshasync.me`). Every tenant gets
 the same 16-module product, its own staff/students/parents, its own data partition,
 and its own subscription state (trial → paid).
 
@@ -126,7 +126,7 @@ The platform ships **three client surfaces** against **one backend API**:
 
 1. **Middleware stack** (`backend/app/main.py`), in order:
    `RequestIDMiddleware` (correlation ID on every log line) → `CORSMiddleware`
-   (explicit origin list **plus** a subdomain regex for `*.xyz.com` / localhost) →
+   (explicit origin list **plus** a subdomain regex for `*.shikshasync.me` / localhost) →
    route handling → slowapi rate limiter → global exception handler.
 2. **Auth dependency** (`app/dependencies/auth.py`) decodes the JWT, then
    **re-checks the role live from the database** (`role_assignments` joined to `roles`,
@@ -150,7 +150,7 @@ and each auth dependency **rejects the other types**:
 |---|---|---|---|
 | `platform` | `platform_users` | `/platform/login` | Super Admin, Support, Sales, Finance |
 | `owner` | `platform_owners` | `/account/login` | Customer account: owns institutions, billing, invoices, trials |
-| `tenant` | `users` (tenant-scoped) | `{slug}.xyz.com/login` | 18 institution roles |
+| `tenant` | `users` (tenant-scoped) | `{slug}.shikshasync.me/login` | 18 institution roles |
 
 - Access token: **15 minutes**; refresh token: **7 days**.
 - Refresh tokens are random (`secrets.token_urlsafe(64)`), stored only as **SHA-256
@@ -408,7 +408,7 @@ cd app && npx expo start
 
 Production target (per `doc/ARCHITECTURE.md` and the capacity report): Uvicorn/Gunicorn
 workers behind a reverse proxy, managed PostgreSQL (RDS-style) with PgBouncer, Redis,
-object storage for uploads, subdomain wildcard DNS (`*.xyz.com`) routing to the web
+object storage for uploads, subdomain wildcard DNS (`*.shikshasync.me`) routing to the web
 front, and the scheduler running as a singleton. The capacity analysis in
 `SYSTEM_ANALYSIS_AND_PRODUCTION_REPORT.md` models tiers from a single 2-vCPU node
 (~500 concurrent users) up to a Kubernetes multi-pod SaaS fleet (150k+ users).

@@ -1,4 +1,4 @@
-# Market & Business Analysis — xyz.com Multi-Tenant School ERP + LMS
+# Market & Business Analysis — shikshasync.me Multi-Tenant School ERP + LMS
 
 **Purpose:** End-to-end commercial analysis — market size, target customers,
 competition, what makes this product genuinely unique, what the market actually
@@ -132,7 +132,7 @@ compliance) while onboarding the staff (ease of marking attendance, exams).
    Security-conscious schools (and parents) understand "your data never touches another
    school."
 2. **Subdomain-per-institution provisioned automatically on sign-up** — a school gets
-   `theirname.xyz.com` in minutes, with modules, admin account and setup wizard. This is
+   `theirname.shikshasync.me` in minutes, with modules, admin account and setup wizard. This is
    the Shopify/Zoom motion applied to schools; competitors still do manual setup
    projects.
 3. **22 roles with live, revocable permissions** — permissions are re-checked from the
@@ -264,7 +264,7 @@ budget players start **₹9,000–23,000/year flat per school**; Fedena/Entab **
 - Payments, A/V live classes, WhatsApp/SMS, regional languages, compliance exports not
   built/integrated.
 - Production ops missing: no CI/CD, Docker, backups, monitoring; secrets were committed.
-- Placeholder brand (xyz.com), noindex marketing site, mock testimonials, no legal pages.
+- Placeholder brand (shikshasync.me), noindex marketing site, mock testimonials, no legal pages.
 - No real customer references yet.
 
 **Opportunities**

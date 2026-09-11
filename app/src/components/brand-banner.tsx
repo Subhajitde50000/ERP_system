@@ -46,7 +46,7 @@ export function MobileBanner() {
           <View style={styles.logoBox}>
             <GraduationCap size={20} color={Colors.primary} />
           </View>
-          <Text style={styles.wordmark}>xyz.com</Text>
+          <Text style={styles.wordmark}>shikshasync.me</Text>
         </View>
         <Text style={styles.slogan}>
           One Platform for <Text style={styles.sloganAccent}>Your Entire Institution</Text>

@@ -1,10 +1,10 @@
 /**
- * Shared auth/tenant contracts — xyz.com ERP + LMS
+ * Shared auth/tenant contracts — shikshasync.me ERP + LMS
  * Mirrors the login API payload in login_page_design.md §8.
  */
 
 /**
- * Platform-level roles — served from app.xyz.com.
+ * Platform-level roles — served from app.shikshasync.me.
  * Ref: role_based_system_design.md §2.1
  */
 export type PlatformRole =
@@ -15,7 +15,7 @@ export type PlatformRole =
   | "OWNER";
 
 /**
- * The 18 institution roles — served from <tenant>.xyz.com.
+ * The 18 institution roles — served from <tenant>.shikshasync.me.
  * Ref: role_based_system_design.md §2.2, packages/shared-types/roles.ts
  */
 export type InstitutionRole =
@@ -73,13 +73,13 @@ export interface Tenant {
   slug: string;
   /** Display name, e.g. "ABC College" */
   name: string;
-  /** Full host shown in the badge, e.g. "abc-college.xyz.com" */
+  /** Full host shown in the badge, e.g. "abc-college.shikshasync.me" */
   host: string;
   type: TenantType;
   logoUrl?: string | null;
   /** true when the slug did not resolve to a known institution (§7) */
   notFound?: boolean;
-  /** true for the platform console at app.xyz.com */
+  /** true for the platform console at app.shikshasync.me */
   isPlatform?: boolean;
   /** Optional SSO provider label, e.g. "Google Workspace" */
   ssoProvider?: string | null;
@@ -133,7 +133,7 @@ export class AuthError extends Error {
   }
 }
 
-/* ── Platform console sign-in (app.xyz.com) ─────────────────────────────── */
+/* ── Platform console sign-in (app.shikshasync.me) ─────────────────────────────── */
 
 /**
  * Platform staff credentials.

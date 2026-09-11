@@ -49,7 +49,7 @@ origins that share a database but not a permission model.
                                           │
               ┌───────────────────────────┼───────────────────────────┐
               │                           │                           │
-    app.xyz.com                 *.xyz.com                    api.xyz.com
+    app.shikshasync.me                 *.shikshasync.me                    api.shikshasync.me
     (platform console)          (tenant app)                 (REST + WS)
               │                           │                           │
     ┌─────────▼─────────┐      ┌──────────▼────────┐      ┌───────────▼─────────┐
@@ -76,7 +76,7 @@ origins that share a database but not a permission model.
   └────────────────────┘
 ```
 
-**Two origins, one API.** `app.xyz.com` has no `tenant_id`; `*.xyz.com` always
+**Two origins, one API.** `app.shikshasync.me` has no `tenant_id`; `*.shikshasync.me` always
 has one. The same NestJS app serves both — the tenant resolver decides which
 mode a request is in, and that decision is the root of every authorization
 check downstream.

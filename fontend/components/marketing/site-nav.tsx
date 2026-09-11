@@ -10,7 +10,7 @@ import { PRIMARY_NAV } from "@/lib/marketing";
 /**
  * Public site header — shared by every marketing page. Sticky, with a compact
  * mobile drawer. The primary CTA creates an account; "Sign in" reaches the
- * owner platform login (xyz.com/login in production).
+ * owner platform login (shikshasync.me/login in production).
  */
 export function SiteNav() {
   const pathname = usePathname();
@@ -38,11 +38,11 @@ export function SiteNav() {
       }`}
     >
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
-        <Link href="/" className="flex items-center gap-2" aria-label="xyz.com home">
+        <Link href="/" className="flex items-center gap-2" aria-label="shikshasync.me home">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
             <GraduationCap className="h-5 w-5" aria-hidden="true" />
           </span>
-          <span className="font-display text-lg font-bold tracking-tight text-primary">xyz.com</span>
+          <span className="font-display text-lg font-bold tracking-tight text-primary">shikshasync.me</span>
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">

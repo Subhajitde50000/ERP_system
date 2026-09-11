@@ -1533,7 +1533,7 @@ class ParentLinkService:
                 "name": parent.name,
                 "tenant_name": tenant.name,
                 "student_name": child.name,
-                "login_url": f"https://{tenant.slug}.{get_settings().PUBLIC_ROOT_DOMAIN or 'xyz.com'}/login",
+                "login_url": f"https://{tenant.slug}.{get_settings().PUBLIC_ROOT_DOMAIN or 'shikshasync.me'}/login",
             },
             tenant_id=tenant.id,
         )
@@ -2058,7 +2058,7 @@ class ParentLinkService:
 
         link_url = (
             f"https://{tenant.slug}."
-            f"{get_settings().PUBLIC_ROOT_DOMAIN or 'xyz.com'}/reset-password?token={raw_token}"
+            f"{get_settings().PUBLIC_ROOT_DOMAIN or 'shikshasync.me'}/reset-password?token={raw_token}"
         )
         queue_email(
             db,
@@ -2096,7 +2096,7 @@ class ParentLinkService:
         """
         if not link_row.parent_email:
             return
-        root = get_settings().PUBLIC_ROOT_DOMAIN or "xyz.com"
+        root = get_settings().PUBLIC_ROOT_DOMAIN or "shikshasync.me"
         queue_email(
             db,
             "parent.link_invited",

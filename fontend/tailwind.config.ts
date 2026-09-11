@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 /**
- * xyz.com ERP + LMS design tokens — login_page_design.md §3, §12
+ * shikshasync.me ERP + LMS design tokens — login_page_design.md §3, §12
  * Every brand colour lives here so all 15 modules stay consistent.
  */
 const config: Config = {

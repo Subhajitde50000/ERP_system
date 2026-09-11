@@ -1,5 +1,5 @@
 /**
- * Platform Owner API client — the xyz.com customer-account layer.
+ * Platform Owner API client — the shikshasync.me customer-account layer.
  *
  * One owner owns many institutions. This client backs the owner signup → verify
  * email → platform dashboard flow: My Institutions, Billing, Subscriptions,

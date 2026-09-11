@@ -10,7 +10,7 @@ import {
 import { OwnerAuthProvider, useOwnerAuth } from "@/hooks/use-owner-auth";
 
 /**
- * Platform console session gate — `app.xyz.com`.
+ * Platform console session gate — `app.shikshasync.me`.
  *
  * Every page under `(platform)` reads live data over an authenticated API, so
  * the console needs a session provider and a redirect for anonymous visitors.

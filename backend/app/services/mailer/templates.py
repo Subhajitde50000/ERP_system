@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from html import escape
 from typing import Any
 
-BRAND = "xyz.com ERP"
+BRAND = "shikshasync.me ERP"
 
 
 @dataclass(slots=True)

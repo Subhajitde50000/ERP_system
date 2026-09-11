@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Owner console data hooks — the xyz.com account-holder's dashboard.
+ * Owner console data hooks — the shikshasync.me account-holder's dashboard.
  *
  * Thin bindings over the shared `useResource` primitive, exactly like the
  * Super Admin hooks: one place owns loading/error/refetch, so neither console

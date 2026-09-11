@@ -7,22 +7,22 @@ import { OwnerAuthProvider } from "@/hooks/use-owner-auth";
 
 export const metadata: Metadata = {
   title: "Sign in · Platform account",
-  description: "Sign in to your xyz.com platform account.",
+  description: "Sign in to your shikshasync.me platform account.",
   robots: { index: false, follow: false },
 };
 
 /**
- * Owner (platform) login — the xyz.com "Platform Login" door.
+ * Owner (platform) login — the shikshasync.me "Platform Login" door.
  *
- *   xyz.com/login        → this page (owner / customer account)
- *   green.xyz.com/login  → institution login (/login) — daily ERP
- *   app.xyz.com/login    → staff console (/platform/login)
+ *   shikshasync.me/login        → this page (owner / customer account)
+ *   green.shikshasync.me/login  → institution login (/login) — daily ERP
+ *   app.shikshasync.me/login    → staff console (/platform/login)
  *
- * Behind the real DNS split, rewrite `xyz.com/login` to `/account/login`:
+ * Behind the real DNS split, rewrite `shikshasync.me/login` to `/account/login`:
  *
  *     // next.config.mjs
  *     async rewrites() {
- *       return [{ source: "/login", has: [{ type: "host", value: "xyz.com" }], destination: "/account/login" }];
+ *       return [{ source: "/login", has: [{ type: "host", value: "shikshasync.me" }], destination: "/account/login" }];
  *     }
  */
 export default function OwnerLoginPage() {

@@ -129,7 +129,7 @@ export default function LoginScreen() {
   function handleContactAdmin() {
     Alert.alert(
       "Contact Institution Admin",
-      "Your Institution Admin is your school or college IT administrator, Registrar, or Academic Office.\n\n• If you need your Institution Code, check your admission confirmation email or portal URL (e.g. abc-college.xyz.com).\n• If you cannot access your account or reset your password, contact your campus helpdesk or teacher to reset it directly.",
+      "Your Institution Admin is your school or college IT administrator, Registrar, or Academic Office.\n\n• If you need your Institution Code, check your admission confirmation email or portal URL (e.g. abc-college.shikshasync.me).\n• If you cannot access your account or reset your password, contact your campus helpdesk or teacher to reset it directly.",
       [{ text: "Got it" }]
     );
   }

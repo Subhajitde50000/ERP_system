@@ -6,7 +6,7 @@ import type { MetadataRoute } from "next";
  * feature, pricing, and compliance routes with priority and update frequencies.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://xyz.com";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://shikshasync.me";
   const lastModified = new Date();
 
   const publicRoutes: {

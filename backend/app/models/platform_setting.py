@@ -47,8 +47,8 @@ class PlatformSetting(Base):
 # `product_name` etc. are strings; `trial_length_days` is coerced to int by the
 # service. Any key absent from the table reads back as its default here.
 PLATFORM_SETTING_DEFAULTS: dict[str, str] = {
-    "product_name": "xyz.com",
-    "support_email": "support@xyz.com",
+    "product_name": "shikshasync.me",
+    "support_email": "support@shikshasync.me",
     "default_timezone": "Asia/Kolkata",
     "default_currency": "INR",
     "trial_length_days": "14",

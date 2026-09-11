@@ -124,7 +124,7 @@ jobs:
       - name: Run Next.js Build Check
         env:
           NEXT_PUBLIC_API_URL: http://localhost:8000
-          NEXT_PUBLIC_ROOT_DOMAIN: xyz.com
+          NEXT_PUBLIC_ROOT_DOMAIN: shikshasync.me
           NEXT_TELEMETRY_DISABLED: 1
         run: npm run build
 
@@ -156,4 +156,4 @@ jobs:
           tags: erp-frontend:test
           build-args: |
             NEXT_PUBLIC_API_URL=http://localhost:8000
-            NEXT_PUBLIC_ROOT_DOMAIN=xyz.com
+            NEXT_PUBLIC_ROOT_DOMAIN=shikshasync.me

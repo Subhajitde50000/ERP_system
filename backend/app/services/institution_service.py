@@ -1968,7 +1968,7 @@ class InstitutionService:
 
     @staticmethod
     async def _queue_invite_email(db, tenant: Tenant, user: User, raw_token: str) -> None:
-        domain = get_app_settings().PUBLIC_ROOT_DOMAIN or "xyz.com"
+        domain = get_app_settings().PUBLIC_ROOT_DOMAIN or "shikshasync.me"
         link = f"https://{tenant.slug}.{domain}/reset-password?token={raw_token}"
         queue_email(
             db,

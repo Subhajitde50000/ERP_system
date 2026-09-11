@@ -5,7 +5,7 @@ import { LandingPage } from "@/components/marketing/landing-page";
 export const metadata: Metadata = {
   title: "Connected operations for education institutions",
   description:
-    "Explore xyz.com, the connected ERP and learning platform for schools, colleges and universities.",
+    "Explore shikshasync.me, the connected ERP and learning platform for schools, colleges and universities.",
   robots: { index: true, follow: true },
 };
 

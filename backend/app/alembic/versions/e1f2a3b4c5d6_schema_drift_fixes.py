@@ -208,8 +208,8 @@ def upgrade() -> None:
         )
     )
     for key, value in [
-        ("product_name",     "xyz.com"),
-        ("support_email",    "support@xyz.com"),
+        ("product_name",     "shikshasync.me"),
+        ("support_email",    "support@shikshasync.me"),
         ("default_timezone", "Asia/Kolkata"),
         ("default_currency", "INR"),
         ("trial_length_days","14"),

@@ -3,9 +3,9 @@ import type { ModuleKey, PlatformRole } from "./auth";
 /**
  * Platform console contracts — the Super Admin pages (C-SA-01…C-SA-08).
  *
- * These live at **`app.xyz.com`**, not on an institution subdomain
+ * These live at **`app.shikshasync.me`**, not on an institution subdomain
  * (`complete_webpage_developer_assignment.md` §2: "These pages live at
- * app.xyz.com — not institution subdomains · Next.js route prefix
+ * app.shikshasync.me — not institution subdomains · Next.js route prefix
  * `app/(platform)/`").
  *
  * Mirrors the Layer 1 tables in `database_design_complete.md`:
@@ -41,7 +41,7 @@ export type SubscriptionStatus = "TRIAL" | "ACTIVE" | "PAST_DUE" | "CANCELLED";
 export interface TenantRow {
   id: string;
   name: string;
-  /** Subdomain — `abc-college.xyz.com` */
+  /** Subdomain — `abc-college.shikshasync.me` */
   slug: string;
   type: TenantType;
   planName: string;

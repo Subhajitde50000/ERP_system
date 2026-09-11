@@ -539,7 +539,7 @@ class AuthService:
         await db.flush()
 
         # Build the tenant-scoped reset URL: https://{slug}.{root_domain}/reset-password?token=...
-        root = settings.PUBLIC_ROOT_DOMAIN or "xyz.com"
+        root = settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me"
         reset_url = f"https://{tenant.slug}.{root}/reset-password?token={raw_token}"
 
         # Queue the reset email inside the same transaction — the outbox worker

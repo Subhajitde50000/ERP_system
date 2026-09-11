@@ -5,9 +5,9 @@ import { ShieldCheck, Mail, Lock, UserCheck, EyeOff, FileText, AlertTriangle } f
 import { MarketingShell, Section, SectionHeading } from "@/components/marketing/marketing-shell";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy — xyz.com ERP & Learning Platform",
+  title: "Privacy Policy — shikshasync.me ERP & Learning Platform",
   description:
-    "How xyz.com Technologies Private Limited collects, processes, protects, and handles personal data under the India DPDP Act 2023, GDPR, and international data protection standards.",
+    "How shikshasync.me Technologies Private Limited collects, processes, protects, and handles personal data under the India DPDP Act 2023, GDPR, and international data protection standards.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -17,7 +17,7 @@ export default function PrivacyPolicyPage() {
         <SectionHeading
           eyebrow="Legal & Compliance"
           title="Privacy Policy"
-          lede="xyz.com is built with tenant isolation and data privacy at its architectural foundation. This policy details how we handle personal data for institutions, educators, students, and parents."
+          lede="shikshasync.me is built with tenant isolation and data privacy at its architectural foundation. This policy details how we handle personal data for institutions, educators, students, and parents."
         />
         <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">
@@ -107,7 +107,7 @@ export default function PrivacyPolicyPage() {
                   1. Scope & Legal Relationship
                 </h2>
                 <p>
-                  This Privacy Policy applies to all services, web applications, mobile applications, APIs, and portals operated by <strong>xyz.com Technologies Private Limited</strong> (&ldquo;xyz.com&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;).
+                  This Privacy Policy applies to all services, web applications, mobile applications, APIs, and portals operated by <strong>shikshasync.me Technologies Private Limited</strong> (&ldquo;shikshasync.me&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;).
                 </p>
                 <p>
                   In the context of the <strong>Digital Personal Data Protection Act, 2023 (DPDP Act)</strong> of India and the <strong>General Data Protection Regulation (GDPR)</strong>:
@@ -116,13 +116,13 @@ export default function PrivacyPolicyPage() {
                   <div className="rounded-card border border-border bg-white p-4">
                     <p className="font-semibold text-primary">When you are an Institution (Customer):</p>
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      The Educational Institution is the <strong>Data Fiduciary (Data Controller)</strong> that determines the purposes of student and staff record processing. xyz.com acts strictly as the <strong>Data Processor</strong> carrying out processing in accordance with the institution&apos;s agreement.
+                      The Educational Institution is the <strong>Data Fiduciary (Data Controller)</strong> that determines the purposes of student and staff record processing. shikshasync.me acts strictly as the <strong>Data Processor</strong> carrying out processing in accordance with the institution&apos;s agreement.
                     </p>
                   </div>
                   <div className="rounded-card border border-border bg-white p-4">
                     <p className="font-semibold text-primary">When you register an Account directly:</p>
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      For institutional administrators, account-holders who sign up on our website, and prospective clients submitting service inquiries, xyz.com acts as the <strong>Data Fiduciary (Data Controller)</strong> regarding account credentials and billing records.
+                      For institutional administrators, account-holders who sign up on our website, and prospective clients submitting service inquiries, shikshasync.me acts as the <strong>Data Fiduciary (Data Controller)</strong> regarding account credentials and billing records.
                     </p>
                   </div>
                 </div>
@@ -184,7 +184,7 @@ export default function PrivacyPolicyPage() {
                   <li className="flex items-start gap-2.5">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
                     <span>
-                      <strong>Verifiable Parental Consent:</strong> Educational institutions using xyz.com collect and maintain verifiable consent from parents or lawful guardians prior to enrolling minor students (individuals under the age of 18) onto the platform.
+                      <strong>Verifiable Parental Consent:</strong> Educational institutions using shikshasync.me collect and maintain verifiable consent from parents or lawful guardians prior to enrolling minor students (individuals under the age of 18) onto the platform.
                     </span>
                   </li>
                   <li className="flex items-start gap-2.5">
@@ -371,7 +371,7 @@ export default function PrivacyPolicyPage() {
                     </li>
                   </ul>
                   <p className="pt-2 text-xs text-muted-foreground border-t border-border">
-                    * For student records uploaded by an institution, requests should primarily be submitted directly to the school or college administration. xyz.com will assist institutions promptly in fulfilling legitimate requests.
+                    * For student records uploaded by an institution, requests should primarily be submitted directly to the school or college administration. shikshasync.me will assist institutions promptly in fulfilling legitimate requests.
                   </p>
                 </div>
               </section>
@@ -395,7 +395,7 @@ export default function PrivacyPolicyPage() {
                         Grievance Redressal & Privacy Officer
                       </p>
                       <p className="mt-1 text-xs text-slate-600">
-                        xyz.com Technologies Private Limited
+                        shikshasync.me Technologies Private Limited
                       </p>
                       <p className="mt-0.5 text-xs text-slate-500">
                         CIN: U72900KA2024PTC189421
@@ -404,13 +404,13 @@ export default function PrivacyPolicyPage() {
                       <div className="mt-4 space-y-1.5 text-xs">
                         <p className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-accent" />
-                          <a href="mailto:grievance@xyz.com" className="text-accent font-semibold hover:underline">
-                            grievance@xyz.com
+                          <a href="mailto:grievance@shikshasync.me" className="text-accent font-semibold hover:underline">
+                            grievance@shikshasync.me
                           </a>
                         </p>
                         <p className="flex items-center gap-2 text-slate-600">
                           <FileText className="h-4 w-4 text-slate-400" />
-                          <span>Legal & Compliance: legal@xyz.com</span>
+                          <span>Legal & Compliance: legal@shikshasync.me</span>
                         </p>
                       </div>
                     </div>

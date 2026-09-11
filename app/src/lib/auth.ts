@@ -1,5 +1,5 @@
 /**
- * Auth API client — xyz.com ERP + LMS (mobile port of fontend/lib/auth.ts)
+ * Auth API client — shikshasync.me ERP + LMS (mobile port of fontend/lib/auth.ts)
  *
  * All calls go to the FastAPI backend at EXPO_PUBLIC_API_URL. The institution
  * slug is typed on the login screen (the website resolves it from the

@@ -59,11 +59,11 @@ export function SiteFooter() {
       <div className="mx-auto max-w-7xl px-5 py-14 sm:px-8 lg:px-10">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(5,1fr)]">
           <div className="max-w-xs">
-            <Link href="/" className="flex items-center gap-2" aria-label="xyz.com home">
+            <Link href="/" className="flex items-center gap-2" aria-label="shikshasync.me home">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-primary">
                 <GraduationCap className="h-5 w-5" aria-hidden="true" />
               </span>
-              <span className="font-display text-lg font-bold text-white">xyz.com</span>
+              <span className="font-display text-lg font-bold text-white">shikshasync.me</span>
             </Link>
             <p className="mt-4 text-sm leading-6 text-slate-400">
               The connected ERP and learning platform for schools, colleges and universities — one
@@ -92,7 +92,7 @@ export function SiteFooter() {
 
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-1">
-            <span>© {new Date().getFullYear()} xyz.com Technologies Private Limited. Education, connected.</span>
+            <span>© {new Date().getFullYear()} shikshasync.me Technologies Private Limited. Education, connected.</span>
             <span className="text-[11px] text-slate-500">
               CIN: U72900KA2024PTC189421 · GSTIN: 29AABCX1234F1Z9 · Bengaluru, Karnataka, India
             </span>

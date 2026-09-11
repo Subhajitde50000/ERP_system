@@ -1,6 +1,6 @@
 # Institution Admin — Simple User Guide
 
-This guide is for the person who runs the institution on xyz.com — the principal,
+This guide is for the person who runs the institution on shikshasync.me — the principal,
 the office administrator, or whoever was given the **Institution Admin** role.
 You do not need to be technical. Read this once and you will know how to run
 your school or college on the platform.
@@ -13,10 +13,10 @@ It is your control room. After you sign in, everything about your institution �
 classes, staff, students, modules, settings — is managed from one place, at:
 
 ```
-https://<your-institution>.xyz.com/admin/dashboard
+https://<your-institution>.shikshasync.me/admin/dashboard
 ```
 
-For example, Green College's admin works at `green.xyz.com/admin/dashboard`.
+For example, Green College's admin works at `green.shikshasync.me/admin/dashboard`.
 
 Only people with the **Institution Admin** role can open it. Everyone else is
 sent to the normal login screen.
@@ -25,7 +25,7 @@ sent to the normal login screen.
 
 ## Step 0 — How to sign in
 
-1. Open your institution's login page, e.g. `https://green.xyz.com/login`.
+1. Open your institution's login page, e.g. `https://green.shikshasync.me/login`.
 2. Enter your **email** and **password** (given to you by the platform team or
    set from your invite email).
 3. You will land on the **Dashboard**.
@@ -157,8 +157,8 @@ Go to **Modules**. You will see all available features.
     means that module is not in your subscription. Ask the account owner to
     upgrade the plan.
 
-> The person who owns the xyz.com **account** (the one who pays the bill) manages
-> plans and billing from their own dashboard at `xyz.com` — that is a separate
+> The person who owns the shikshasync.me **account** (the one who pays the bill) manages
+> plans and billing from their own dashboard at `shikshasync.me` — that is a separate
 > login from this admin console.
 
 ---
@@ -195,7 +195,7 @@ the database, or you can invite them again with the same email.
 
 **Can two institutions share one login?**
 No. Each institution has its own secure login at its own address
-(`green.xyz.com`, `abc-school.xyz.com`). But the **owner account** at `xyz.com`
+(`green.shikshasync.me`, `abc-school.shikshasync.me`). But the **owner account** at `shikshasync.me`
 can manage and pay for several institutions from one place.
 
 **I made a mistake — can I delete things?**
@@ -204,7 +204,7 @@ you can deactivate staff. Students and classes can be removed by your platform
 team if needed.
 
 **Something is broken. Who do I call?**
-Use **Support Tickets** from the owner dashboard (`xyz.com`), or contact your
+Use **Support Tickets** from the owner dashboard (`shikshasync.me`), or contact your
 platform team. Describe what you did and what you saw.
 
 ---

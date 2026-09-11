@@ -14,7 +14,7 @@ import { API_BASE_URL } from "./auth";
 
 /** Root domain; override per-environment with NEXT_PUBLIC_ROOT_DOMAIN. */
 export const ROOT_DOMAIN =
-  process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "xyz.com";
+  process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "shikshasync.me";
 
 /** Hosts that never carry a tenant slug. */
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "0.0.0.0", "[::1]"]);
@@ -46,11 +46,11 @@ const FIXTURE_TENANTS: Record<string, Omit<Tenant, "host" | "slug">> = {
   },
 };
 
-/** The platform console tenant (app.xyz.com). */
+/** The platform console tenant (app.shikshasync.me). */
 function platformTenant(host: string): Tenant {
   return {
     slug: "app",
-    name: "xyz.com Platform",
+    name: "shikshasync.me Platform",
     host,
     type: "PLATFORM",
     isPlatform: true,
@@ -130,7 +130,7 @@ async function fetchTenantBySlug(
  * Resolve a Host header into the tenant the login page should render for.
  * Async because it calls the API in production.
  *
- * @param host  Raw Host header, e.g. "abc-college.xyz.com"
+ * @param host  Raw Host header, e.g. "abc-college.shikshasync.me"
  * @param slugOverride  Optional ?tenant= query value, for local development
  */
 export async function resolveTenant(
@@ -178,7 +178,7 @@ export function identifierLabel(tenant: Tenant): string {
 }
 
 export function identifierPlaceholder(tenant: Tenant): string {
-  if (tenant.isPlatform) return "you@xyz.com";
+  if (tenant.isPlatform) return "you@shikshasync.me";
   if (tenant.type === "SCHOOL") return "you@school.edu or ADM1024";
   return "you@college.edu or ROLL123";
 }

@@ -136,7 +136,7 @@ To enable HTTPS on your production domain:
 2. Issue wildcard SSL certificate:
    ```bash
    sudo certbot certonly --manual --preferred-challenges=dns \
-     -d "xyz.com" -d "*.xyz.com"
+     -d "shikshasync.me" -d "*.shikshasync.me"
    ```
 
 3. Mount your certificates into `./certbot/conf` and update `nginx/default.conf` to enable HTTPS listening on port 443.

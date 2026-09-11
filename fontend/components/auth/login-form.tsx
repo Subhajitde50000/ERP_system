@@ -112,7 +112,7 @@ export function LoginForm({ tenant }: { tenant: Tenant }) {
         </h1>
         <p className="mt-1 text-[13px] text-[#64748B]">
           {tenant.isPlatform
-            ? "Sign in to the xyz.com platform console"
+            ? "Sign in to the shikshasync.me platform console"
             : "Sign in to your institution account"}
         </p>
       </div>

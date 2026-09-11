@@ -28,11 +28,11 @@ psql -f database/update2.sql          # ← §8 adds the Support schema
 cd backend && alembic upgrade head
 ```
 
-Create a Support account, then sign in at `app.xyz.com/platform/login`:
+Create a Support account, then sign in at `app.shikshasync.me/platform/login`:
 
 ```bash
 python backend/scripts/create_superadmin.py \
-  --email support@xyz.com --password 'StrongPass!' --name "Support Agent"
+  --email support@shikshasync.me --password 'StrongPass!' --name "Support Agent"
 # then set platform_role = 'SUPPORT'
 ```
 
@@ -146,7 +146,7 @@ and fail if either drifts.
 - `CURRENT_AGENT = { id: "pu-2", name: "Nandini Rao" }` — every agent saw that
   name on the reply box, and "assigned to me" filtered on somebody else's id.
   Now from the platform session.
-- `{slug}.xyz.com` in the read-only view → `tenantHost()`.
+- `{slug}.shikshasync.me` in the read-only view → `tenantHost()`.
 - `lib/support-data.ts` (352 lines) deleted as dead code.
 
 ---

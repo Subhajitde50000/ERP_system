@@ -1,5 +1,5 @@
 /**
- * Auth API client — xyz.com ERP + LMS
+ * Auth API client — shikshasync.me ERP + LMS
  *
  * All calls go to the FastAPI backend at NEXT_PUBLIC_API_URL.
  * The slug (institution subdomain) is resolved before calls are made and

@@ -8,7 +8,7 @@ import { AUDIENCES } from "@/lib/marketing";
 export const metadata: Metadata = {
   title: "Solutions — for schools, colleges, universities and groups",
   description:
-    "xyz.com adapts to your structure: K-12 schools, colleges, multi-faculty universities and multi-campus groups, all under one platform account.",
+    "shikshasync.me adapts to your structure: K-12 schools, colleges, multi-faculty universities and multi-campus groups, all under one platform account.",
 };
 
 export default function SolutionsPage() {
@@ -18,7 +18,7 @@ export default function SolutionsPage() {
         <SectionHeading
           eyebrow="Solutions"
           title="Shaped to how your institution actually works."
-          lede="Whether you run a single school or a multi-campus group, xyz.com adapts to your structure — one account manages them all."
+          lede="Whether you run a single school or a multi-campus group, shikshasync.me adapts to your structure — one account manages them all."
           align="center"
         />
       </Section>

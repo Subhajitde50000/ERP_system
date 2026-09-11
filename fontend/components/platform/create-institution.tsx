@@ -19,7 +19,7 @@ import type { PlanRow, TenantRow } from "@/types/platform";
  * The slug is the tenant's subdomain, so it is validated hard: lowercase
  * a–z/0–9/hyphen only, not already taken, and not one of the reserved names
  * `lib/tenant.ts` routes to the platform console itself. Getting this wrong
- * would make the new tenant unreachable or shadow `app.xyz.com`.
+ * would make the new tenant unreachable or shadow `app.shikshasync.me`.
  */
 export function CreateInstitution({
   plans,

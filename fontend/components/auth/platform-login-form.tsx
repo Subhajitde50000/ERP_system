@@ -12,11 +12,11 @@ import { PLATFORM_ROLE_HOME, PLATFORM_ROLE_LABELS } from "@/lib/platform";
 import { AuthError } from "@/types/auth";
 
 /**
- * Platform console sign-in — `app.xyz.com/login`.
+ * Platform console sign-in — `app.shikshasync.me/login`.
  *
  * `login_page_design.md` §1 requires the page to serve
- * "`app.xyz.com` → Platform roles (Super Admin, Support, Sales, Finance)",
- * and §8 redirects `SUPER_ADMIN → app.xyz.com/dashboard`. The eight platform
+ * "`app.shikshasync.me` → Platform roles (Super Admin, Support, Sales, Finance)",
+ * and §8 redirects `SUPER_ADMIN → app.shikshasync.me/dashboard`. The eight platform
  * pages were built but nothing signed anyone in to them; this is that door.
  *
  * Reuses `TextField`, `Button` and `FormAlert` — the palette, the 44px
@@ -150,7 +150,7 @@ export function PlatformLoginForm() {
           name="email"
           type="email"
           label="Work email"
-          placeholder="you@xyz.com"
+          placeholder="you@shikshasync.me"
           autoComplete="username"
           autoCapitalize="none"
           spellCheck={false}

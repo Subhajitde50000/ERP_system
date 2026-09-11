@@ -1,6 +1,6 @@
-# xyz.com ERP + LMS — Student & Teacher app (React Native)
+# shikshasync.me ERP + LMS — Student & Teacher app (React Native)
 
-Mobile app for the **Student** and **Teacher** consoles of the xyz.com ERP + LMS.
+Mobile app for the **Student** and **Teacher** consoles of the shikshasync.me ERP + LMS.
 It is a React Native (Expo + expo-router) port of those sides of the website in
 `../fontend` — same screens, same design tokens, same API endpoints, so the
 app UI matches the website UI one-to-one.

@@ -5,9 +5,9 @@ import { RefreshCw, CheckCircle, CreditCard, School } from "lucide-react";
 import { MarketingShell, Section, SectionHeading } from "@/components/marketing/marketing-shell";
 
 export const metadata: Metadata = {
-  title: "Refund & Cancellation Policy — xyz.com",
+  title: "Refund & Cancellation Policy — shikshasync.me",
   description:
-    "Transparent refund and cancellation terms for xyz.com platform subscriptions, free trial protections, and institutional student fee payment guidelines.",
+    "Transparent refund and cancellation terms for shikshasync.me platform subscriptions, free trial protections, and institutional student fee payment guidelines.",
 };
 
 export default function RefundPolicyPage() {
@@ -119,7 +119,7 @@ export default function RefundPolicyPage() {
                   <div className="rounded-card border border-border bg-white p-4">
                     <p className="font-bold text-primary">Support Request</p>
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      Email <a href="mailto:billing@xyz.com" className="text-accent underline font-semibold">billing@xyz.com</a> from your registered account owner email. Our team processes requests within one business day.
+                      Email <a href="mailto:billing@shikshasync.me" className="text-accent underline font-semibold">billing@shikshasync.me</a> from your registered account owner email. Our team processes requests within one business day.
                     </p>
                   </div>
                 </div>
@@ -156,7 +156,7 @@ export default function RefundPolicyPage() {
                         4. Crucial Notice: Student Tuition & Institution Fee Payments
                       </h2>
                       <p className="mt-2 text-xs leading-6 text-blue-800">
-                        Please read carefully if you are a parent, student, or guardian making fee payments through the xyz.com portal:
+                        Please read carefully if you are a parent, student, or guardian making fee payments through the shikshasync.me portal:
                       </p>
                     </div>
                   </div>
@@ -164,13 +164,13 @@ export default function RefundPolicyPage() {
 
                 <div className="rounded-card border border-border bg-white p-5 space-y-3 text-xs text-slate-700">
                   <p>
-                    <strong>A. Technology Intermediary Role:</strong> xyz.com Technologies Private Limited acts strictly as the software provider and technology intermediary connecting educational institutions with certified payment aggregators. All tuition fees, admission deposits, hostel charges, laboratory fees, and examination dues paid through the portal are deposited directly into the institution&apos;s designated bank account.
+                    <strong>A. Technology Intermediary Role:</strong> shikshasync.me Technologies Private Limited acts strictly as the software provider and technology intermediary connecting educational institutions with certified payment aggregators. All tuition fees, admission deposits, hostel charges, laboratory fees, and examination dues paid through the portal are deposited directly into the institution&apos;s designated bank account.
                   </p>
                   <p>
                     <strong>B. Institutional Refund Autonomy:</strong> All refund requests for student fees (such as school withdrawals, fee adjustments, or scholarship concessions) are governed exclusively by the independent fee refund policy of the respective school, college, or university.
                   </p>
                   <p>
-                    <strong>C. Procedure for Student Fee Refunds:</strong> xyz.com cannot unilaterally issue refunds for institutional fees without written authorization from the school administration. Parents and students must submit fee refund applications directly to their school&apos;s administrative office or accounts department.
+                    <strong>C. Procedure for Student Fee Refunds:</strong> shikshasync.me cannot unilaterally issue refunds for institutional fees without written authorization from the school administration. Parents and students must submit fee refund applications directly to their school&apos;s administrative office or accounts department.
                   </p>
                 </div>
               </section>
@@ -185,7 +185,7 @@ export default function RefundPolicyPage() {
                 </p>
                 <div className="rounded-card border border-border bg-white p-5 text-xs text-slate-700 space-y-2">
                   <p>• Institutions may claim service credits or pro-rata invoice adjustments against subsequent billing cycles.</p>
-                  <p>• Service credit claims must be submitted to <a href="mailto:support@xyz.com" className="text-accent underline font-semibold">support@xyz.com</a> within fifteen (15) days of the verified outage incident.</p>
+                  <p>• Service credit claims must be submitted to <a href="mailto:support@shikshasync.me" className="text-accent underline font-semibold">support@shikshasync.me</a> within fifteen (15) days of the verified outage incident.</p>
                   <p>• Downtime caused by client-side network failures, third-party internet service providers, or scheduled maintenance windows announced in advance are excluded.</p>
                 </div>
               </section>
@@ -226,14 +226,14 @@ export default function RefundPolicyPage() {
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="font-semibold text-primary">Finance & Billing Helpdesk</p>
-                      <p className="text-xs text-muted-foreground">xyz.com Technologies Private Limited</p>
+                      <p className="text-xs text-muted-foreground">shikshasync.me Technologies Private Limited</p>
                     </div>
                     <div className="text-xs">
                       <a
-                        href="mailto:billing@xyz.com"
+                        href="mailto:billing@shikshasync.me"
                         className="inline-flex items-center gap-1.5 font-bold text-accent hover:underline"
                       >
-                        billing@xyz.com
+                        billing@shikshasync.me
                       </a>
                     </div>
                   </div>

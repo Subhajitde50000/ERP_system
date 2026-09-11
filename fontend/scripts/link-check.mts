@@ -343,7 +343,7 @@ for (const [path, label] of PUBLIC_PAGES) {
   publicRows.push({ page: label, url, want, got: outcome, status, ok });
 }
 
-/* ── Platform console (app.xyz.com) — C-SA-01…08 ───────────────────────── */
+/* ── Platform console (app.shikshasync.me) — C-SA-01…08 ───────────────────────── */
 
 const PLATFORM_PAGES: [string, string][] = [
   ["/platform/dashboard", "Platform Dashboard (C-SA-01)"],

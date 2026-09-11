@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Owner account sign-up — the first step of the xyz.com customer journey:
+ * Owner account sign-up — the first step of the shikshasync.me customer journey:
  *
  *   Sign Up (Name, Email, Password) → Verify Email → Platform Dashboard
  *
