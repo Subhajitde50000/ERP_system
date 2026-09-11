@@ -1,6 +1,0 @@
-teacher can close assiment submition but cnat reopen.
-sfter submition student can't not able to reopen but the teacsher not approvew      
-
--------------------             ----------------------
-WHEN TEACHER REVIEW QUESTION CANT SEE ANY QUESTION ONLYY THE SQUER
-STUDENT SADE RESULT UI ISSUE

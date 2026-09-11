@@ -6,7 +6,7 @@ import { SECURITY_POINTS } from "@/lib/marketing";
 export const metadata: Metadata = {
   title: "Security — isolated by design, audited by default",
   description:
-    "Tenant data isolation, origin-bound tokens, role-based access control, encrypted credentials and audit logging — how xyz.com keeps institution data safe.",
+    "Tenant data isolation, origin-bound tokens, role-based access control, encrypted credentials and audit logging — how shikshasync.me keeps institution data safe.",
 };
 
 export default function SecurityPage() {
@@ -16,7 +16,7 @@ export default function SecurityPage() {
         <SectionHeading
           eyebrow="Security & trust"
           title="Isolated by design. Audited by default."
-          lede="xyz.com is multi-tenant by architecture: every institution is a separate tenant with its own data, roles and tokens. Security is not a feature we bolted on — it is how the platform is built."
+          lede="shikshasync.me is multi-tenant by architecture: every institution is a separate tenant with its own data, roles and tokens. Security is not a feature we bolted on — it is how the platform is built."
           align="center"
         />
       </Section>

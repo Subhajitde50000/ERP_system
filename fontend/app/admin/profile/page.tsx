@@ -66,7 +66,7 @@ export default function ProfilePage() {
               <div>
                 <p className="font-display text-lg font-bold text-primary">{profile.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {profile.slug}.xyz.com · {profile.type}
+                  {profile.slug}.shikshasync.me · {profile.type}
                 </p>
               </div>
               <div className="ml-auto text-right text-xs text-muted-foreground">

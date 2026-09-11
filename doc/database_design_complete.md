@@ -1,6 +1,6 @@
 # ERP + LMS Platform — Complete Database Design
 
-> Platform: xyz.com Multi-Tenant ERP + LMS  
+> Platform: shikshasync.me Multi-Tenant ERP + LMS  
 > Database: PostgreSQL 15  
 > ORM: Prisma  
 > Version: 1.0  

@@ -1,6 +1,6 @@
-# MANUAL.md — xyz.com ERP Platform
+# MANUAL.md — shikshasync.me ERP Platform
 
-End-to-end operations manual for the xyz.com multi-tenant ERP + LMS platform.
+End-to-end operations manual for the shikshasync.me multi-tenant ERP + LMS platform.
 Read this before deploying. It covers architecture, setup, the three login
 systems, the live admin features, the API, and the production checklist.
 
@@ -15,7 +15,7 @@ on AWS / Shopify / Zoho:
   `rahul@gmail.com`) signs up once and runs Green College, ABC School and XYZ
   Academy under a single account, with consolidated billing and support.
 - **Each institution is an isolated tenant** with its own subdomain
-  (`green.xyz.com`), data, roles and modules.
+  (`green.shikshasync.me`), data, roles and modules.
 - **16 modules** — 8 core (always on) + 8 optional (plan-gated).
 
 There are **three identity tables / three login systems**, each with its own JWT
@@ -23,9 +23,9 @@ type so a token from one is never accepted by another:
 
 | Identity | Table | Logs in at | JWT type | Purpose |
 |---|---|---|---|---|
-| Platform **staff** | `platform_users` | `/platform/login` (`app.xyz.com`) | `platform` | Super Admin / Support / Sales / Finance run xyz.com |
-| Platform **owner** (customer) | `platform_owners` | `/account/login` (`xyz.com/login`) | `owner` | Owns institutions, billing, subscriptions, support |
-| Institution **members** | `users` | `/login` (`green.xyz.com/login`) | `tenant` | Daily ERP: students, teachers, admins, … |
+| Platform **staff** | `platform_users` | `/platform/login` (`app.shikshasync.me`) | `platform` | Super Admin / Support / Sales / Finance run shikshasync.me |
+| Platform **owner** (customer) | `platform_owners` | `/account/login` (`shikshasync.me/login`) | `owner` | Owns institutions, billing, subscriptions, support |
+| Institution **members** | `users` | `/login` (`green.shikshasync.me/login`) | `tenant` | Daily ERP: students, teachers, admins, … |
 
 ---
 
@@ -105,7 +105,7 @@ demo credentials.
 Create platform **staff** (Super Admin etc.) separately:
 
 ```bash
-python scripts/create_superadmin.py --email admin@xyz.com --password 'StrongPass!' --name "Super Admin"
+python scripts/create_superadmin.py --email admin@shikshasync.me --password 'StrongPass!' --name "Super Admin"
 ```
 
 ### 4.3 Frontend
@@ -130,13 +130,13 @@ npm run dev                     # http://localhost:3000
 
 ## 5. The three login systems
 
-### 5.1 Owner (customer) — `xyz.com/login` → `/account/login`
+### 5.1 Owner (customer) — `shikshasync.me/login` → `/account/login`
 - `POST /api/v1/owner/signup` → `POST /owner/verify-email` → `POST /owner/login`.
 - Email **must** be verified before login is allowed.
 - Owns institutions, billing, subscriptions, invoices, payments, support tickets,
   profile. See `doc/PLATFORM-OWNER-ACCOUNTS.md`.
 
-### 5.2 Institution member — `green.xyz.com/login` → `/login`
+### 5.2 Institution member — `green.shikshasync.me/login` → `/login`
 - `POST /api/v1/tenant/auth/login` `{ slug, identifier, password }`.
 - `identifier` is an **email or roll number**. JWT is bound to the tenant
   (`tenant_id`) and the origin — replaying it against another institution fails.
@@ -145,12 +145,12 @@ npm run dev                     # http://localhost:3000
 - Vice Principals land on `/vp/dashboard`; an active delegated department scope is required.
 - HODs land on `/hod/dashboard`; a department HOD assignment creates their scoped access automatically.
 
-### 5.3 Staff (xyz.com employees) — `app.xyz.com/login` → `/platform/login`
+### 5.3 Staff (shikshasync.me employees) — `app.shikshasync.me/login` → `/platform/login`
 - `POST /api/v1/platform/auth/login`. Created via `create_superadmin.py` or seed.
 
 > On a single-origin dev deploy these are three **paths**; in production they are
-> three **hosts** (rewrite `xyz.com/login`→`/account/login`,
-> `app.xyz.com/login`→`/platform/login`, `*.xyz.com/login`→`/login`).
+> three **hosts** (rewrite `shikshasync.me/login`→`/account/login`,
+> `app.shikshasync.me/login`→`/platform/login`, `*.shikshasync.me/login`→`/login`).
 
 ---
 
@@ -297,14 +297,14 @@ scored by policy (≥75% of class duration → Present, 30–74% → Late/Partia
       raw email-verification token from API responses).
 - [ ] **Database** — `database.sql`, `update.sql` **and** `update2.sql` applied (or the validated Alembic path reaches `e7f2a6c3b904`); backups on.
 - [ ] **CORS** — `ALLOWED_ORIGINS` lists only your real origins
-      (`https://xyz.com,https://app.xyz.com`, approved tenant origins).
+      (`https://shikshasync.me,https://app.shikshasync.me`, approved tenant origins).
 - [ ] **Email** — wire an outbound provider to drain `outbox_emails`
       (`tenant.provisioned`, `staff.invited`, `owner.verify_email`). Until then,
       verification/invite links are only visible in dev mode / the DB.
 - [ ] **Payments** — replace the mock gateway in
       `SignupService.mark_paid` with a real Razorpay/Cashfree webhook handler
       (SYSTEM-FLOW §9.1; `UNIQUE(gateway, gateway_ref)` already guards replays).
-- [ ] **DNS / hosts** — apex `xyz.com`, staff `app.xyz.com`, tenant `*.xyz.com`.
+- [ ] **DNS / hosts** — apex `shikshasync.me`, staff `app.shikshasync.me`, tenant `*.shikshasync.me`.
 - [ ] **Frontend build** — `npm run build` in CI. The app uses local/system font stacks, so production builds do not depend on a Google Fonts network fetch.
 - [ ] **Process** — run the backend with `python run.py --prod` (4 workers) or a
       process manager; serve the frontend via `next start` or a CDN.

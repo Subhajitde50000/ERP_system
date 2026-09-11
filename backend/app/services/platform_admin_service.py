@@ -487,7 +487,7 @@ class PlatformAdminService:
             )
         )
 
-        domain = settings.PUBLIC_ROOT_DOMAIN or "xyz.com"
+        domain = settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me"
         scheme = "http" if "localhost" in domain else "https"
         login_url = f"{scheme}://{slug}.{domain}/login"
         queue_email(
@@ -1098,7 +1098,7 @@ class PlatformAdminService:
         return PlatformSettingsOut(
             product_name=values["product_name"],
             support_email=values["support_email"],
-            root_domain=settings.PUBLIC_ROOT_DOMAIN or "xyz.com",
+            root_domain=settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me",
             allowed_modules=modules,
             default_timezone=values["default_timezone"],
             default_currency=values["default_currency"],

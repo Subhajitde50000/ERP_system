@@ -11,7 +11,7 @@ import { usePlatformSession } from "@/hooks/use-platform-session";
 import type { PlatformRole } from "@/types/auth";
 
 /**
- * Platform console shell — `app.xyz.com`.
+ * Platform console shell — `app.shikshasync.me`.
  *
  * Deliberately *not* the institution `DashboardShell`: that one carries an
  * academic-year chip, a notification bell and a search box wired to

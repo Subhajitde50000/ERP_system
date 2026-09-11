@@ -109,7 +109,7 @@ export function TrialList({
           Trials
         </h1>
         <p className="mt-1 text-[13px] text-muted-foreground">
-          Every institution evaluating xyz.com, closest to expiry first.
+          Every institution evaluating shikshasync.me, closest to expiry first.
         </p>
       </div>
 
@@ -215,7 +215,7 @@ function TrialCard({
             <UrgencyChip trial={trial} />
           </div>
           <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 text-[11px] text-muted-foreground">
-            <span className="shrink-0 font-mono">{trial.slug}.xyz.com</span>
+            <span className="shrink-0 font-mono">{trial.slug}.shikshasync.me</span>
             <span className="shrink-0 capitalize">
               · {trial.type.toLowerCase()}
             </span>

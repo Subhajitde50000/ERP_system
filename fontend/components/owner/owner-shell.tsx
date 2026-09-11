@@ -18,7 +18,7 @@ import { useOwnerAuth } from "@/hooks/use-owner-auth";
 import { Button } from "@/components/ui/button";
 
 /**
- * Platform-owner dashboard shell — the xyz.com account console.
+ * Platform-owner dashboard shell — the shikshasync.me account console.
  *
  * Nav mirrors the requested dashboard: My Institutions, Billing (subscriptions,
  * invoices, payments), Support Tickets and Profile, plus the "Create New

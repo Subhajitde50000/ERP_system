@@ -8,7 +8,7 @@ import { FAQS } from "@/lib/marketing";
 export const metadata: Metadata = {
   title: "FAQ — answers to common questions",
   description:
-    "How xyz.com works, pricing, multi-institution accounts, data isolation, implementation and support — answered.",
+    "How shikshasync.me works, pricing, multi-institution accounts, data isolation, implementation and support — answered.",
 };
 
 export default function FaqPage() {
@@ -53,7 +53,7 @@ export default function FaqPage() {
       </section>
 
       <CtaBand
-        title="Try xyz.com free for 14 days."
+        title="Try shikshasync.me free for 14 days."
         body="Create your account, spin up an institution, and explore every module. No card required."
         primary={{ label: "Start free", href: "/signup" }}
         secondary={{ label: "See pricing", href: "/pricing" }}

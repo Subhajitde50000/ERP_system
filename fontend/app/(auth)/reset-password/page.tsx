@@ -9,7 +9,7 @@ import { resolveTenant } from "@/lib/tenant";
 
 export const metadata: Metadata = {
   title: "Set a new password",
-  description: "Choose a new password for your xyz.com account.",
+  description: "Choose a new password for your shikshasync.me account.",
   // A reset link must never be indexed or forwarded to a referrer.
   robots: { index: false, follow: false },
 };

@@ -33,6 +33,40 @@ class Settings(BaseSettings):
 
     # ── Redis ─────────────────────────────────────────────────────────────────
     REDIS_URL: str = "redis://localhost:6379/0"
+    # WebRTC relay for the live classroom (see doc/deploy-coturn.md).
+    # TURN_URL e.g. "turn:turn.example.com:3478" or "turns:...:5349" (TLS);
+    # with static shared-secret auth set username/credential accordingly.
+    TURN_URL: str = ""
+    TURN_USERNAME: str = ""
+    TURN_CREDENTIAL: str = ""
+    # SFU (Selective Forwarding Unit) configuration (LiveKit / mediasoup / Janus)
+    SFU_ENABLED: bool = False
+    SFU_URL: str = ""
+    SFU_API_KEY: str = ""
+    SFU_API_SECRET: str = ""
+    # Set to false on API-only workers; run one scheduler-enabled worker
+    # (or a dedicated worker process) to own the background jobs.
+    SCHEDULER_ENABLED: bool = True
+
+    def ice_servers(self) -> list[dict]:
+        """ICE server list for the live-classroom WebRTC peers.
+
+        STUN is enough on open networks; TURN (relay) is what gets calls
+        through symmetric NATs and strict firewalls. TURN is only offered
+        when fully configured — a half-configured relay would just produce
+        failing candidates. Supports comma-separated URLs (e.g. turn: and turns:).
+        """
+        servers = [{"urls": "stun:stun.l.google.com:19302"}]
+        if self.TURN_URL and self.TURN_USERNAME and self.TURN_CREDENTIAL:
+            urls = [u.strip() for u in self.TURN_URL.split(",") if u.strip()]
+            servers.append(
+                {
+                    "urls": urls if len(urls) > 1 else (urls[0] if urls else self.TURN_URL),
+                    "username": self.TURN_USERNAME,
+                    "credential": self.TURN_CREDENTIAL,
+                }
+            )
+        return servers
 
     # ── Online Class ──────────────────────────────────────────────────────────
     # Max concurrent WebSocket connections per live room (per worker).
@@ -40,6 +74,32 @@ class Settings(BaseSettings):
     WS_MAX_ROOM_PARTICIPANTS: int = 500
     # Maximum file upload size for class materials / recordings (MB).
     ONLINE_CLASS_UPLOAD_MAX_MB: int = 25
+    # ── File storage (B6): private, tenant-prefixed, signed-URL access ──────
+    # "auto"  = local outside production; Cloudflare R2 in production;
+    # "r2"    = Cloudflare R2 (explicit production backend);
+    # "s3"    = Amazon S3 / compatible bucket (optional deployment switch);
+    # "local" = private disk under UPLOAD_FILE_ROOT (local development only).
+    STORAGE_BACKEND: str = "auto"
+    UPLOAD_FILE_ROOT: str = "uploads"
+    # How long vended file links stay valid (S3 presigned URLs share this).
+    UPLOAD_SIGNED_URL_TTL_SECONDS: int = 900
+    # Cloudflare R2 settings. All four values are required for STORAGE_BACKEND=r2.
+    R2_BUCKET: str = ""
+    R2_ENDPOINT_URL: str = ""  # https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+    R2_ACCESS_KEY_ID: str = ""
+    R2_SECRET_ACCESS_KEY: str = ""
+    R2_KEY_PREFIX: str = ""
+    # S3 backend settings. S3_BUCKET is required when STORAGE_BACKEND=s3;
+    # credentials may be omitted when the workload runs on an IAM role.
+    S3_BUCKET: str = ""
+    S3_REGION: str = ""
+    S3_ENDPOINT_URL: str = ""      # e.g. MinIO https://minio.internal:9000
+    S3_ACCESS_KEY_ID: str = ""
+    S3_SECRET_ACCESS_KEY: str = ""
+    S3_KEY_PREFIX: str = ""        # optional bucket-internal prefix
+    # Use path-style URLs (required for MinIO / self-hosted stores).
+    # Set to false for AWS S3 / Cloudflare R2 (virtual-hosted-style).
+    S3_FORCE_PATH_STYLE: bool = False
     # Comma-separated MIME-type allowlist for shared class files.
     ONLINE_CLASS_ALLOWED_MIME_TYPES: str = (
         "application/pdf,"
@@ -59,10 +119,23 @@ class Settings(BaseSettings):
     def allowed_mime_set(self) -> set[str]:
         return {m.strip() for m in self.ONLINE_CLASS_ALLOWED_MIME_TYPES.split(",") if m.strip()}
 
-    # ── Firebase Cloud Messaging (optional push notifications) ────────────────
-    # Set this to your FCM v1 service-account JSON path or leave blank to
-    # disable push entirely (in-app DB notifications still work).
-    FCM_SERVER_KEY: str = ""
+    # ── Firebase Cloud Messaging (Android / iOS / web push) ──────────────────
+    # Remote push is sent through the FCM v1 HTTP API. Two ways to provide the
+    # Firebase service-account credentials (a Google Cloud service account with
+    # the "Firebase Cloud Messaging API" enabled):
+    #   1. FCM_SERVICE_ACCOUNT_JSON    – path to the downloaded JSON file
+    #   2. FCM_SERVICE_ACCOUNT_B64     – base64 of the same JSON (useful on
+    #                                    platforms where secrets live in env)
+    # When neither is set, remote push is disabled and only the in-app DB
+    # inbox is written (safe default for development / tests).
+    FCM_SERVICE_ACCOUNT_JSON: str = ""
+    FCM_SERVICE_ACCOUNT_B64: str = ""
+    # Optional project id override; usually read from the service-account file.
+    FCM_PROJECT_ID: str = ""
+    # Default time-to-live applied to FCM messages.
+    FCM_TTL_SECONDS: int = 86400
+    # How many outbox rows the background delivery worker claims per run.
+    NOTIFICATION_PUSH_BATCH_SIZE: int = 100
 
     # ── CORS ──────────────────────────────────────────────────────────────────
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
@@ -77,38 +150,35 @@ class Settings(BaseSettings):
 
     # ── Signup / provisioning ─────────────────────────────────────────────────
     # Root domain used to build login URLs and subdomain checks, e.g.
-    # https://green.xyz.com/login — defaults to xyz.com.
-    PUBLIC_ROOT_DOMAIN: str = "xyz.com"
+    # https://green.shikshasync.me/login — defaults to shikshasync.me.
+    PUBLIC_ROOT_DOMAIN: str = "shikshasync.me"
     TRIAL_DAYS: int = 14
     TENANT_DEFAULT_TIMEZONE: str = "Asia/Kolkata"
 
     # ── Email ─────────────────────────────────────────────────────────────────
     # Which transport actually sends mail:
-    #   google  → Gmail / Workspace SMTP   (app/services/mailer/providers/google.py)
-    #   klaviyo → Klaviyo Events API       (app/services/mailer/providers/klaviyo.py)
+    #   google    → Gmail / Google Workspace SMTP (deployment testing)
+    #   zeptomail → Zoho ZeptoMail HTTPS API (production)
     #   console → log only, never delivers (safe default for dev/tests)
-    # A provider that is commented out in mailer/registry.py is ignored here.
     EMAIL_PROVIDER: str = "console"
-    # Envelope identity — shared by both providers.
+    # Envelope identity.
     EMAIL_FROM: str = ""
-    EMAIL_FROM_NAME: str = "xyz.com ERP"
+    EMAIL_FROM_NAME: str = "shikshasync.me ERP"
     EMAIL_REPLY_TO: str = ""
     EMAIL_TIMEOUT_SECONDS: int = 20
 
-    # -- Google (SMTP) --
-    # GOOGLE_SMTP_PASSWORD must be a 16-char App Password, not the account
-    # password: https://myaccount.google.com/apppasswords
+    # -- Google SMTP (deployment testing) --
+    # Use an App Password, never the Google account password.
     GOOGLE_SMTP_HOST: str = "smtp.gmail.com"
-    GOOGLE_SMTP_PORT: int = 587          # 587 = STARTTLS, 465 = implicit TLS
+    GOOGLE_SMTP_PORT: int = 587
     GOOGLE_SMTP_USER: str = ""
     GOOGLE_SMTP_PASSWORD: str = ""
 
-    # -- Klaviyo (Events API) --
-    # Private key (pk_...) with Events:write + Profiles:write scopes.
-    KLAVIYO_API_KEY: str = ""
-    KLAVIYO_API_REVISION: str = "2024-10-15"
-    # Metric name prefix — the flow trigger becomes e.g. "ERP owner.verify_email"
-    KLAVIYO_METRIC_PREFIX: str = "ERP"
+    # -- Zoho ZeptoMail (HTTPS API) --
+    # Agent-specific Send Mail Token from ZeptoMail > SMTP/API > API.
+    ZEPTO_MAIL_SEND_TOKEN: str = ""
+    # Use https://api.zeptomail.in/v1.1/email for an India data centre.
+    ZEPTO_MAIL_API_URL: str = "https://api.zeptomail.com/v1.1/email"
 
 
 @lru_cache

@@ -13,11 +13,12 @@ Endpoints:
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.database import get_db
 from app.dependencies.auth import get_current_tenant_user
 from app.models.user import User
@@ -36,6 +37,7 @@ from app.services.auth_service import AuthService, _load_tenant_user_permissions
 
 router = APIRouter(prefix="/tenant/auth", tags=["Tenant Authentication"])
 limiter = Limiter(key_func=get_remote_address)
+settings = get_settings()
 
 
 @router.post("/login", response_model=APIResponse[TenantLoginResponse])
@@ -43,6 +45,7 @@ limiter = Limiter(key_func=get_remote_address)
 async def tenant_login(
     req: TenantLoginRequest,
     request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Authenticate an institution user. Accepts email or student roll number."""
@@ -53,32 +56,57 @@ async def tenant_login(
         request=request,
         db=db,
     )
+    # Set secure httpOnly cookie to prevent XSS exfiltration on web clients
+    response.set_cookie(
+        key="erp_refresh_token",
+        value=data.tokens.refresh_token,
+        httponly=True,
+        secure=settings.APP_ENV == "production",
+        samesite="lax",
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        path="/",
+    )
     return APIResponse(success=True, data=data, message="Tenant login successful")
 
 
 @router.post("/logout", response_model=APIResponse[None])
 async def tenant_logout(
-    req: LogoutRequest,
+    req: LogoutRequest | None,
+    request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
     current_user: Annotated[User, Depends(get_current_tenant_user)],
 ):
-    """Revoke the current user session."""
-    await AuthService.tenant_logout(refresh_token=req.refresh_token, db=db)
+    """Revoke the current user session and clear cookies."""
+    token = (req.refresh_token if req and req.refresh_token else None) or request.cookies.get("erp_refresh_token") or request.cookies.get("refresh_token")
+    if token:
+        await AuthService.tenant_logout(refresh_token=token, db=db)
+    response.delete_cookie(key="erp_refresh_token", path="/")
+    response.delete_cookie(key="refresh_token", path="/")
     return APIResponse(success=True, data=None, message="Logout successful")
 
 
 @router.post("/refresh", response_model=APIResponse[AccessTokenResponse])
 async def tenant_refresh(
-    req: RefreshRequest,
+    req: RefreshRequest | None,
+    request: Request,
+    response: Response,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Refresh an expired access token using a valid refresh token."""
+    """Refresh an expired access token using a valid refresh token from body or httpOnly cookie."""
+    token = (req.refresh_token if req and req.refresh_token else None) or request.cookies.get("erp_refresh_token") or request.cookies.get("refresh_token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Refresh token is required via request body or httpOnly cookie",
+        )
     data = await AuthService.tenant_refresh(
-        refresh_token=req.refresh_token, db=db
+        refresh_token=token, db=db
     )
     return APIResponse(
         success=True, data=data, message="Token refreshed successfully"
     )
+
 
 
 @router.post("/forgot-password", response_model=APIResponse[None])

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Live Owner consoles — the xyz.com account-holder's seven pages.
+ * Live Owner consoles — the shikshasync.me account-holder's seven pages.
  *
  * Same shape as `consoles.tsx` on the Super Admin side: a hook for the data,
  * `<Live>` for loading/error, `useAction` for mutations. Nothing here

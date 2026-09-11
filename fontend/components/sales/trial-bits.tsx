@@ -63,7 +63,7 @@ export function TrialListItem({ trial }: { trial: TrialRow }) {
           </div>
 
           <p className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 text-[11px] text-muted-foreground">
-            <span className="shrink-0 font-mono">{trial.slug}.xyz.com</span>
+            <span className="shrink-0 font-mono">{trial.slug}.shikshasync.me</span>
             <span className="shrink-0">· {trial.planName}</span>
             <span className="shrink-0">
               · {trial.studentCount.toLocaleString("en-IN")} students

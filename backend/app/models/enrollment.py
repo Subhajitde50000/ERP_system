@@ -10,15 +10,25 @@ These tables already exist in database.sql but had no ORM model, so no service
 could read or write them. Mirrors the schema exactly.
 """
 
+import enum
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, ForeignKey, Index, String, UniqueConstraint
+from sqlalchemy import Date, Enum as SAEnum, ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.database import Base
+
+
+class EnrollmentStatus(str, enum.Enum):
+    """PG enum ``enrollment_status`` (database.sql §3)."""
+
+    ACTIVE = "ACTIVE"
+    TRANSFERRED = "TRANSFERRED"
+    DROPPED = "DROPPED"
+    COMPLETED = "COMPLETED"
 
 
 class Enrollment(Base):
@@ -53,8 +63,11 @@ class Enrollment(Base):
     enrollment_date: Mapped[date] = mapped_column(
         Date, nullable=False, default=date.today
     )
-    # ACTIVE | TRANSFERRED | DROPPED | COMPLETED (enrollment_status)
-    status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE")
+    # ACTIVE | TRANSFERRED | DROPPED | COMPLETED (PG enum — SAEnum keeps the
+    # asyncpg INSERT cast aligned with the database type).
+    status: Mapped[EnrollmentStatus] = mapped_column(
+        SAEnum(EnrollmentStatus, name="enrollment_status"), nullable=False, default=EnrollmentStatus.ACTIVE
+    )
     transferred_to: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("classes.id"), nullable=True
     )

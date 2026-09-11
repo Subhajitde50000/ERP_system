@@ -27,7 +27,7 @@ import type { BillingSummary, OwnerInstitution } from "@/types/owner";
  *
  * We cannot use a static href derived from NEXT_PUBLIC_ROOT_DOMAIN because
  * that env value is embedded at compile time and may be stale (e.g. still
- * "xyz.com" when the dev server is running on localhost). Reading
+ * "shikshasync.me" when the dev server is running on localhost). Reading
  * window.location at the moment of the click is always correct.
  */
 function openInstitution(slug: string) {
@@ -38,7 +38,7 @@ function openInstitution(slug: string) {
     const domain = port ? `localhost:${port}` : "localhost";
     url = `http://${slug}.${domain}/login`;
   } else {
-    // On abc.xyz.com → root = xyz.com
+    // On abc.shikshasync.me → root = shikshasync.me
     const parts = hostname.split(".");
     const root = parts.length >= 2 ? parts.slice(-2).join(".") : hostname;
     url = `https://${slug}.${root}/login`;

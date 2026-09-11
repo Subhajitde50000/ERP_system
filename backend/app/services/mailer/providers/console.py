@@ -2,7 +2,7 @@
 Mailer provider — CONSOLE (development fallback)
 
 Never talks to the network: it logs the email and reports success. Used when
-neither Google nor Klaviyo is configured so local development and tests never
+no live provider is configured so local development and tests never
 crash on a missing API key. Requires no settings, so it is always "configured".
 """
 

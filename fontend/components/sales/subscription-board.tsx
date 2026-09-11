@@ -229,7 +229,7 @@ export function SubscriptionBoard({
                           {a.tenantName}
                         </span>
                         <span className="block truncate font-mono text-[11px] font-normal text-muted-foreground">
-                          {a.tenantSlug}.xyz.com
+                          {a.tenantSlug}.shikshasync.me
                         </span>
                       </th>
                       <td className="py-3 pr-3 align-top text-[12px] text-muted-foreground">
@@ -288,7 +288,7 @@ export function SubscriptionBoard({
                         {a.tenantName}
                       </p>
                       <p className="truncate font-mono text-[11px] text-muted-foreground">
-                        {a.tenantSlug}.xyz.com
+                        {a.tenantSlug}.shikshasync.me
                       </p>
                     </div>
                     <StateChip account={a} />

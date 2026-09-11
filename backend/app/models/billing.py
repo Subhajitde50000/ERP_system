@@ -229,7 +229,18 @@ class PlatformPayment(Base):
         TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
     )
 
-    __table_args__ = (Index("idx_platform_payments_tenant_id", "tenant_id"),)
+    __table_args__ = (
+        # Replay-attack guard: a (gateway, gateway_ref) pair must be globally
+        # unique so a webhook delivered twice cannot create a duplicate payment.
+        # Mirrors CONSTRAINT uq_platform_payments_gateway_ref in database.sql.
+        # NULL gateway_ref rows (offline / mock payments) are excluded by
+        # PostgreSQL's NULL-distinct behaviour — two NULLs do not collide.
+        UniqueConstraint(
+            "gateway", "gateway_ref",
+            name="uq_platform_payments_gateway_ref",
+        ),
+        Index("idx_platform_payments_tenant_id", "tenant_id"),
+    )
 
 
 # ── Coupons ───────────────────────────────────────────────────────────────────

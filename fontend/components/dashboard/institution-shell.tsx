@@ -31,7 +31,7 @@ export async function InstitutionShell({
       role={role}
       enabledModules={session.enabledModules}
       tenantName={tenant.isPlatform ? "ABC College" : tenant.name}
-      tenantHost={tenant.isPlatform ? "abc-college.xyz.com" : tenant.host}
+      tenantHost={tenant.isPlatform ? "abc-college.shikshasync.me" : tenant.host}
       userName={session.user.name}
       roleChip={roleChip(role)}
       academicYear={session.academicYear}

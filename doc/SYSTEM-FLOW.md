@@ -34,11 +34,11 @@
 ## 1. The two doors: who creates an institution
 
 The public entry point is now owner-first, like AWS, Shopify or Zoho. The
-account at `xyz.com` belongs to the owner, not to one institution. One owner
+account at `shikshasync.me` belongs to the owner, not to one institution. One owner
 can create and manage many tenants from the platform dashboard.
 
 ```
-Visit xyz.com
+Visit shikshasync.me
   │
   ▼  Sign Up (Owner name, email, password)
   │
@@ -63,7 +63,7 @@ Visit xyz.com
   │
   ▼  Institution Created
   │
-  ▼  Go To green.xyz.com
+  ▼  Go To green.shikshasync.me
 ```
 
 Example ownership model:
@@ -106,7 +106,7 @@ purchases in this system and they are easy to confuse:**
 
 | Purchase | Buyer | Pays whom | Tables |
 |---|---|---|---|
-| **Platform subscription** | Institution → xyz.com | The platform | `plans`, `subscriptions` |
+| **Platform subscription** | Institution → shikshasync.me | The platform | `plans`, `subscriptions` |
 | **Student fees** | Parent/Student → Institution | The institution | `fee_structures`, `fee_payments` |
 
 §9 of the DB doc is titled "Platform ERP Tables (Finance Module)" but contains
@@ -281,7 +281,7 @@ tables behind them. Section 9 specifies the fix.
 The admin never receives a password. They receive a reset link:
 
 ```
-Email → https://abc-college.xyz.com/reset-password?token=…
+Email → https://abc-college.shikshasync.me/reset-password?token=…
               │
               ├─ token missing  → "This link isn't complete"
               ├─ token expired  → "This link has expired" + request a new one
@@ -299,7 +299,7 @@ institution's admin account.
 ### 4.2 The login itself
 
 ```
-POST /auth/login  { identifier, password }   on abc-college.xyz.com
+POST /auth/login  { identifier, password }   on abc-college.shikshasync.me
         │
         ├─ TenantResolver: subdomain → tenant  (Redis, 5-min TTL)
         ├─ tenantState():  is_active AND subscription not CANCELLED

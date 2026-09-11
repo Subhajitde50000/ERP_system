@@ -1,7 +1,7 @@
 import { AccountGate } from "@/components/owner/account-gate";
 
 /**
- * Owner platform dashboard — /account. The xyz.com "Platform Dashboard":
+ * Owner platform dashboard — /account. The shikshasync.me "Platform Dashboard":
  * My Institutions, Billing, Subscriptions, Invoices, Support Tickets, Profile.
  * All routes here require an authenticated owner.
  */

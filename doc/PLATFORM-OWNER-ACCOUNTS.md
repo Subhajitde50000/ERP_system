@@ -1,6 +1,6 @@
 # Platform Owner Accounts — the AWS / Shopify / Zoho model
 
-> **What this is.** The "account-holder" architecture that turns xyz.com into a
+> **What this is.** The "account-holder" architecture that turns shikshasync.me into a
 > multi-tenant SaaS platform like AWS, Shopify or Zoho: **one customer account
 > owns many institutions**, managed from a single platform dashboard.
 >
@@ -15,8 +15,8 @@ Before this change the system had only two identity tables:
 
 | Table | Who | Login at |
 |---|---|---|
-| `platform_users` | xyz.com **staff** (Super Admin, Support, Sales, Finance) | `app.xyz.com/login` |
-| `users` | institution-bound members (Teacher, Student, INSTITUTION_ADMIN…) | `green.xyz.com/login` |
+| `platform_users` | shikshasync.me **staff** (Super Admin, Support, Sales, Finance) | `app.shikshasync.me/login` |
+| `users` | institution-bound members (Teacher, Student, INSTITUTION_ADMIN…) | `green.shikshasync.me/login` |
 
 There was **no customer**. The public `/signup` created an isolated institution
 plus a single institution-admin `users` row — with nothing tying multiple
@@ -27,17 +27,17 @@ unrelated logins and no consolidated billing.
 
 | Table | Who | Login at |
 |---|---|---|
-| `platform_users` | xyz.com staff (unchanged) | `app.xyz.com/login` → `/platform/login` |
-| **`platform_owners`** | **the customer / account-holder** | **`xyz.com/login` → `/account/login`** |
-| `users` | institution members (unchanged) | `green.xyz.com/login` → `/login` |
+| `platform_users` | shikshasync.me staff (unchanged) | `app.shikshasync.me/login` → `/platform/login` |
+| **`platform_owners`** | **the customer / account-holder** | **`shikshasync.me/login` → `/account/login`** |
+| `users` | institution members (unchanged) | `green.shikshasync.me/login` → `/login` |
 
 An owner is the buyer. **One owner → many institutions**, via
 `tenants.owner_id`. Rahul (`rahul@gmail.com`) signs up once and owns Green
-College, ABC School and XYZ Academy; he logs into `xyz.com` once and manages
+College, ABC School and XYZ Academy; he logs into `shikshasync.me` once and manages
 billing, subscriptions, invoices and support for all of them.
 
 ```
-   Visit xyz.com
+   Visit shikshasync.me
    │
    ▼  Sign Up (Name, Email, Password)            → platform_owners (unverified)
    │
@@ -55,18 +55,18 @@ billing, subscriptions, invoices and support for all of them.
    │      (reuses the public checkout: Plan → Subdomain → Payment → Provision,
    │       but the order carries owner_id so tenants.owner_id is stamped)
    │
-   ▼  Go To  green.xyz.com/login   (daily ERP — a separate login system)
+   ▼  Go To  green.shikshasync.me/login   (daily ERP — a separate login system)
 ```
 
 ## Two (really three) login systems
 
-1. **Platform / Owner login** — `xyz.com/login` (`/account/login`).
+1. **Platform / Owner login** — `shikshasync.me/login` (`/account/login`).
    - JWT `type: "owner"`. Owns institutions, billing, subscriptions, invoices,
      support tickets, profile.
-2. **Institution login** — `green.xyz.com/login` (`/login`).
+2. **Institution login** — `green.shikshasync.me/login` (`/login`).
    - JWT `type: "tenant"`. Daily ERP: students, teachers, attendance, exams,
      LMS, finance, reports.
-3. **Staff console** — `app.xyz.com/login` (`/platform/login`).
+3. **Staff console** — `app.shikshasync.me/login` (`/platform/login`).
    - JWT `type: "platform"`. Super Admin / Support / Sales / Finance running the
      platform itself.
 

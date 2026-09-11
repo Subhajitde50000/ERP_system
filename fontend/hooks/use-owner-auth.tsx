@@ -8,7 +8,7 @@
  * - `isAuthenticated`, `isLoading`, `error`
  * - `login`, `logout`, `refresh`
  *
- * This is the xyz.com "Platform Login" door: Rahul signs in once and manages
+ * This is the shikshasync.me "Platform Login" door: Rahul signs in once and manages
  * every institution he owns. It is deliberately separate from the staff
  * console (`usePlatformAuth`) and the institution login (`/login`).
  */

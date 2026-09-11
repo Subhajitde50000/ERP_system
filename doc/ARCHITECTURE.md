@@ -1,14 +1,12 @@
 # ERP + LMS Platform — System & Backend Architecture
 
-> **Scope.** `docs/developer_system_design_deployment.md` already specifies the
-> happy path: stack choices, repo layout, guards, module system, API envelope,
-> deployment. **This document does not repeat it.** It covers what that
-> document does not: the failure modes, the data-integrity rules, the
-> operational contract, and three design defects in the existing spec that
-> will bite in production.
+> **Scope.** `TECHNICAL-DETAILS-AND-SYSTEM-DESIGN.md` and `DEPLOYMENT.md` specify the
+> production stack, repo layout, guards, module system, API envelope, and
+> deployment. **This document covers:** the failure modes, the data-integrity rules, the
+> operational contract, and tenant isolation architecture.
 >
-> Read that document first for *what* to build. Read this one for *why it
-> breaks* and what to do about it.
+> Read `TECHNICAL-DETAILS-AND-SYSTEM-DESIGN.md` for *what* is built. Read this one for
+> *reliability, failure modes, and operational guardrails*.
 >
 > Companion: `database.sql` (106 tables, verified on PostgreSQL 17),
 > `DB-DOC-AUDIT.md`, `docs/database_design_complete.md` v2.1.
@@ -51,7 +49,7 @@ origins that share a database but not a permission model.
                                           │
               ┌───────────────────────────┼───────────────────────────┐
               │                           │                           │
-    app.xyz.com                 *.xyz.com                    api.xyz.com
+    app.shikshasync.me                 *.shikshasync.me                    api.shikshasync.me
     (platform console)          (tenant app)                 (REST + WS)
               │                           │                           │
     ┌─────────▼─────────┐      ┌──────────▼────────┐      ┌───────────▼─────────┐
@@ -78,7 +76,7 @@ origins that share a database but not a permission model.
   └────────────────────┘
 ```
 
-**Two origins, one API.** `app.xyz.com` has no `tenant_id`; `*.xyz.com` always
+**Two origins, one API.** `app.shikshasync.me` has no `tenant_id`; `*.shikshasync.me` always
 has one. The same NestJS app serves both — the tenant resolver decides which
 mode a request is in, and that decision is the root of every authorization
 check downstream.

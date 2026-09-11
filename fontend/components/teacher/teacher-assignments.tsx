@@ -379,6 +379,7 @@ export function TeacherAssignmentDetailPage() {
   );
   const [busy, setBusy] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [reopenPrompt, setReopenPrompt] = useState(false);
   const data = resource.data;
 
   const [edit, setEdit] = useState<{ title: string; description: string; due_date: string; total_marks: string; passing_marks: string } | null>(null);
@@ -431,10 +432,10 @@ export function TeacherAssignmentDetailPage() {
                 <button
                   type="button"
                   disabled={busy !== null}
-                  onClick={() => run("reopen", () => reopenTeacherAssignment(assignmentId))}
+                  onClick={() => setReopenPrompt(true)}
                   className="inline-flex h-10 items-center gap-2 rounded-field bg-accent px-4 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover disabled:opacity-60"
                 >
-                  <RotateCcw className="h-4 w-4" /> {busy === "reopen" ? "Reopening…" : "Reopen assignment"}
+                  <RotateCcw className="h-4 w-4" /> Reopen assignment
                 </button>
               ) : null}
             </div>
@@ -442,6 +443,53 @@ export function TeacherAssignmentDetailPage() {
         }
       />
       {actionError ? <p role="alert" className="mb-3 text-sm text-destructive-text">{actionError}</p> : null}
+      {reopenPrompt && data?.status === "CLOSED" ? (
+        <div className="mb-5 grid gap-3 rounded-field border border-border bg-muted/40 p-4" role="dialog" aria-label="Reopen assignment">
+          <div>
+            <h2 className="text-sm font-bold text-primary">Reopen this assignment?</h2>
+            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              Students can submit again while it stays published. You choose what happens to work that is
+              already in but has not been reviewed yet:
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={async () => {
+                setReopenPrompt(false);
+                await run("reopen", () => reopenTeacherAssignment(assignmentId, true));
+              }}
+              className="inline-flex h-10 items-center gap-2 rounded-field bg-accent px-4 text-xs font-semibold text-white shadow-accent transition hover:bg-accent-hover disabled:opacity-60"
+            >
+              <RotateCcw className="h-4 w-4" /> {busy === "reopen" ? "Reopening…" : "Reopen & ask students to resubmit"}
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={async () => {
+                setReopenPrompt(false);
+                await run("reopen", () => reopenTeacherAssignment(assignmentId, false));
+              }}
+              className="inline-flex h-10 items-center gap-2 rounded-field border border-border px-4 text-xs font-semibold text-primary transition hover:border-accent hover:text-accent disabled:opacity-60"
+            >
+              Reopen for new submissions only
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => setReopenPrompt(false)}
+              className="inline-flex h-10 items-center rounded-field px-4 text-xs font-semibold text-muted-foreground hover:text-primary disabled:opacity-60"
+            >
+              Cancel
+            </button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            &ldquo;Resubmit&rdquo; sends already-submitted (un-reviewed) work back to students as
+            &ldquo;changes requested&rdquo;; approved or rejected work is never changed.
+          </p>
+        </div>
+      ) : null}
       <AsyncState loading={resource.loading} error={resource.error} onRetry={resource.reload} loadingLabel="Loading assignment…">
         {data ? (
           <div className="space-y-5">

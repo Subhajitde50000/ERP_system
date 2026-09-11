@@ -5,9 +5,9 @@ import { CtaBand, MarketingShell, Section, SectionHeading } from "@/components/m
 import { STATS, TESTIMONIALS } from "@/lib/marketing";
 
 export const metadata: Metadata = {
-  title: "Customers — institutions that run on xyz.com",
+  title: "Customers — institutions that run on shikshasync.me",
   description:
-    "Schools, colleges and universities use xyz.com to connect academics, learning and operations. Hear what changed for them.",
+    "Schools, colleges and universities use shikshasync.me to connect academics, learning and operations. Hear what changed for them.",
 };
 
 const CASES = [
@@ -43,8 +43,8 @@ export default function CustomersPage() {
       <Section className="!pb-10 text-center">
         <SectionHeading
           eyebrow="Customers"
-          title="Institutions that run on xyz.com."
-          lede="From a single school to a multi-campus trust, education leaders use xyz.com to connect academics, learning and operations."
+          title="Institutions that run on shikshasync.me."
+          lede="From a single school to a multi-campus trust, education leaders use shikshasync.me to connect academics, learning and operations."
           align="center"
         />
         <div className="mx-auto mt-10 grid max-w-3xl grid-cols-2 gap-6 sm:grid-cols-4">
@@ -98,7 +98,7 @@ export default function CustomersPage() {
       </Section>
 
       <CtaBand
-        title="Join 500+ institutions on xyz.com."
+        title="Join 500+ institutions on shikshasync.me."
         body="Start your free trial today, or let our team tailor a rollout plan for your institution."
         primary={{ label: "Start free", href: "/signup" }}
         secondary={{ label: "Talk to us", href: "/contact" }}

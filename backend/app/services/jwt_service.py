@@ -62,7 +62,7 @@ def create_owner_access_token(owner_id: uuid.UUID) -> str:
     """
     Mint a Platform-Owner JWT access token.
 
-    The owner is the customer / account-holder who logs in at xyz.com and
+    The owner is the customer / account-holder who logs in at shikshasync.me and
     manages their institutions, billing and subscriptions. `type="owner"`
     distinguishes it from staff (`type="platform"`) and institution users
     (`type="tenant"`), so a token from one login system is never accepted by

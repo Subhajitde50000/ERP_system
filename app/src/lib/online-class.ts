@@ -36,6 +36,32 @@ export function fileHref(url: string): string {
   return url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
 }
 
+/**
+ * Web-console URL of a live classroom. React Native has no WebRTC in this
+ * build, so audio/video calls run in the browser; the student deep-links to
+ * this page from the InClass screen while staying connected here for chat,
+ * raise-hand and attendance.
+ */
+export function webClassUrl(classId: string, role: "student" | "teacher" = "student"): string | null {
+  const base = process.env.EXPO_PUBLIC_WEB_URL;
+  if (!base) return null;
+  const routePrefix = role === "teacher" ? "teacher" : "student";
+  return `${base.replace(/\/$/, "")}/${routePrefix}/online-classes/${classId}`;
+}
+
+/**
+ * Resolves a valid web classroom URL with automatic fallback to API_BASE_URL
+ * web host (replacing :8000 with :3000) when EXPO_PUBLIC_WEB_URL is not set.
+ */
+export function resolveClassWebUrl(classId: string, role: "student" | "teacher" = "student"): string {
+  const explicit = webClassUrl(classId, role);
+  if (explicit) return explicit;
+  const fallbackHost = API_BASE_URL.replace(/:8000$/, ":3000").replace(/\/api.*$/, "");
+  const normalized = (fallbackHost || "http://localhost:3000").replace(/\/$/, "");
+  const routePrefix = role === "teacher" ? "teacher" : "student";
+  return `${normalized}/${routePrefix}/online-classes/${classId}`;
+}
+
 // ── Shapes (mirror backend/app/schemas/online_class.py) ──────────────────────
 
 export interface TeachingAssignmentOption {

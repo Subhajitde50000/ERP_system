@@ -376,6 +376,13 @@ export interface TeacherAttemptRow {
   pending_grading_count: number;
 }
 
+export interface TeacherAnswerOption {
+  id: string;
+  text: string;
+  is_correct: boolean;
+  sort_order: number;
+}
+
 export interface TeacherAnswerRow {
   answer_id: string;
   question_id: string;
@@ -385,7 +392,11 @@ export interface TeacherAnswerRow {
   selected_option_id: string | null;
   selected_option_text: string | null;
   correct_option_text: string | null;
+  /** Full answer key for the question — every option, correct one flagged. */
+  options: TeacherAnswerOption[];
   text_answer: string | null;
+  /** MATCH-type answers store pairings as JSON instead of plain text. */
+  matched_pairs: Record<string, string> | null;
   score: number | null;
   feedback: string | null;
   is_auto_graded: boolean;
@@ -733,8 +744,16 @@ export const publishTeacherAssignment = (assignmentId: string) =>
 export const closeTeacherAssignment = (assignmentId: string) =>
   call<TeacherAssignmentDetail>(`/assignments/${assignmentId}/close`, { method: "POST" });
 
-export const reopenTeacherAssignment = (assignmentId: string) =>
-  call<TeacherAssignmentDetail>(`/assignments/${assignmentId}/reopen`, { method: "POST" });
+/**
+ * Reopen a closed assignment. With `requestResubmission` (default) every
+ * un-reviewed submission is handed back to its student as RESUBMIT_REQUESTED,
+ * so the assignment reappears in their pending list with a resubmit action;
+ * without it only students who never submitted can now submit.
+ */
+export const reopenTeacherAssignment = (assignmentId: string, requestResubmission = true) =>
+  call<TeacherAssignmentDetail>(`/assignments/${assignmentId}/reopen`, {
+    ...jsonInit("POST", { request_resubmission: requestResubmission }),
+  });
 
 export const addAssignmentMilestone = (assignmentId: string, payload: TeacherMilestoneIn) =>
   call<TeacherAssignmentDetail>(`/assignments/${assignmentId}/milestones`, jsonInit("POST", payload));

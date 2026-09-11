@@ -98,7 +98,7 @@ const SHARED = [
 /**
  * Platform-console route prefixes (assignment doc §2).
  *
- * These live at `app.xyz.com` and are a *different application* from the
+ * These live at `app.shikshasync.me` and are a *different application* from the
  * institution app — `/finance/invoices` is the platform's billing page, not
  * the tenant's `/fees`. They must never fall through to the SHARED table
  * below, which is written for institution routes: `/report/` matched

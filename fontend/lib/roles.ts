@@ -10,12 +10,12 @@ interface RoleMeta {
   label: string;
   /** Post-login destination */
   redirect: string;
-  /** Absolute redirect (platform console lives on app.xyz.com) */
+  /** Absolute redirect (platform console lives on app.shikshasync.me) */
   external?: boolean;
 }
 
 const ROLE_MAP: Record<Role, RoleMeta> = {
-  // Platform — hosted on app.xyz.com
+  // Platform — hosted on app.shikshasync.me
   SUPER_ADMIN: { label: "Super Admin", redirect: "/platform/dashboard", external: true },
   SUPPORT_STAFF: { label: "Support Staff", redirect: "/platform/support/dashboard", external: true },
   SALES_EXECUTIVE: { label: "Sales Executive", redirect: "/platform/sales/dashboard", external: true },
@@ -98,7 +98,7 @@ export function redirectForRoles(roles: Role[]): string {
 
   // SUPER_ADMIN and platform staff land on the platform console host (§8)
   if (meta.external) {
-    const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "xyz.com";
+    const root = process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "shikshasync.me";
     const isLocal =
       typeof window !== "undefined" &&
       /^(localhost|127\.0\.0\.1|\[::1\])$/.test(window.location.hostname);
@@ -117,7 +117,7 @@ export function isYouthRole(role: Role | null): boolean {
 
 /* ── Institution dashboard helpers ──────────────────────────────────────── */
 
-/** The 18 institution roles served from <tenant>.xyz.com. */
+/** The 18 institution roles served from <tenant>.shikshasync.me. */
 export const INSTITUTION_ROLES = PRIORITY.filter(
   (r) => !(ROLE_MAP[r]?.external ?? false),
 ) as InstitutionRole[];

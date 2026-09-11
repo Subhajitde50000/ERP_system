@@ -156,7 +156,7 @@ export interface Faq {
 
 export const FAQS: Faq[] = [
   {
-    q: "How is xyz.com different from a generic school management tool?",
+    q: "How is shikshasync.me different from a generic school management tool?",
     a: "It is a true multi-tenant platform: one account can own many institutions, each with its own subdomain, data isolation, roles and billing. Eight core academic modules come included, and you switch on optional modules as you grow.",
   },
   {

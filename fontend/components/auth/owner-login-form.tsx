@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Owner login — the xyz.com "Platform Login" door.
+ * Owner login — the shikshasync.me "Platform Login" door.
  *
  * Purpose: My Institutions, Billing, Subscriptions, Invoices, Support Tickets,
- * Profile. The institution's *daily* ERP work happens at green.xyz.com/login
- * (a different login system). In production this is `xyz.com/login`; on a
+ * Profile. The institution's *daily* ERP work happens at green.shikshasync.me/login
+ * (a different login system). In production this is `shikshasync.me/login`; on a
  * single-origin deployment it is `/account/login`.
  */
 
@@ -115,7 +115,7 @@ export function OwnerLoginForm() {
 
       <p className="mt-4 rounded-field bg-[#F8FAFC] px-3.5 py-2.5 text-[11px] leading-relaxed text-[#64748B]">
         Doing daily ERP work (attendance, exams, fees)? Sign in at your
-        institution&apos;s address, e.g. <span className="font-semibold">green.xyz.com/login</span>.
+        institution&apos;s address, e.g. <span className="font-semibold">green.shikshasync.me/login</span>.
       </p>
     </div>
   );

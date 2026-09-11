@@ -60,7 +60,7 @@ export function BrandingPanel() {
       </div>
 
       <p className="relative z-10 text-xs text-white/40">
-        © {new Date().getFullYear()} xyz.com · Secure, Multi-Tenant ERP + LMS
+        © {new Date().getFullYear()} shikshasync.me · Secure, Multi-Tenant ERP + LMS
       </p>
     </aside>
   );

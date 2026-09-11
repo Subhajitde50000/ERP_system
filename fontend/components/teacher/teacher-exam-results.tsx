@@ -13,6 +13,7 @@ import {
   fetchTeacherExam,
   gradeExamAttempt,
   releaseExamResults,
+  type TeacherAnswerOption,
   type TeacherAnswerRow,
   type TeacherAttemptDetail,
 } from "@/lib/teacher";
@@ -253,9 +254,22 @@ function GradingForm({
               {statusLabel(answer.question_type)} · {answer.marks} marks
             </legend>
             <p className="whitespace-pre-wrap text-sm font-semibold text-primary">{answer.question_text}</p>
-            <p className="mt-2 whitespace-pre-wrap rounded-field bg-muted p-3 text-sm text-muted-foreground">
-              {answer.text_answer?.trim() || answer.selected_option_text || "(no answer written)"}
-            </p>
+            {answer.text_answer?.trim() ? (
+              <p className="mt-2 whitespace-pre-wrap rounded-field bg-muted p-3 text-sm text-muted-foreground">
+                {answer.text_answer}
+              </p>
+            ) : answer.selected_option_text ? (
+              <p className="mt-2 rounded-field bg-muted p-3 text-sm text-muted-foreground">
+                Student picked: <span className="font-semibold text-primary">{answer.selected_option_text}</span>
+              </p>
+            ) : answer.matched_pairs && Object.keys(answer.matched_pairs).length ? (
+              <MatchedPairs pairs={answer.matched_pairs} />
+            ) : (
+              <p className="mt-2 rounded-field bg-muted p-3 text-sm italic text-muted-foreground">
+                (no answer written)
+              </p>
+            )}
+            {answer.options.length ? <AnswerKeyOptions answer={answer} /> : null}
             <div className="mt-3 grid gap-3 sm:grid-cols-3">
               <div>
                 <label htmlFor={`score-${answer.answer_id}`} className={labelClass}>Score (0–{answer.marks})</label>
@@ -309,8 +323,102 @@ function AutoGradedSummary({ answers }: { answers: TeacherAnswerRow[] }) {
   const earned = auto.reduce((sum, answer) => sum + (answer.score ?? 0), 0);
   const possible = auto.reduce((sum, answer) => sum + answer.marks, 0);
   return (
-    <p className="rounded-field bg-muted px-4 py-2.5 text-xs font-semibold text-muted-foreground">
-      Auto-graded objective answers: {earned} / {possible} marks across {auto.length} question(s).
-    </p>
+    <section className="rounded-field border border-border p-4" aria-label="Auto-graded answers">
+      <p className="text-xs font-semibold text-muted-foreground">
+        Auto-graded objective answers: {earned} / {possible} marks across {auto.length} question(s).
+      </p>
+      <ul className="mt-3 space-y-4">
+        {auto.map((answer) => {
+          const unanswered = !answer.selected_option_id;
+          const correct = Boolean(
+            answer.selected_option_id && answer.correct_option_text === answer.selected_option_text,
+          );
+          return (
+            <li key={answer.answer_id} className="rounded-field border border-border p-3">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <p className="min-w-0 flex-1 text-sm font-semibold text-primary">{answer.question_text}</p>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                    unanswered
+                      ? "bg-muted text-muted-foreground"
+                      : correct
+                        ? "bg-success-light text-success-text"
+                        : "bg-destructive-light text-destructive-text"
+                  }`}
+                >
+                  {unanswered ? "NOT ANSWERED" : correct ? "CORRECT" : "WRONG"} · {answer.score ?? 0}/{answer.marks}
+                </span>
+              </div>
+              {unanswered ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Correct answer: <span className="font-semibold text-success-text">{answer.correct_option_text ?? "—"}</span>
+                </p>
+              ) : (
+                <AnswerKeyOptions answer={answer} />
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * The full answer key for one question: every option in authoring order with
+ * the correct one and the student's pick flagged. Plain-text badges (no symbol
+ * glyphs) so the panel stays readable in every font.
+ */
+function AnswerKeyOptions({ answer }: { answer: TeacherAnswerRow }) {
+  const options: TeacherAnswerOption[] = [...answer.options].sort((a, b) => a.sort_order - b.sort_order);
+  if (!options.length) return null;
+  return (
+    <ul className="mt-2 space-y-1.5" aria-label="Answer key">
+      {options.map((option) => {
+        const isPicked = option.id === answer.selected_option_id;
+        return (
+          <li
+            key={option.id}
+            className={`flex flex-wrap items-center gap-2 rounded-field border px-2.5 py-1.5 text-[13px] ${
+              isPicked ? "border-accent bg-accent-light" : "border-border bg-background"
+            }`}
+          >
+            <span className="min-w-0 flex-1 text-foreground">{option.text}</span>
+            {option.is_correct && (
+              <span className="shrink-0 rounded-full bg-success-light px-2 py-0.5 text-[10px] font-bold text-success-text">
+                CORRECT
+              </span>
+            )}
+            {isPicked && (
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  option.is_correct ? "bg-success-light text-success-text" : "bg-destructive-light text-destructive-text"
+                }`}
+              >
+                STUDENT&apos;S PICK
+              </span>
+            )}
+          </li>
+        );
+      })}
+      {!answer.selected_option_id && (
+        <li className="px-2.5 text-[11px] italic text-muted-foreground">No option selected.</li>
+      )}
+    </ul>
+  );
+}
+
+/** MATCH answers keep their pairings as JSON; show them as a two-column list. */
+function MatchedPairs({ pairs }: { pairs: Record<string, string> }) {
+  const entries = Object.entries(pairs);
+  return (
+    <dl className="mt-2 grid gap-1.5 rounded-field bg-muted p-3 text-sm sm:grid-cols-[auto_1fr]">
+      {entries.map(([left, right]) => (
+        <div key={left} className="contents">
+          <dt className="font-semibold text-primary">{left}</dt>
+          <dd className="text-muted-foreground">→ {right}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }

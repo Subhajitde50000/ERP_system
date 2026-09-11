@@ -5,7 +5,7 @@
 ## 1. Platform Overview
 
 ```
-xyz.com  (Multi-Tenant SaaS)
+shikshasync.me  (Multi-Tenant SaaS)
 │
 ├── Platform Layer      → Super Admin controls
 └── Institution Layer   → Each college / school is an isolated tenant
@@ -504,4 +504,4 @@ audit_logs            id, tenant_id, user_id, action, entity, entity_id, timesta
 
 ---
 
-*Document version: 1.0 | For: xyz.com ERP + LMS Platform*
+*Document version: 1.0 | For: shikshasync.me ERP + LMS Platform*

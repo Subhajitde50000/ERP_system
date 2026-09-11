@@ -429,6 +429,15 @@ class TeacherAttemptPage(TeacherPage):
     items: list[TeacherAttemptRow]
 
 
+class TeacherAnswerOption(BaseModel):
+    """One option of the question's answer key, shown in the grading panel."""
+
+    id: uuid.UUID
+    text: str
+    is_correct: bool
+    sort_order: int = 0
+
+
 class TeacherAnswerRow(BaseModel):
     answer_id: uuid.UUID
     question_id: uuid.UUID
@@ -438,7 +447,12 @@ class TeacherAnswerRow(BaseModel):
     selected_option_id: uuid.UUID | None = None
     selected_option_text: str | None = None
     correct_option_text: str | None = None
+    # Full option list (answer key context) — lets the reviewer see every
+    # option, which is correct and which the student picked.
+    options: list[TeacherAnswerOption] = Field(default_factory=list)
     text_answer: str | None = None
+    # MATCH-type answers store pairings as JSONB instead of plain text.
+    matched_pairs: dict | None = None
     score: float | None = None
     feedback: str | None = None
     is_auto_graded: bool
@@ -475,6 +489,19 @@ class TeacherAssignmentCreate(BaseModel):
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("due_date must include a timezone")
         return value
+
+
+class TeacherAssignmentReopen(BaseModel):
+    """Optional body for POST /assignments/{id}/reopen.
+
+    ``request_resubmission`` (default true) also moves every un-reviewed
+    submission (SUBMITTED / UNDER_REVIEW — latest version per student and
+    milestone scope) to RESUBMIT_REQUESTED, handing the work back to students:
+    the close → reopen → resubmit loop.  Set it to false to reopen only for
+    students who never submitted.
+    """
+
+    request_resubmission: bool = True
 
 
 class TeacherAssignmentUpdate(BaseModel):

@@ -8,13 +8,39 @@ import "./globals.css";
  */
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://shikshasync.me"),
   title: {
-    default: "xyz.com · Education, connected",
-    template: "%s · xyz.com",
+    default: "shikshasync.me · Education, connected",
+    template: "%s · shikshasync.me",
   },
   description:
     "Secure, multi-tenant ERP + LMS for schools and colleges. Attendance, exams, assignments, fees, hostel and more.",
-  robots: { index: false, follow: false },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  openGraph: {
+    title: "shikshasync.me · Education, connected",
+    description:
+      "Secure, multi-tenant ERP + LMS for schools and colleges. Attendance, exams, assignments, fees, hostel and more.",
+    url: "https://shikshasync.me",
+    siteName: "shikshasync.me",
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "shikshasync.me · Education, connected",
+    description:
+      "Secure, multi-tenant ERP + LMS for schools and colleges. Attendance, exams, assignments, fees, hostel and more.",
+  },
 };
 
 export const viewport: Viewport = {

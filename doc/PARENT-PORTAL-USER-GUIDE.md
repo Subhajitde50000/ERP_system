@@ -49,7 +49,7 @@ father to have different menus, and normal for you to see fees for one child and
 ### On a computer or phone browser
 
 1. Open the link printed on the slip, or type your school's address and add `/guardian-access`:
-   `https://green.xyz.com/guardian-access`. The page is headed **Open your parent portal**.
+   `https://green.shikshasync.me/guardian-access`. The page is headed **Open your parent portal**.
 2. Type the code into **Activation code**. Spaces and dashes do not matter — they are removed for
    you, and letters are capitalised as you type.
 3. *(Worth doing, if the family has more than one slip)* Press **Check the invitation first**. The
@@ -86,7 +86,7 @@ None of these lock your child's record. A failed guess changes nothing except th
 
 | | Where |
 |---|---|
-| **Web** | `https://<school>.xyz.com/login` → your email and password → you land on **My family** |
+| **Web** | `https://<school>.shikshasync.me/login` → your email and password → you land on **My family** |
 | **App** | Open the app → school code (e.g. `green`) → Sign in → you land on **My family** |
 
 Forgot the password? Use **Forgot password?** on the login page — your portal account is an ordinary
@@ -466,7 +466,7 @@ that any change carries a staff member's name.
 
 ## 10. For the school office — granting and removing access
 
-Web: **Admin console → Guardians** (`https://<school>.xyz.com/admin/guardian-links`).
+Web: **Admin console → Guardians** (`https://<school>.shikshasync.me/admin/guardian-links`).
 
 ### Link a guardian (one form, three shapes)
 
@@ -583,7 +583,7 @@ your child's record.
 when the school set an end date. Ask for an extension before it runs out. On a child's own page the
 same fact appears as "Access until …".
 
-**Is there an app?** Yes — the same xyz.com app, signed in with your guardian account. It has the same
+**Is there an app?** Yes — the same shikshasync.me app, signed in with your guardian account. It has the same
 screens, including leave filing.
 
 **I entered the code wrongly a few times. Did I lock my child out?** No. Lookups are limited per

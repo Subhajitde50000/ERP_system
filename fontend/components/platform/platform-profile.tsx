@@ -258,10 +258,10 @@ export function PlatformProfile({ role }: { role: PlatformRole }) {
   }[role];
 
   const defaultDemoEmail = {
-    SUPER_ADMIN: "vikram.admin@xyz.com",
-    SUPPORT_STAFF: "nandini.support@xyz.com",
-    SALES_EXECUTIVE: "rohit.sales@xyz.com",
-    FINANCE_MANAGER: "sanjay.finance@xyz.com",
+    SUPER_ADMIN: "vikram.admin@shikshasync.me",
+    SUPPORT_STAFF: "nandini.support@shikshasync.me",
+    SALES_EXECUTIVE: "rohit.sales@shikshasync.me",
+    FINANCE_MANAGER: "sanjay.finance@shikshasync.me",
     OWNER: "rahul.owner@acme-edu.com",
   }[role];
 
@@ -749,7 +749,7 @@ export function PlatformProfile({ role }: { role: PlatformRole }) {
               </div>
               <div className="flex items-center justify-between py-2">
                 <span className="text-muted-foreground">Access Realm</span>
-                <span className="font-medium text-foreground">Platform Root (xyz.com)</span>
+                <span className="font-medium text-foreground">Platform Root (shikshasync.me)</span>
               </div>
               <div className="flex items-center justify-between py-2">
                 <span className="text-muted-foreground">2FA Enforcement</span>

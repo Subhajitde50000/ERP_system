@@ -35,6 +35,7 @@ import {
   type LucideIcon,
 } from "lucide-react-native";
 
+import { NotificationBell } from "@/components/notification-bell";
 import { useInstitutionAuth } from "@/lib/session";
 import type { ParentChildRow } from "@/lib/parent";
 import { useParentConsole } from "@/lib/parent-console";
@@ -76,6 +77,7 @@ export function ParentShellHeader({ onOpenNav }: { onOpenNav: () => void }) {
         {activeChild?.class_name ? <Text style={styles.childMeta}>{activeChild.class_name}</Text> : null}
         <ChevronDown size={14} color={Colors.mutedForeground} />
       </TouchableOpacity>
+      <NotificationBell />
       <ChildSwitcher open={switcher} onClose={() => setSwitcher(false)} />
     </View>
   );

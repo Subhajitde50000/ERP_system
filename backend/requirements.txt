@@ -23,10 +23,8 @@ slowapi==0.1.9
 # Redis (async)
 redis[hiredis]==5.2.1
 
-# Email
-# google provider  → SMTP transport
+# Email — Google SMTP for deployment testing; ZeptoMail HTTPS API for production
 aiosmtplib==3.0.2
-# klaviyo provider → Events API over HTTP (also used by the test client)
 httpx==0.28.1
 
 # Background jobs (app/services/scheduler_service.py: retention sweep, outbox
@@ -36,6 +34,9 @@ apscheduler==3.11.0
 
 # Utilities
 python-multipart==0.0.12
+# Object-storage backend for uploads (STORAGE_BACKEND=s3; optional at runtime —
+# imported lazily so local-disk deployments don't need it installed)
+boto3==1.35.90
 # Windows requires tzdata for Python's zoneinfo module (no system tz database)
 tzdata>=2024.1
 

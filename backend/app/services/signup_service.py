@@ -107,7 +107,7 @@ class SignupService:
     async def create_platform_account(
         db: AsyncSession, payload: PlatformAccountCreateRequest
     ) -> PlatformAccountResponse:
-        """Create the xyz.com owner account and queue email verification.
+        """Create the shikshasync.me owner account and queue email verification.
 
         The platform account is deliberately separate from any tenant user:
         this owner can create Green College today and ABC School tomorrow, then
@@ -318,7 +318,7 @@ class SignupService:
                 if len(suggestions) >= 3:
                     break
 
-        domain = settings.PUBLIC_ROOT_DOMAIN or "xyz.com"
+        domain = settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me"
         return SubdomainCheckResponse(
             slug=slug or "institution",
             available=not taken,
@@ -435,7 +435,7 @@ class SignupService:
 
     @staticmethod
     def _order_response(order: Order) -> OrderResponse:
-        domain = settings.PUBLIC_ROOT_DOMAIN or "xyz.com"
+        domain = settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me"
         return OrderResponse(
             id=order.id,
             mode=order.mode,
@@ -638,7 +638,7 @@ class SignupService:
 
         # 11. Welcome email — queued inside this transaction so a mail outage
         # can never roll back a paid signup; delivered right after the commit.
-        domain = settings.PUBLIC_ROOT_DOMAIN or "xyz.com"
+        domain = settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me"
         login_url = _login_url(tenant.slug, domain)
         email = queue_email(
             db,
@@ -749,7 +749,7 @@ class SignupService:
         )
         email = email_res.scalar_one_or_none()
 
-        domain = settings.PUBLIC_ROOT_DOMAIN or "xyz.com"
+        domain = settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me"
         return ProvisionResult(
             order_id=order.id,
             mode=order.mode,

@@ -64,6 +64,7 @@ export default function TeacherLayout() {
         <Stack.Screen name="content/upload" />
         <Stack.Screen name="notices/index" />
         <Stack.Screen name="notices/new" />
+        <Stack.Screen name="notifications" />
         <Stack.Screen name="discussion/index" />
         <Stack.Screen name="discussion/[id]" />
       </Stack>

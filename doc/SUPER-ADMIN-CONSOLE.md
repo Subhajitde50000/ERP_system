@@ -32,14 +32,14 @@ cd backend && alembic upgrade head
 # 2. Catalogue, roles, plans, Super Admin
 python backend/scripts/seed_data.py
 python backend/scripts/create_superadmin.py \
-  --email admin@xyz.com --password 'StrongPass!' --name "Super Admin"
+  --email admin@shikshasync.me --password 'StrongPass!' --name "Super Admin"
 
 # 3. Run
 cd backend  && uvicorn app.main:app
 cd fontend  && npm run build && npm start
 ```
 
-Sign in at `app.xyz.com/platform/login` → lands on `/platform/dashboard`.
+Sign in at `app.shikshasync.me/platform/login` → lands on `/platform/dashboard`.
 
 ---
 
@@ -159,7 +159,7 @@ already existed; the seven pages were the last fixtures and are now live:
 | Support Tickets | `/platform/tickets` | `GET·POST /owner/tickets`, `…/reply` |
 | Profile | `/platform/profile` | `PUT /owner/profile`, `POST /change-password` |
 
-Two account types now share `app.xyz.com` (`platform_users` staff and
+Two account types now share `app.shikshasync.me` (`platform_users` staff and
 `platform_owners` customers). The gate accepts either; each API rejects the
 other's token, which the test suite asserts in both directions.
 
@@ -172,7 +172,7 @@ Five defects found and fixed after the initial build:
 | # | Defect | Effect |
 |---|---|---|
 | 1 | Trial countdown measured against a frozen 2026-07-29 clock | a 14-day trial displayed "19d left" |
-| 2 | `.xyz.com` hardcoded in 11 places | staging / white-label deploys showed the wrong host; "Open" links went to the wrong environment |
+| 2 | `.shikshasync.me` hardcoded in 11 places | staging / white-label deploys showed the wrong host; "Open" links went to the wrong environment |
 | 3 | Sidebar always showed the demo name "Vikram" | every Super Admin saw the same wrong identity |
 | 4 | `rahul@gmail.com` and an invented "2 tickets" in the Owner dashboard | fake data on a customer-facing page |
 | 5 | Owner API returned snake_case, `types/owner.ts` expects camelCase | **silent** — every owner field read `undefined` and rendered blank, no error anywhere |

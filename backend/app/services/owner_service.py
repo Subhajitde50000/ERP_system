@@ -79,7 +79,7 @@ def _extract_ip(request: Request) -> str | None:
 
 
 def _login_url(slug: str) -> str:
-    domain = settings.PUBLIC_ROOT_DOMAIN or "xyz.com"
+    domain = settings.PUBLIC_ROOT_DOMAIN or "shikshasync.me"
     scheme = "http" if "localhost" in domain else "https"
     return f"{scheme}://{slug}.{domain}/login"
 
@@ -116,11 +116,11 @@ class OwnerService:
         await db.flush()
 
         verify_url = (
-            f"https://{settings.PUBLIC_ROOT_DOMAIN or 'xyz.com'}/verify-email"
+            f"https://{settings.PUBLIC_ROOT_DOMAIN or 'shikshasync.me'}/verify-email"
             f"?token={raw_token}"
         )
         # Queued in the outbox inside this transaction, then delivered by the
-        # active provider (Google SMTP or Klaviyo — see mailer/registry.py).
+        # active provider (ZeptoMail in production; see mailer/registry.py).
         # In dev/no-mailer mode the raw token is also returned to the caller so
         # the flow can be completed end-to-end.
         queue_email(
@@ -180,7 +180,7 @@ class OwnerService:
             hours=24
         )
         verify_url = (
-            f"https://{settings.PUBLIC_ROOT_DOMAIN or 'xyz.com'}/verify-email"
+            f"https://{settings.PUBLIC_ROOT_DOMAIN or 'shikshasync.me'}/verify-email"
             f"?token={raw_token}"
         )
         queue_email(
@@ -339,7 +339,7 @@ class OwnerService:
             minutes=30
         )
         reset_url = (
-            f"https://{settings.PUBLIC_ROOT_DOMAIN or 'xyz.com'}/reset-password"
+            f"https://{settings.PUBLIC_ROOT_DOMAIN or 'shikshasync.me'}/reset-password"
             f"?token={raw}"
         )
         queue_email(

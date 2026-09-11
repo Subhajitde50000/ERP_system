@@ -51,10 +51,10 @@ async def create_platform_account(
     payload: PlatformAccountCreateRequest,
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
-    """Create the owner's xyz.com platform account and send verification.
+    """Create the owner's shikshasync.me platform account and send verification.
 
     This is the AWS/Shopify-style account: the owner signs in once at
-    xyz.com, then creates and manages one or many institutions from the
+    shikshasync.me, then creates and manages one or many institutions from the
     platform dashboard.
     """
     data = await SignupService.create_platform_account(db, payload)
@@ -88,7 +88,7 @@ async def get_tenant_by_slug(
     db: Annotated[AsyncSession, Depends(get_db)],
 ):
     """Public tenant lookup — used by the login page to render the right
-    institution badge for <tenant>.xyz.com without any credentials."""
+    institution badge for <tenant>.shikshasync.me without any credentials."""
     from sqlalchemy import select
 
     from app.models.tenant import Tenant

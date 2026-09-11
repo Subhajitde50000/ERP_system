@@ -152,7 +152,7 @@ export function ConvertTrial({
         </div>
       </div>
       <p className="mb-4 flex min-w-0 flex-wrap items-center gap-x-2 text-[13px] text-muted-foreground">
-        <span className="font-mono">{trial.slug}.xyz.com</span>
+        <span className="font-mono">{trial.slug}.shikshasync.me</span>
         <span>· trialling {trial.planName}</span>
         <span>· {trial.contactName}</span>
       </p>
@@ -404,7 +404,7 @@ export function ConvertTrial({
                 <Mail className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                 <span className="min-w-0">
                   <strong className="font-semibold">
-                    Welcome to xyz.com, {trial.name}
+                    Welcome to shikshasync.me, {trial.name}
                   </strong>
                   <br />
                   Your {plan?.name} plan starts{" "}

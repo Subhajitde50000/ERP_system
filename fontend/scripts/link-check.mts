@@ -235,6 +235,10 @@ const PUBLIC_PAGES = [
   ["/login", "Login"],
   ["/forgot-password", "Forgot password"],
   ["/support", "Support"],
+  ["/contact", "Contact"],
+  ["/privacy", "Privacy Policy"],
+  ["/terms", "Terms of Service"],
+  ["/refund-policy", "Refund Policy"],
   ["/", "Root → redirects to /login"],
   ["/this-route-does-not-exist", "404 page"],
 ];
@@ -339,7 +343,7 @@ for (const [path, label] of PUBLIC_PAGES) {
   publicRows.push({ page: label, url, want, got: outcome, status, ok });
 }
 
-/* ── Platform console (app.xyz.com) — C-SA-01…08 ───────────────────────── */
+/* ── Platform console (app.shikshasync.me) — C-SA-01…08 ───────────────────────── */
 
 const PLATFORM_PAGES: [string, string][] = [
   ["/platform/dashboard", "Platform Dashboard (C-SA-01)"],

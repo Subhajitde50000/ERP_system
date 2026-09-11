@@ -6,7 +6,7 @@ import { STATS } from "@/lib/marketing";
 export const metadata: Metadata = {
   title: "About — education, connected",
   description:
-    "xyz.com is on a mission to give every institution one calm, connected home for academics, learning and operations. Made in India.",
+    "shikshasync.me is on a mission to give every institution one calm, connected home for academics, learning and operations. Made in India.",
 };
 
 const VALUES = [
@@ -27,7 +27,7 @@ export default function AboutPage() {
     <MarketingShell>
       <Section className="!pb-10 text-center">
         <SectionHeading
-          eyebrow="About xyz.com"
+          eyebrow="About shikshasync.me"
           title="We’re building the connected home for education."
           lede="Our mission is simple: give every institution — from a single school to a multi-campus trust — one calm, reliable place to run academics, learning and operations."
           align="center"

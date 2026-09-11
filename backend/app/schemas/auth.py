@@ -24,7 +24,7 @@ class TenantLoginRequest(BaseModel):
     """
     Body for POST /tenant/auth/login.
     The slug identifies which institution this login belongs to.
-    The frontend extracts it from the subdomain (abc.xyz.com → slug = 'abc').
+    The frontend extracts it from the subdomain (abc.shikshasync.me → slug = 'abc').
     identifier accepts either an email address or a student roll number.
     """
 
@@ -38,15 +38,15 @@ class TenantLoginRequest(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    """Body for POST .../auth/refresh"""
+    """Body for POST .../auth/refresh (optional if refresh_token cookie is present)"""
 
-    refresh_token: str = Field(..., min_length=1)
+    refresh_token: str | None = Field(default=None)
 
 
 class LogoutRequest(BaseModel):
-    """Body for POST .../auth/logout"""
+    """Body for POST .../auth/logout (optional if refresh_token cookie is present)"""
 
-    refresh_token: str = Field(..., min_length=1)
+    refresh_token: str | None = Field(default=None)
 
 
 class ForgotPasswordRequest(BaseModel):

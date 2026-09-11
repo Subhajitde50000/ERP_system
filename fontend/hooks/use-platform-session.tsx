@@ -3,7 +3,7 @@
 /**
  * `usePlatformSession` — whoever is signed in to the platform console, or null.
  *
- * Two different account types share `app.xyz.com`:
+ * Two different account types share `app.shikshasync.me`:
  *   - `platform_users`  — Super Admin / Support / Sales / Finance (staff)
  *   - `platform_owners` — the paying customer who owns institutions
  * The shell needs one answer to "who is this and what may they see", so both

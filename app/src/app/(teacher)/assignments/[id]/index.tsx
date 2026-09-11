@@ -3,7 +3,7 @@
  */
 
 import { useState } from "react";
-import { Linking, StyleSheet, Text, View } from "react-native";
+import { Alert, Linking, StyleSheet, Text, View } from "react-native";
 import { Link, useLocalSearchParams } from "expo-router";
 import { Ban, Pencil, Plus, RotateCcw, Send, Trash2 } from "lucide-react-native";
 
@@ -69,6 +69,27 @@ export default function TeacherAssignmentDetailPage() {
     }
   }
 
+  /* Reopen asks what to do with un-reviewed work already submitted: hand it
+     back for revision (default) or only accept new submissions. */
+  function confirmReopen() {
+    Alert.alert(
+      "Reopen assignment",
+      "Students can submit again while it stays published. Hand already-submitted (un-reviewed) work back to students for revision?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "New submissions only",
+          onPress: () => run("reopen", () => reopenTeacherAssignment(assignmentId, false)),
+        },
+        {
+          text: "Reopen & resubmit",
+          onPress: () => run("reopen", () => reopenTeacherAssignment(assignmentId, true)),
+        },
+      ],
+      { cancelable: true },
+    );
+  }
+
   return (
     <Screen>
       <PageHeader
@@ -107,7 +128,7 @@ export default function TeacherAssignmentDetailPage() {
                   icon={RotateCcw}
                   disabled={busy !== null}
                   loading={busy === "reopen"}
-                  onPress={() => run("reopen", () => reopenTeacherAssignment(assignmentId))}
+                  onPress={confirmReopen}
                 />
               ) : null}
             </View>

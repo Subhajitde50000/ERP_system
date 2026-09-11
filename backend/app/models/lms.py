@@ -36,13 +36,10 @@ from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from app.database import Base
+from app.models.principal import LeaveStatus
 
-
-class LeaveStatus(str, enum.Enum):
-    PENDING = "PENDING"
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
-    CANCELLED = "CANCELLED"
+# LeaveStatus moved to app.models.principal (shared with staff leave_requests
+# behind the same PG enum type) and re-exported here for existing callers.
 
 
 class QuestionType(str, enum.Enum):
@@ -64,6 +61,14 @@ class ReviewDecision(str, enum.Enum):
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
     CHANGES_REQUESTED = "CHANGES_REQUESTED"
+
+
+class ScholarshipType(str, enum.Enum):
+    """PG enum ``scholarship_type`` (database.sql §3) behind scholarships.type."""
+
+    PERCENTAGE = "PERCENTAGE"
+    FIXED_AMOUNT = "FIXED_AMOUNT"
+    FULL_WAIVER = "FULL_WAIVER"
 
 
 class ContentKind(str, enum.Enum):
@@ -424,7 +429,7 @@ class Scholarship(Base):
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    type: Mapped[str] = mapped_column(String(30), nullable=False)
+    type: Mapped[ScholarshipType] = mapped_column(SAEnum(ScholarshipType, name="scholarship_type"), nullable=False)
     value: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     criteria: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
