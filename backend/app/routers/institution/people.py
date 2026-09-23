@@ -47,6 +47,18 @@ async def list_staff(
     return APIResponse(success=True, data=await InstitutionService.list_staff(db, admin.tenant_id), message="Staff loaded")
 
 
+@router.post("/users/{user_id}/password-reset", response_model=APIResponse[None])
+async def resend_password_reset(
+    user_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    admin: Annotated[User, Depends(get_current_tenant_user_admin)],
+):
+    """Send a fresh password-reset link to an active student or staff member."""
+    tenant = await _tenant(db, admin)
+    await InstitutionService.resend_password_reset(db, tenant, user_id, actor=admin)
+    return APIResponse(success=True, data=None, message="Password reset link sent")
+
+
 @router.post("/staff", response_model=APIResponseStaffOne, status_code=201)
 async def invite_staff(
     payload: StaffInvite,

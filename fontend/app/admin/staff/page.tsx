@@ -28,6 +28,7 @@ import {
   fetchStaff,
   inviteStaff,
   revokeStaffRole,
+  resendPasswordReset,
   setStaffActive,
   updateStaff,
   uploadStaff,
@@ -63,6 +64,7 @@ export default function StaffPage() {
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkResult, setBulkResult] = useState<BulkUploadResult | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [resettingUserId, setResettingUserId] = useState<string | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const bulkInputRef = useRef<HTMLInputElement>(null);
 
@@ -270,6 +272,22 @@ export default function StaffPage() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not delete staff member.");
+    }
+  }
+
+  async function sendPasswordReset(s: StaffMember) {
+    if (!s.email) {
+      setError("This staff member has no email address for a password reset link.");
+      return;
+    }
+    setResettingUserId(s.id);
+    setError(null);
+    try {
+      await resendPasswordReset(s.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send the password reset link.");
+    } finally {
+      setResettingUserId(null);
     }
   }
 
@@ -579,6 +597,16 @@ export default function StaffPage() {
                       title="Edit Staff Member"
                     >
                       <Edit className="h-3.5 w-3.5" /> Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={!s.is_active || !s.email || resettingUserId === s.id}
+                      onClick={() => sendPasswordReset(s)}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-md border border-accent-border bg-white px-2.5 text-xs font-semibold text-accent transition hover:bg-accent-light disabled:cursor-not-allowed disabled:opacity-50"
+                      title={s.email ? "Send password reset link" : "No email address"}
+                    >
+                      <Mail className="h-3.5 w-3.5" /> {resettingUserId === s.id ? "Sending..." : "Reset link"}
                     </button>
 
                     <button

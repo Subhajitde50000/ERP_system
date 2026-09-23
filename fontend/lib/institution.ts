@@ -251,6 +251,8 @@ export const deleteStaff = (userId: string) =>
   call<null>(`/staff/${userId}`, { method: "DELETE" });
 export const setStaffActive = (userId: string, active: boolean) =>
   call<StaffMember>(`/staff/${userId}/active?active=${active}`, { method: "PUT" });
+export const resendPasswordReset = (userId: string) =>
+  call<null>(`/users/${userId}/password-reset`, { method: "POST" });
 
 export const fetchStudents = () => call<StudentRecord[]>("/students");
 export const fetchClasses = () => call<ClassRecord[]>("/classes");

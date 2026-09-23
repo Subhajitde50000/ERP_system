@@ -814,6 +814,74 @@ class InstitutionService:
         return [await InstitutionService._staff_out(db, tenant_id, u) for u in users]
 
     @staticmethod
+    async def resend_password_reset(
+        db: AsyncSession,
+        tenant: Tenant,
+        user_id: uuid.UUID,
+        *,
+        actor: User,
+    ) -> None:
+        """Issue a fresh reset link for an active student or staff account."""
+        user_res = await db.execute(
+            select(User).where(
+                User.id == user_id,
+                User.tenant_id == tenant.id,
+                User.deleted_at == None,  # noqa: E711
+            )
+        )
+        user = user_res.scalar_one_or_none()
+        if user is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="User not found")
+        if not user.is_active:
+            raise HTTPException(status.HTTP_409_CONFLICT, detail="Cannot send a reset link to an inactive account")
+        if not user.email:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, detail="This account has no email address")
+
+        role_res = await db.execute(
+            select(Role.name).join(RoleAssignment, RoleAssignment.role_id == Role.id).where(
+                RoleAssignment.user_id == user.id,
+                RoleAssignment.tenant_id == tenant.id,
+                RoleAssignment.is_active == True,  # noqa: E712
+            )
+        )
+        roles = set(role_res.scalars().all())
+        is_student = "STUDENT" in roles
+        is_staff = bool(roles - {"STUDENT", "PARENT", "INSTITUTION_ADMIN"})
+        if not (is_student or is_staff):
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Password reset links can only be sent to students or staff",
+            )
+
+        raw_token = generate_secure_token(32)
+        user.password_reset_token = hash_token(raw_token)
+        user.password_reset_expires = datetime.now(timezone.utc) + timedelta(minutes=30)
+        root_domain = get_app_settings().PUBLIC_ROOT_DOMAIN or "shikshasync.me"
+        reset_url = f"https://{tenant.slug}.{root_domain}/reset-password?token={raw_token}"
+        queue_email(
+            db,
+            "tenant.password_reset",
+            to=user.email,
+            context={
+                "name": user.name,
+                "reset_url": reset_url,
+                "expires_minutes": 30,
+                "institution": tenant.name,
+            },
+            tenant_id=tenant.id,
+        )
+        AuditService.record(
+            db,
+            actor=actor,
+            actor_role="INSTITUTION_ADMIN",
+            action="RESEND_PASSWORD_RESET",
+            entity="User",
+            entity_id=user.id,
+            tenant_id=tenant.id,
+            new_value={"target_roles": sorted(roles)},
+        )
+
+    @staticmethod
     async def invite_staff(
         db: AsyncSession,
         tenant: Tenant,

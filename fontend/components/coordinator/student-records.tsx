@@ -6,6 +6,7 @@ import {
   Edit2,
   FileSpreadsheet,
   Filter,
+  Mail,
   Plus,
   Search,
   Trash2,
@@ -22,6 +23,7 @@ import {
   deleteStudent,
   fetchClasses,
   fetchStudents,
+  resendPasswordReset,
   updateStudent,
   uploadStudents,
   type BulkUploadResult,
@@ -58,6 +60,7 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const [bulkFile, setBulkFile] = useState<File | null>(null);
   const [bulkResult, setBulkResult] = useState<BulkUploadResult | null>(null);
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [resettingStudentId, setResettingStudentId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -172,6 +175,22 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not delete student.");
+    }
+  }
+
+  async function sendPasswordReset(student: StudentRecord) {
+    if (!student.email) {
+      setError("This student has no email address for a password reset link.");
+      return;
+    }
+    setResettingStudentId(student.id);
+    setError(null);
+    try {
+      await resendPasswordReset(student.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send the password reset link.");
+    } finally {
+      setResettingStudentId(null);
     }
   }
 
@@ -457,6 +476,17 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
+                        {isAdmin ? (
+                          <button
+                            type="button"
+                            disabled={!student.is_active || !student.email || resettingStudentId === student.id}
+                            onClick={() => sendPasswordReset(student)}
+                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent-light hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+                            title={student.email ? "Send password reset link" : "No email address"}
+                          >
+                            <Mail className="h-4 w-4" />
+                          </button>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => handleDelete(student)}
