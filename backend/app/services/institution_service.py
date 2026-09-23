@@ -820,6 +820,8 @@ class InstitutionService:
         user_id: uuid.UUID,
         *,
         actor: User,
+        student_only: bool = False,
+        actor_role: str = "INSTITUTION_ADMIN",
     ) -> None:
         """Issue a fresh reset link for an active student or staff account."""
         user_res = await db.execute(
@@ -847,10 +849,14 @@ class InstitutionService:
         roles = set(role_res.scalars().all())
         is_student = "STUDENT" in roles
         is_staff = bool(roles - {"STUDENT", "PARENT", "INSTITUTION_ADMIN"})
-        if not (is_student or is_staff):
+        if not is_student and (student_only or not is_staff):
             raise HTTPException(
                 status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Password reset links can only be sent to students or staff",
+                detail=(
+                    "Password reset links can only be sent to students"
+                    if student_only
+                    else "Password reset links can only be sent to students or staff"
+                ),
             )
 
         raw_token = generate_secure_token(32)
@@ -873,7 +879,7 @@ class InstitutionService:
         AuditService.record(
             db,
             actor=actor,
-            actor_role="INSTITUTION_ADMIN",
+            actor_role=actor_role,
             action="RESEND_PASSWORD_RESET",
             entity="User",
             entity_id=user.id,

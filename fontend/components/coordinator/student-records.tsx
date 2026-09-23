@@ -24,6 +24,7 @@ import {
   fetchClasses,
   fetchStudents,
   resendPasswordReset,
+  resendStudentPasswordReset,
   updateStudent,
   uploadStudents,
   type BulkUploadResult,
@@ -186,7 +187,9 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
     setResettingStudentId(student.id);
     setError(null);
     try {
-      await resendPasswordReset(student.id);
+      await (isAdmin
+        ? resendPasswordReset(student.id)
+        : resendStudentPasswordReset(student.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send the password reset link.");
     } finally {
@@ -476,17 +479,15 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
                         >
                           <Edit2 className="h-4 w-4" />
                         </button>
-                        {isAdmin ? (
-                          <button
-                            type="button"
-                            disabled={!student.is_active || !student.email || resettingStudentId === student.id}
-                            onClick={() => sendPasswordReset(student)}
-                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent-light hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
-                            title={student.email ? "Send password reset link" : "No email address"}
-                          >
-                            <Mail className="h-4 w-4" />
-                          </button>
-                        ) : null}
+                        <button
+                          type="button"
+                          disabled={!student.is_active || !student.email || resettingStudentId === student.id}
+                          onClick={() => sendPasswordReset(student)}
+                          className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-accent-light hover:text-accent disabled:cursor-not-allowed disabled:opacity-40"
+                          title={student.email ? "Send password reset link" : "No email address"}
+                        >
+                          <Mail className="h-4 w-4" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(student)}

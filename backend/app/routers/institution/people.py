@@ -178,6 +178,25 @@ async def create_student(
     return APIResponse(success=True, data=data, message="Student created")
 
 
+@router.post("/students/{student_id}/password-reset", response_model=APIResponse[None])
+async def resend_student_password_reset(
+    student_id: uuid.UUID,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    manager: Annotated[User, Depends(get_current_tenant_user_student_records_manager)],
+):
+    """Allow Academic Coordinators to send a reset link to a student only."""
+    tenant = await _tenant(db, manager)
+    await InstitutionService.resend_password_reset(
+        db,
+        tenant,
+        student_id,
+        actor=manager,
+        student_only=True,
+        actor_role="ACADEMIC_COORDINATOR",
+    )
+    return APIResponse(success=True, data=None, message="Password reset link sent")
+
+
 @router.put("/students/{student_id}", response_model=APIResponseStudent)
 async def update_student(
     student_id: uuid.UUID,
