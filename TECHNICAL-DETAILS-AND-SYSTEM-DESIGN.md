@@ -40,7 +40,23 @@ The platform ships **three client surfaces** against **one backend API**:
 
 ## 2. Technology Stack (Exact Versions in Use)
 
-### 2.1 Backend (`backend/requirements.txt`)
+### 2.1 Programming & Development Languages
+
+The shikshasync.me platform is built using a multi-language architecture chosen for strict type safety, asynchronous high performance, cross-platform mobile compatibility, and automated operations:
+
+| Language | Version / Dialect | Role in System | Key Components & Files |
+|---|---|---|---|
+| **Python** | 3.11+ | **Backend API & Async Workers**: Application layer, 21 REST/WebSocket routers, 30+ services, background scheduler, ORM models, auth/RBAC guards, and unit/integration tests (~48,900 LOC). | `backend/app/`, `backend/tests/` (`.py`) |
+| **TypeScript** | 5.x | **Web & Mobile Frontends**: Strictly typed client logic, 188 Next.js pages (18 roles), 75 React Native/Expo screens, client API SDK layer, custom hooks, and shared schemas (~109,200 LOC combined). | `fontend/`, `app/` (`.ts`, `.tsx`) |
+| **JavaScript** | ES6+ / Node.js | **Build Tooling & Automation**: Build configuration scripts, bundler pipelines, link-checking harnesses, and CSS tooling presets. | `fontend/`, `app/`, `scripts/` (`.js`, `.mjs`) |
+| **SQL** | PostgreSQL 16 dialect / PL/pgSQL | **Database Schema & Migrations**: 132 relational tables, triggers, indexes, constraints, foreign keys, and migration scripts. | `database/database.sql`, `backend/alembic/` (`.sql`) |
+| **HTML5 & CSS3** | Modern Standards + Tailwind 3.4 | **UI Markup, Design System & Mailers**: Responsive layouts, custom UI components, responsive typography, and transactional HTML email templates. | `fontend/app/`, `fontend/styles/`, `backend/app/services/mailer/` |
+| **Shell / Bash** | POSIX / Bash 4+ | **Linux DevOps & Operational Scripts**: Container automation, automated database dumps/restores, and server deployment workflows. | `scripts/backup-db.sh`, `scripts/restore-db.sh`, `scripts/deploy.sh` (`.sh`) |
+| **PowerShell** | 5.1+ / Core 7+ | **Windows Deployment Automation**: Automated deployment and environment configuration script for Windows host environments. | `scripts/deploy.ps1` (`.ps1`) |
+| **YAML** | 1.2 | **Infrastructure & CI/CD Orchestration**: Docker Compose orchestration for local and production setups, GitHub Actions workflows. | `docker-compose.yml`, `docker-compose.prod.yml`, `.github/workflows/` (`.yml`, `.yaml`) |
+| **Nginx Config** | Nginx Configuration Syntax | **Gateway & Reverse Proxy**: Reverse proxy routing, SSL termination, subdomain-based multi-tenant routing, and WebSocket upgrades. | `nginx/` (`.conf`) |
+
+### 2.2 Backend (`backend/requirements.txt`)
 
 | Layer | Technology | Version |
 |---|---|---|
@@ -60,7 +76,7 @@ The platform ships **three client surfaces** against **one backend API**:
 | Forms/multipart | python-multipart | 0.0.12 |
 | Tests | pytest, pytest-asyncio, pgserver (embedded Postgres) | 8.3.4 / 0.24.0 / 0.1.4 |
 
-### 2.2 Web frontend (`fontend/package.json`)
+### 2.3 Web frontend (`fontend/package.json`)
 
 - **Next.js 16.2** App Router, **React 19.2**, TypeScript 5, Tailwind CSS 3.4
 - `lucide-react` icons, `xlsx` (Excel import/export), `html2canvas` (grade-card/image export)
@@ -69,7 +85,7 @@ The platform ships **three client surfaces** against **one backend API**:
   `fontend/lib/` (~40 API modules) with small hooks in `fontend/hooks/`
 - Fonts are local/system stacks (no Google Fonts dependency at build or runtime)
 
-### 2.3 Mobile app (`app/package.json`)
+### 2.4 Mobile app (`app/package.json`)
 
 - **Expo SDK 57**, React Native 0.86, React 19.2, expo-router (file-based routing)
 - `expo-secure-store` for token storage, `expo-web-browser`, `expo-image`,
@@ -78,7 +94,7 @@ The platform ships **three client surfaces** against **one backend API**:
 - Shares the same API envelope/types design as the web client (ported `api-client`)
 - Route groups: `(student)`, `(teacher)`, `(parent)` plus shared auth screens
 
-### 2.4 Data & infrastructure
+### 2.5 Data & infrastructure
 
 - **PostgreSQL 16** — single source of truth (132 tables), UUID primary keys everywhere
 - **Redis 7** — sessions/cache target + designed pub/sub channel for multi-worker live classes
