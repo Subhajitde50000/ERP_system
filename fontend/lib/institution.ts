@@ -211,6 +211,7 @@ export const inviteStaff = (payload: {
   phone?: string;
   role: string;
   departmentId?: string;
+  password?: string;
 }) =>
   call<StaffMember>("/staff", {
     method: "POST",
@@ -220,6 +221,7 @@ export const inviteStaff = (payload: {
       phone: payload.phone,
       role: payload.role,
       department_id: payload.departmentId,
+      password: payload.password,
     }),
   });
 export const assignStaffRole = (userId: string, roleName: string, departmentId?: string) =>
@@ -258,7 +260,7 @@ export const resendStudentPasswordReset = (studentId: string) =>
 
 export const fetchStudents = () => call<StudentRecord[]>("/students");
 export const fetchClasses = () => call<ClassRecord[]>("/classes");
-export const createStudent = (payload: { name: string; roll_no: string; email?: string; gender?: string; class_id?: string }) =>
+export const createStudent = (payload: { name: string; roll_no: string; email?: string; gender?: string; class_id?: string; password?: string }) =>
   call<StudentRecord>("/students", { method: "POST", body: JSON.stringify(payload) });
 export const updateStudent = (
   id: string,

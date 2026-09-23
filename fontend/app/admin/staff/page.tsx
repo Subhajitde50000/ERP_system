@@ -41,9 +41,9 @@ import { roleLabel, STAFF_INVITABLE_ROLES } from "@/lib/roles";
 import type { Role } from "@/types/auth";
 
 const TEMPLATE_CSV = [
-  "name,email,phone,role,department_code",
-  "Priya Nair,priya@college.edu,+91 98765 43210,TEACHER,CS",
-  "Rahul Verma,rahul@college.edu,,ACADEMIC_COORDINATOR,",
+  "name,email,phone,role,department_code,password",
+  "Priya Nair,priya@college.edu,+91 98765 43210,TEACHER,CS,SecurePass1!",
+  "Rahul Verma,rahul@college.edu,,ACADEMIC_COORDINATOR,,",
 ].join("\n");
 
 export default function StaffPage() {
@@ -57,6 +57,7 @@ export default function StaffPage() {
     phone: "",
     role: "TEACHER",
     departmentId: "",
+    password: "",
   });
   const [showForm, setShowForm] = useState(false);
   const [vpDepartments, setVpDepartments] = useState<Record<string, string>>({});
@@ -143,8 +144,9 @@ export default function StaffPage() {
         phone: form.phone || undefined,
         role: form.role,
         departmentId: form.role === "VICE_PRINCIPAL" ? form.departmentId : undefined,
+        password: form.password || undefined,
       });
-      setForm({ name: "", email: "", phone: "", role: "TEACHER", departmentId: "" });
+      setForm({ name: "", email: "", phone: "", role: "TEACHER", departmentId: "", password: "" });
       setShowForm(false);
       await load();
     } catch (err) {
@@ -326,7 +328,8 @@ export default function StaffPage() {
                 <code className="rounded bg-muted px-1 py-0.5">email</code>,{" "}
                 <code className="rounded bg-muted px-1 py-0.5">role</code> (required) —{" "}
                 <code className="rounded bg-muted px-1 py-0.5">phone</code>,{" "}
-                <code className="rounded bg-muted px-1 py-0.5">department_code</code> (optional).
+                <code className="rounded bg-muted px-1 py-0.5">department_code</code>,{" "}
+                <code className="rounded bg-muted px-1 py-0.5">password</code> (optional).
                 Use the department <em>code</em> (e.g. CS) to scope the role. Valid roles:{" "}
                 <span className="text-primary">{STAFF_INVITABLE_ROLES.map((r) => roleLabel(r)).join(", ")}</span>.
                 Vice Principals must have a department code.
@@ -358,7 +361,7 @@ export default function StaffPage() {
             </button>
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Each imported member receives a default password (<code className="rounded bg-muted px-1 py-0.5 font-bold text-primary">password1234!</code>) and an invite email with a set-password link.
+            Leave <code className="rounded bg-muted px-1 py-0.5">password</code> blank to use the default (<code className="rounded bg-muted px-1 py-0.5 font-bold text-primary">password1234!</code>). Passwords must be 8–128 characters.
           </p>
 
           {bulkError ? <div className="mt-4"><ErrorState message={bulkError} /></div> : null}
@@ -419,6 +422,10 @@ export default function StaffPage() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className={labelClass}>Initial password (optional)</label>
+              <input type="password" minLength={8} maxLength={128} className={inputClass} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Leave blank for default" />
+            </div>
             {form.role === "VICE_PRINCIPAL" || form.role === "HOD" ? (
               <div className="sm:col-span-2">
                 <label className={labelClass}>
@@ -447,7 +454,7 @@ export default function StaffPage() {
                 <UserPlus className="h-4 w-4" aria-hidden="true" /> {busy ? "Inviting…" : "Send invite"}
               </button>
               <p className="text-xs text-muted-foreground">
-                Default password: <code className="rounded bg-muted px-1.5 py-0.5 font-bold text-primary">password1234!</code>
+                Leave blank to use the default password: <code className="rounded bg-muted px-1.5 py-0.5 font-bold text-primary">password1234!</code>
               </p>
             </div>
           </form>

@@ -90,6 +90,19 @@ DEFAULT_STUDENT_PASSWORD = "password1232!"
 NON_INVITABLE_ROLES = frozenset({"INSTITUTION_ADMIN", "STUDENT", "PARENT"})
 
 class InstitutionService:
+    @staticmethod
+    def _initial_password(password: str | None, default: str) -> str:
+        """Return an optional CSV password after applying the API password floor."""
+        password = (password or "").strip()
+        if not password:
+            return default
+        if not 8 <= len(password) <= 128:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="password must be between 8 and 128 characters",
+            )
+        return password
+
     # ── helpers ──────────────────────────────────────────────────────────────
 
     @staticmethod
@@ -914,7 +927,7 @@ class InstitutionService:
         raw_token = generate_secure_token(32)
         user = User(
             id=uuid.uuid4(), tenant_id=tenant.id, name=payload.name, email=email, phone=payload.phone,
-            password_hash=hash_password(DEFAULT_STAFF_PASSWORD), is_active=True,
+            password_hash=hash_password(payload.password or DEFAULT_STAFF_PASSWORD), is_active=True,
             password_reset_token=hash_token(raw_token),
             password_reset_expires=datetime.now(timezone.utc) + timedelta(days=7),
         )
@@ -1317,7 +1330,9 @@ class InstitutionService:
         raw_token = generate_secure_token(32)
         user = User(
             id=uuid.uuid4(), tenant_id=tenant.id, name=name, email=email,
-            phone=row.get("phone") or None, password_hash=hash_password(DEFAULT_STAFF_PASSWORD), is_active=True,
+            phone=row.get("phone") or None,
+            password_hash=hash_password(InstitutionService._initial_password(row.get("password"), DEFAULT_STAFF_PASSWORD)),
+            is_active=True,
             password_reset_token=hash_token(raw_token),
             password_reset_expires=datetime.now(timezone.utc) + timedelta(days=7),
         )
@@ -1373,7 +1388,7 @@ class InstitutionService:
             email=str(payload.email).lower() if payload.email else None,
             student_roll_no=payload.roll_no, gender=Gender(payload.gender) if payload.gender else None,
             date_of_birth=payload.date_of_birth,
-            password_hash=hash_password(DEFAULT_STUDENT_PASSWORD), is_active=True,
+            password_hash=hash_password(payload.password or DEFAULT_STUDENT_PASSWORD), is_active=True,
         )
         db.add(user)
         await db.flush()
@@ -1570,7 +1585,8 @@ class InstitutionService:
             id=uuid.uuid4(), tenant_id=tenant.id, name=name, email=email,
             student_roll_no=roll_no, gender=Gender(gender) if gender else None,
             date_of_birth=dob,
-            password_hash=hash_password(DEFAULT_STUDENT_PASSWORD), is_active=True,
+            password_hash=hash_password(InstitutionService._initial_password(row.get("password"), DEFAULT_STUDENT_PASSWORD)),
+            is_active=True,
         )
         db.add(user)
         await db.flush()

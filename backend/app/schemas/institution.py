@@ -237,6 +237,7 @@ class StaffInvite(BaseModel):
     phone: str | None = Field(default=None, max_length=20)
     role: str = Field(..., max_length=50, description="Role name, e.g. TEACHER")
     department_id: uuid.UUID | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=128)
 
 
 class StaffUpdate(BaseModel):
@@ -281,6 +282,7 @@ class StudentCreate(BaseModel):
     gender: str | None = Field(default=None, pattern="^(MALE|FEMALE|OTHER)$")
     date_of_birth: date | None = None
     class_id: uuid.UUID | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=128)
 
 
 class StudentUpdate(BaseModel):

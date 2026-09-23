@@ -33,9 +33,9 @@ import {
 } from "@/lib/institution";
 
 const SAMPLE_CSV = [
-  "name,roll_no,email,gender,class_code",
-  "Aarav Sharma,CS101,aarav@school.edu,MALE,10-A",
-  "Ananya Patel,CS102,ananya@school.edu,FEMALE,10-A",
+  "name,roll_no,email,gender,class_code,password",
+  "Aarav Sharma,CS101,aarav@school.edu,MALE,10-A,SecurePass1!",
+  "Ananya Patel,CS102,ananya@school.edu,FEMALE,10-A,",
 ].join("\n");
 
 export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
@@ -50,7 +50,7 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
 
   // Add Form state
-  const [form, setForm] = useState({ name: "", roll_no: "", email: "", gender: "", class_id: "" });
+  const [form, setForm] = useState({ name: "", roll_no: "", email: "", gender: "", class_id: "", password: "" });
 
   // Edit Modal state
   const [editingStudent, setEditingStudent] = useState<StudentRecord | null>(null);
@@ -111,8 +111,9 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
         email: form.email || undefined,
         gender: form.gender || undefined,
         class_id: form.class_id || undefined,
+        password: form.password || undefined,
       });
-      setForm({ name: "", roll_no: "", email: "", gender: "", class_id: "" });
+      setForm({ name: "", roll_no: "", email: "", gender: "", class_id: "", password: "" });
       setAdding(false);
       await load();
     } catch (err) {
@@ -267,7 +268,7 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
           </div>
           <form onSubmit={handleBulkUpload} className="space-y-4">
             <p className="text-xs text-muted-foreground">
-              Required headers: <code className="rounded bg-muted px-1 font-mono">name, roll_no</code>. Optional: <code className="rounded bg-muted px-1 font-mono">email, gender, date_of_birth, class_code</code>. Default initial password: <code className="rounded bg-muted px-1 font-mono text-primary font-bold">password1232!</code>
+              Required headers: <code className="rounded bg-muted px-1 font-mono">name, roll_no</code>. Optional: <code className="rounded bg-muted px-1 font-mono">email, gender, date_of_birth, class_code, password</code>. Leave password blank to use <code className="rounded bg-muted px-1 font-mono text-primary font-bold">password1232!</code>.
             </p>
             <div className="flex flex-wrap items-center gap-4">
               <input
@@ -316,7 +317,7 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
           <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
             <div>
               <h3 className="font-display font-bold text-primary">Add New Student</h3>
-              <p className="text-xs text-muted-foreground">Default password: <code className="rounded bg-muted px-1 font-mono text-primary font-bold">password1232!</code></p>
+              <p className="text-xs text-muted-foreground">Leave initial password blank to use <code className="rounded bg-muted px-1 font-mono text-primary font-bold">password1232!</code>.</p>
             </div>
             <button type="button" onClick={() => setAdding(false)} className="text-muted-foreground hover:text-foreground">
               <X className="h-4 w-4" />
@@ -334,6 +335,10 @@ export function StudentRecordsPage({ isAdmin = false }: { isAdmin?: boolean }) {
             <div>
               <label className={labelClass}>Email (optional)</label>
               <input type="email" className={inputClass} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="aarav@school.edu" />
+            </div>
+            <div>
+              <label className={labelClass}>Initial password (optional)</label>
+              <input type="password" minLength={8} maxLength={128} className={inputClass} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Leave blank for default" />
             </div>
             <div>
               <label className={labelClass}>Gender (optional)</label>
