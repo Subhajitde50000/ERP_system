@@ -1,0 +1,665 @@
+{
+ "dashboard": {
+  "academic_year": "2026-27",
+  "attendance_threshold": 75,
+  "mentee_count": 5,
+  "direct_count": 2,
+  "team_count": 1,
+  "class_count": 1,
+  "average_attendance": 83.33,
+  "at_risk_count": 1,
+  "pending_leave_count": 0,
+  "upcoming_exam_count": 0,
+  "notes_this_month": 1,
+  "at_risk_mentees": [
+   {
+    "student_id": "b0000000-0000-0000-0000-000000000002",
+    "student_name": "Student Two",
+    "roll_number": "R002",
+    "email": "s2@demo.test",
+    "phone": null,
+    "avatar_url": null,
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "department_name": "Computer Science",
+    "sources": [
+     {
+      "assignment_id": "a0429020-4c85-428b-9baa-42c582ce6259",
+      "scope_type": "STUDENT",
+      "label": "Direct mentee"
+     },
+     {
+      "assignment_id": "2d8bf9c0-7ef0-4793-b5bf-e5e91266a929",
+      "scope_type": "CLASS",
+      "label": "Class CSE-A"
+     }
+    ],
+    "attendance_percentage": 50.0,
+    "is_at_risk": true,
+    "pending_leave_count": 0,
+    "note_count": 1,
+    "last_note_at": "2026-09-24T08:27:12.857456Z"
+   }
+  ],
+  "recent_notes": [
+   {
+    "id": "fd4321fc-53de-4626-b8d4-60ece158f239",
+    "student_id": "b0000000-0000-0000-0000-000000000002",
+    "student_name": "Student Two",
+    "class_name": "CSE-A",
+    "author_id": "a0000000-0000-0000-0000-000000000004",
+    "author_name": "Tina Teacher",
+    "is_own": true,
+    "body": "Edited body",
+    "is_private": false,
+    "note_date": "2026-09-24",
+    "created_at": "2026-09-24T08:27:12.857456Z",
+    "updated_at": "2026-09-24T08:27:12.937560Z"
+   }
+  ],
+  "upcoming_exams": [],
+  "classes": [
+   {
+    "assignment_id": "2d8bf9c0-7ef0-4793-b5bf-e5e91266a929",
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "class_code": "CSEA",
+    "department_name": "Computer Science",
+    "room_no": "101",
+    "class_teacher_name": "Tina Teacher",
+    "student_count": 3,
+    "average_attendance": 83.33,
+    "at_risk_count": 1,
+    "assigned_at": "2026-09-24T08:27:12.280215Z"
+   }
+  ],
+  "teams": [
+   {
+    "assignment_id": "2ba3a027-9c2f-42f5-9abe-4db3c54a4924",
+    "team_id": "77777777-7777-7777-7777-777777777771",
+    "team_name": "Team Rocket",
+    "coursework_id": "66666666-6666-6666-6666-666666666661",
+    "coursework_title": "Mini Project",
+    "coursework_status": "PUBLISHED",
+    "due_date": "2026-10-24T08:24:16.366282Z",
+    "class_id": "44444444-4444-4444-4444-444444444442",
+    "class_name": "CSE-B",
+    "subject_name": "Algorithms",
+    "member_count": 2,
+    "submission_status": null,
+    "open_task_count": 1,
+    "assigned_at": "2026-09-24T08:27:13.259786Z"
+   }
+  ]
+ },
+ "mentees": {
+  "academic_year": "2026-27",
+  "attendance_threshold": 75,
+  "total": 5,
+  "items": [
+   {
+    "student_id": "b0000000-0000-0000-0000-000000000002",
+    "student_name": "Student Two",
+    "roll_number": "R002",
+    "email": "s2@demo.test",
+    "phone": null,
+    "avatar_url": null,
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "department_name": "Computer Science",
+    "sources": [
+     {
+      "assignment_id": "a0429020-4c85-428b-9baa-42c582ce6259",
+      "scope_type": "STUDENT",
+      "label": "Direct mentee"
+     },
+     {
+      "assignment_id": "2d8bf9c0-7ef0-4793-b5bf-e5e91266a929",
+      "scope_type": "CLASS",
+      "label": "Class CSE-A"
+     }
+    ],
+    "attendance_percentage": 50.0,
+    "is_at_risk": true,
+    "pending_leave_count": 0,
+    "note_count": 1,
+    "last_note_at": "2026-09-24T08:27:12.857456Z"
+   },
+   {
+    "student_id": "b0000000-0000-0000-0000-000000000005",
+    "student_name": "Student Five",
+    "roll_number": "R005",
+    "email": "s5@demo.test",
+    "phone": null,
+    "avatar_url": null,
+    "class_id": "44444444-4444-4444-4444-444444444442",
+    "class_name": "CSE-B",
+    "department_name": "Computer Science",
+    "sources": [
+     {
+      "assignment_id": "2ba3a027-9c2f-42f5-9abe-4db3c54a4924",
+      "scope_type": "TEAM",
+      "label": "Team Team Rocket"
+     }
+    ],
+    "attendance_percentage": null,
+    "is_at_risk": false,
+    "pending_leave_count": 0,
+    "note_count": 0,
+    "last_note_at": null
+   },
+   {
+    "student_id": "b0000000-0000-0000-0000-000000000004",
+    "student_name": "Student Four",
+    "roll_number": "R004",
+    "email": "s4@demo.test",
+    "phone": null,
+    "avatar_url": null,
+    "class_id": "44444444-4444-4444-4444-444444444442",
+    "class_name": "CSE-B",
+    "department_name": "Computer Science",
+    "sources": [
+     {
+      "assignment_id": "2ba3a027-9c2f-42f5-9abe-4db3c54a4924",
+      "scope_type": "TEAM",
+      "label": "Team Team Rocket"
+     }
+    ],
+    "attendance_percentage": null,
+    "is_at_risk": false,
+    "pending_leave_count": 0,
+    "note_count": 0,
+    "last_note_at": null
+   },
+   {
+    "student_id": "b0000000-0000-0000-0000-000000000001",
+    "student_name": "Student One",
+    "roll_number": "R001",
+    "email": "s1@demo.test",
+    "phone": null,
+    "avatar_url": null,
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "department_name": "Computer Science",
+    "sources": [
+     {
+      "assignment_id": "02ff43a4-0777-4ea5-a5f9-5da7d1a0b94b",
+      "scope_type": "STUDENT",
+      "label": "Direct mentee"
+     },
+     {
+      "assignment_id": "2d8bf9c0-7ef0-4793-b5bf-e5e91266a929",
+      "scope_type": "CLASS",
+      "label": "Class CSE-A"
+     }
+    ],
+    "attendance_percentage": 100.0,
+    "is_at_risk": false,
+    "pending_leave_count": 0,
+    "note_count": 0,
+    "last_note_at": null
+   },
+   {
+    "student_id": "b0000000-0000-0000-0000-000000000003",
+    "student_name": "Student Three",
+    "roll_number": "R003",
+    "email": "s3@demo.test",
+    "phone": null,
+    "avatar_url": null,
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "department_name": "Computer Science",
+    "sources": [
+     {
+      "assignment_id": "2d8bf9c0-7ef0-4793-b5bf-e5e91266a929",
+      "scope_type": "CLASS",
+      "label": "Class CSE-A"
+     }
+    ],
+    "attendance_percentage": 100.0,
+    "is_at_risk": false,
+    "pending_leave_count": 0,
+    "note_count": 0,
+    "last_note_at": null
+   }
+  ]
+ },
+ "menteeDetail": {
+  "profile": {
+   "student_id": "b0000000-0000-0000-0000-000000000002",
+   "student_name": "Student Two",
+   "roll_number": "R002",
+   "email": "s2@demo.test",
+   "phone": null,
+   "avatar_url": null,
+   "class_id": "44444444-4444-4444-4444-444444444441",
+   "class_name": "CSE-A",
+   "department_name": "Computer Science",
+   "sources": [
+    {
+     "assignment_id": "a0429020-4c85-428b-9baa-42c582ce6259",
+     "scope_type": "STUDENT",
+     "label": "Direct mentee"
+    },
+    {
+     "assignment_id": "2d8bf9c0-7ef0-4793-b5bf-e5e91266a929",
+     "scope_type": "CLASS",
+     "label": "Class CSE-A"
+    }
+   ],
+   "attendance_percentage": 50.0,
+   "is_at_risk": true,
+   "pending_leave_count": 0,
+   "note_count": 1,
+   "last_note_at": "2026-09-24T08:27:12.857456Z"
+  },
+  "gender": null,
+  "date_of_birth": null,
+  "address": null,
+  "guardians": [],
+  "attendance": {
+   "present": 2,
+   "absent": 2,
+   "late": 0,
+   "excused": 0,
+   "total": 4,
+   "percentage": 50.0
+  },
+  "subjects": [
+   {
+    "present": 2,
+    "absent": 2,
+    "late": 0,
+    "excused": 0,
+    "total": 4,
+    "percentage": 50.0,
+    "subject_id": "55555555-5555-5555-5555-555555555551",
+    "subject_code": "DS",
+    "subject_name": "Data Structures"
+   }
+  ],
+  "results": [],
+  "coursework": [],
+  "upcoming_exams": [],
+  "leaves": [],
+  "notes": [
+   {
+    "id": "fd4321fc-53de-4626-b8d4-60ece158f239",
+    "student_id": "b0000000-0000-0000-0000-000000000002",
+    "student_name": "Student Two",
+    "class_name": "CSE-A",
+    "author_id": "a0000000-0000-0000-0000-000000000004",
+    "author_name": "Tina Teacher",
+    "is_own": true,
+    "body": "Edited body",
+    "is_private": false,
+    "note_date": "2026-09-24",
+    "created_at": "2026-09-24T08:27:12.857456Z",
+    "updated_at": "2026-09-24T08:27:12.937560Z"
+   }
+  ]
+ },
+ "notes": {
+  "total": 1,
+  "limit": 20,
+  "offset": 0,
+  "items": [
+   {
+    "id": "fd4321fc-53de-4626-b8d4-60ece158f239",
+    "student_id": "b0000000-0000-0000-0000-000000000002",
+    "student_name": "Student Two",
+    "class_name": "CSE-A",
+    "author_id": "a0000000-0000-0000-0000-000000000004",
+    "author_name": "Tina Teacher",
+    "is_own": true,
+    "body": "Edited body",
+    "is_private": false,
+    "note_date": "2026-09-24",
+    "created_at": "2026-09-24T08:27:12.857456Z",
+    "updated_at": "2026-09-24T08:27:12.937560Z"
+   }
+  ]
+ },
+ "classes": [
+  {
+   "assignment_id": "2d8bf9c0-7ef0-4793-b5bf-e5e91266a929",
+   "class_id": "44444444-4444-4444-4444-444444444441",
+   "class_name": "CSE-A",
+   "class_code": "CSEA",
+   "department_name": "Computer Science",
+   "room_no": "101",
+   "class_teacher_name": "Tina Teacher",
+   "student_count": 3,
+   "average_attendance": 83.33,
+   "at_risk_count": 1,
+   "assigned_at": "2026-09-24T08:27:12.280215Z"
+  }
+ ],
+ "teams": [
+  {
+   "assignment_id": "2ba3a027-9c2f-42f5-9abe-4db3c54a4924",
+   "team_id": "77777777-7777-7777-7777-777777777771",
+   "team_name": "Team Rocket",
+   "coursework_id": "66666666-6666-6666-6666-666666666661",
+   "coursework_title": "Mini Project",
+   "coursework_status": "PUBLISHED",
+   "due_date": "2026-10-24T08:24:16.366282Z",
+   "class_id": "44444444-4444-4444-4444-444444444442",
+   "class_name": "CSE-B",
+   "subject_name": "Algorithms",
+   "member_count": 2,
+   "submission_status": null,
+   "open_task_count": 1,
+   "assigned_at": "2026-09-24T08:27:13.259786Z"
+  }
+ ],
+ "teamDetail": {
+  "assignment_id": "2ba3a027-9c2f-42f5-9abe-4db3c54a4924",
+  "team_id": "77777777-7777-7777-7777-777777777771",
+  "team_name": "Team Rocket",
+  "coursework_id": "66666666-6666-6666-6666-666666666661",
+  "coursework_title": "Mini Project",
+  "coursework_status": "PUBLISHED",
+  "due_date": "2026-10-24T08:24:16.366282Z",
+  "class_id": "44444444-4444-4444-4444-444444444442",
+  "class_name": "CSE-B",
+  "subject_name": "Algorithms",
+  "member_count": 2,
+  "submission_status": null,
+  "open_task_count": 1,
+  "assigned_at": "2026-09-24T08:27:13.259786Z",
+  "members": [
+   {
+    "student_id": "b0000000-0000-0000-0000-000000000004",
+    "student_name": "Student Four",
+    "roll_number": "R004",
+    "attendance_percentage": null,
+    "joined_at": "2026-09-24T08:24:16.366282Z"
+   },
+   {
+    "student_id": "b0000000-0000-0000-0000-000000000005",
+    "student_name": "Student Five",
+    "roll_number": "R005",
+    "attendance_percentage": null,
+    "joined_at": "2026-09-24T08:24:16.366282Z"
+   }
+  ],
+  "tasks": [
+   {
+    "id": "a9f87e4d-1244-40a4-a8ce-fc23e5deaf1c",
+    "title": "Write proposal",
+    "status": "TODO",
+    "assigned_to_name": "Student Four",
+    "due_date": null
+   }
+  ],
+  "resources": [],
+  "recent_messages": [
+   {
+    "id": "96a3bf9a-cc51-477f-8465-f762282b48c9",
+    "sender_name": "Student Five",
+    "message": "Hello team",
+    "created_at": "2026-09-24T08:24:16.366282Z"
+   }
+  ]
+ },
+ "notices": {
+  "total": 2,
+  "limit": 20,
+  "offset": 0,
+  "items": [
+   {
+    "id": "916f4f15-4abf-4f19-ae12-eeb5a95db825",
+    "title": "Welcome back",
+    "body": "Institution-wide notice",
+    "author_name": "Ada Admin",
+    "target_scope": "INSTITUTION",
+    "target_id": null,
+    "target_name": "Institution-wide",
+    "priority": "NORMAL",
+    "is_pinned": false,
+    "published_at": "2026-09-24T08:24:16.366282Z",
+    "expires_at": null,
+    "attachments": []
+   },
+   {
+    "id": "7be24927-64c2-4433-9ca0-4e53bb17cbef",
+    "title": "CSE-B only",
+    "body": "Class notice for CSE-B",
+    "author_name": "Tom Teacher",
+    "target_scope": "CLASS",
+    "target_id": "44444444-4444-4444-4444-444444444442",
+    "target_name": "CSE-B",
+    "priority": "NORMAL",
+    "is_pinned": false,
+    "published_at": "2026-09-24T08:24:16.366282Z",
+    "expires_at": null,
+    "attachments": []
+   }
+  ]
+ },
+ "board": {
+  "academic_year": "2026-27",
+  "attendance_threshold": 75,
+  "coverage": {
+   "classes_total": 2,
+   "classes_covered": 2,
+   "teams_total": 1,
+   "teams_covered": 1,
+   "students_total": 5,
+   "students_direct": 2,
+   "students_covered": 5
+  },
+  "mentors": [
+   {
+    "mentor_id": "a0000000-0000-0000-0000-000000000004",
+    "mentor_name": "Tina Teacher",
+    "email": "tina@demo.test",
+    "designation": "Assistant Professor",
+    "department_name": "Computer Science",
+    "is_active": true,
+    "assignments": [
+     {
+      "id": "2d8bf9c0-7ef0-4793-b5bf-e5e91266a929",
+      "scope_type": "CLASS",
+      "target_id": "44444444-4444-4444-4444-444444444441",
+      "target_name": "CSE-A",
+      "target_detail": "Computer Science",
+      "class_id": "44444444-4444-4444-4444-444444444441",
+      "class_name": "CSE-A",
+      "member_count": 3,
+      "assigned_at": "2026-09-24T08:27:12.280215Z",
+      "assigned_by_name": "Carl Coordinator",
+      "notes": "updated"
+     },
+     {
+      "id": "2ba3a027-9c2f-42f5-9abe-4db3c54a4924",
+      "scope_type": "TEAM",
+      "target_id": "77777777-7777-7777-7777-777777777771",
+      "target_name": "Team Rocket",
+      "target_detail": "Mini Project",
+      "class_id": "44444444-4444-4444-4444-444444444442",
+      "class_name": "CSE-B",
+      "member_count": 2,
+      "assigned_at": "2026-09-24T08:27:13.259786Z",
+      "assigned_by_name": "Carl Coordinator",
+      "notes": null
+     },
+     {
+      "id": "02ff43a4-0777-4ea5-a5f9-5da7d1a0b94b",
+      "scope_type": "STUDENT",
+      "target_id": "b0000000-0000-0000-0000-000000000001",
+      "target_name": "Student One",
+      "target_detail": "R001",
+      "class_id": "44444444-4444-4444-4444-444444444441",
+      "class_name": "CSE-A",
+      "member_count": 1,
+      "assigned_at": "2026-09-24T08:27:12.228905Z",
+      "assigned_by_name": "Carl Coordinator",
+      "notes": null
+     },
+     {
+      "id": "a0429020-4c85-428b-9baa-42c582ce6259",
+      "scope_type": "STUDENT",
+      "target_id": "b0000000-0000-0000-0000-000000000002",
+      "target_name": "Student Two",
+      "target_detail": "R002",
+      "class_id": "44444444-4444-4444-4444-444444444441",
+      "class_name": "CSE-A",
+      "member_count": 1,
+      "assigned_at": "2026-09-24T08:27:12.375289Z",
+      "assigned_by_name": "Hana Hod",
+      "notes": null
+     }
+    ],
+    "mentee_count": 5,
+    "at_risk_count": 1
+   },
+   {
+    "mentor_id": "a0000000-0000-0000-0000-000000000005",
+    "mentor_name": "Tom Teacher",
+    "email": "tom@demo.test",
+    "designation": "Lecturer",
+    "department_name": "Computer Science",
+    "is_active": true,
+    "assignments": [
+     {
+      "id": "d2bcf95c-23bc-403e-b6bb-6819d91e00d8",
+      "scope_type": "CLASS",
+      "target_id": "44444444-4444-4444-4444-444444444442",
+      "target_name": "CSE-B",
+      "target_detail": "Computer Science",
+      "class_id": "44444444-4444-4444-4444-444444444442",
+      "class_name": "CSE-B",
+      "member_count": 2,
+      "assigned_at": "2026-09-24T08:27:12.957430Z",
+      "assigned_by_name": "Carl Coordinator",
+      "notes": null
+     }
+    ],
+    "mentee_count": 2,
+    "at_risk_count": 0
+   }
+  ],
+  "candidates": [
+   {
+    "id": "a0000000-0000-0000-0000-000000000003",
+    "name": "Hana Hod",
+    "designation": "Professor",
+    "department_name": "Computer Science",
+    "roles": [
+     "HOD"
+    ],
+    "active_assignment_count": 0
+   },
+   {
+    "id": "a0000000-0000-0000-0000-000000000004",
+    "name": "Tina Teacher",
+    "designation": "Assistant Professor",
+    "department_name": "Computer Science",
+    "roles": [
+     "MENTOR",
+     "TEACHER"
+    ],
+    "active_assignment_count": 4
+   },
+   {
+    "id": "a0000000-0000-0000-0000-000000000005",
+    "name": "Tom Teacher",
+    "designation": "Lecturer",
+    "department_name": "Computer Science",
+    "roles": [
+     "MENTOR",
+     "TEACHER"
+    ],
+    "active_assignment_count": 1
+   }
+  ],
+  "classes": [
+   {
+    "id": "44444444-4444-4444-4444-444444444441",
+    "name": "CSE-A",
+    "detail": "Computer Science",
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "member_count": 3,
+    "mentor_id": "a0000000-0000-0000-0000-000000000004",
+    "mentor_name": "Tina Teacher"
+   },
+   {
+    "id": "44444444-4444-4444-4444-444444444442",
+    "name": "CSE-B",
+    "detail": "Computer Science",
+    "class_id": "44444444-4444-4444-4444-444444444442",
+    "class_name": "CSE-B",
+    "member_count": 2,
+    "mentor_id": "a0000000-0000-0000-0000-000000000005",
+    "mentor_name": "Tom Teacher"
+   }
+  ],
+  "teams": [
+   {
+    "id": "77777777-7777-7777-7777-777777777771",
+    "name": "Team Rocket",
+    "detail": "Mini Project",
+    "class_id": "44444444-4444-4444-4444-444444444442",
+    "class_name": "CSE-B",
+    "member_count": 2,
+    "mentor_id": "a0000000-0000-0000-0000-000000000004",
+    "mentor_name": "Tina Teacher"
+   }
+  ],
+  "students": [
+   {
+    "id": "b0000000-0000-0000-0000-000000000005",
+    "name": "Student Five",
+    "detail": "R005",
+    "class_id": "44444444-4444-4444-4444-444444444442",
+    "class_name": "CSE-B",
+    "member_count": 1,
+    "mentor_id": null,
+    "mentor_name": null
+   },
+   {
+    "id": "b0000000-0000-0000-0000-000000000004",
+    "name": "Student Four",
+    "detail": "R004",
+    "class_id": "44444444-4444-4444-4444-444444444442",
+    "class_name": "CSE-B",
+    "member_count": 1,
+    "mentor_id": null,
+    "mentor_name": null
+   },
+   {
+    "id": "b0000000-0000-0000-0000-000000000001",
+    "name": "Student One",
+    "detail": "R001",
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "member_count": 1,
+    "mentor_id": "a0000000-0000-0000-0000-000000000004",
+    "mentor_name": "Tina Teacher"
+   },
+   {
+    "id": "b0000000-0000-0000-0000-000000000003",
+    "name": "Student Three",
+    "detail": "R003",
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "member_count": 1,
+    "mentor_id": null,
+    "mentor_name": null
+   },
+   {
+    "id": "b0000000-0000-0000-0000-000000000002",
+    "name": "Student Two",
+    "detail": "R002",
+    "class_id": "44444444-4444-4444-4444-444444444441",
+    "class_name": "CSE-A",
+    "member_count": 1,
+    "mentor_id": "a0000000-0000-0000-0000-000000000004",
+    "mentor_name": "Tina Teacher"
+   }
+  ]
+ }
+}

@@ -41,6 +41,7 @@ export const NOTIFICATION_TYPE_META: Record<string, TypeMeta> = {
   ASSIGNMENT_REVIEWED: { label: "Assignment reviewed" },
   EXAM_RESULT_RELEASED: { label: "Result released" },
   "parent.leave.filed": { label: "Leave request" },
+  MENTOR_ASSIGNED: { label: "Mentor assigned" },
 };
 
 /** type → console segment → deep-link rule (routes verified per console). */
@@ -62,6 +63,10 @@ const TYPE_LINKS: Partial<Record<string, Partial<Record<ConsoleSegment, LinkRule
   },
   "parent.leave.filed": {
     student: { path: "/attendance" },
+  },
+  MENTOR_ASSIGNED: {
+    // Students have no mentor page yet; the mentor's dashboard lists the new scope.
+    mentor: { path: "/dashboard" },
   },
 };
 

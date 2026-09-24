@@ -2160,18 +2160,34 @@ CREATE TABLE audit_logs (
   created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- A mentor assignment targets exactly ONE of: a student, a project team
+-- (project_groups) or a whole class.  `scope_type` names the target and the
+-- CHECK constraint guarantees the matching FK column is the only one set.
+-- One mentor may hold many assignments; each student / team / class has at
+-- most one ACTIVE mentor per academic year (partial unique indexes below).
+-- Assignments are made by the Academic Coordinator or Institution Admin
+-- (institution-wide) and by the HOD (own departments, student scope).
 CREATE TABLE mentor_assignments (
 
   id                           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id                    UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
   mentor_id                    UUID NOT NULL REFERENCES users(id),
-  student_id                   UUID NOT NULL REFERENCES users(id),
+  scope_type                   VARCHAR(10) NOT NULL DEFAULT 'STUDENT',
+  student_id                   UUID REFERENCES users(id),
+  team_id                      UUID REFERENCES project_groups(id) ON DELETE CASCADE,
+  class_id                     UUID REFERENCES classes(id) ON DELETE CASCADE,
   academic_year_id             UUID NOT NULL REFERENCES academic_years(id),
   assigned_by                  UUID REFERENCES users(id),
   assigned_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   is_active                    BOOLEAN NOT NULL DEFAULT TRUE,
   notes                        TEXT,
-  CONSTRAINT uq_mentor_assignments__mentor_id_student_id_academic_year_id UNIQUE (mentor_id, student_id, academic_year_id)
+  CONSTRAINT uq_mentor_assignments__mentor_id_student_id_academic_year_id UNIQUE (mentor_id, student_id, academic_year_id),
+  CONSTRAINT ck_mentor_assignments__scope_type CHECK (scope_type IN ('STUDENT', 'TEAM', 'CLASS')),
+  CONSTRAINT ck_mentor_assignments__scope_target CHECK (
+       (scope_type = 'STUDENT' AND student_id IS NOT NULL AND team_id IS NULL     AND class_id IS NULL)
+    OR (scope_type = 'TEAM'    AND team_id IS NOT NULL    AND student_id IS NULL  AND class_id IS NULL)
+    OR (scope_type = 'CLASS'   AND class_id IS NOT NULL   AND student_id IS NULL  AND team_id IS NULL)
+  )
 );
 
 CREATE TABLE mentor_notes (
@@ -2406,6 +2422,8 @@ CREATE INDEX idx_audit_tenant_time ON audit_logs (tenant_id, created_at DESC);
 CREATE INDEX idx_audit_entity_id ON audit_logs (entity, entity_id);
 CREATE INDEX idx_mentor_assignments_mentor_id ON mentor_assignments (mentor_id, academic_year_id);
 CREATE INDEX idx_mentor_assignments_student_id ON mentor_assignments (student_id, academic_year_id);
+CREATE INDEX idx_mentor_assignments_team_id ON mentor_assignments (team_id, academic_year_id);
+CREATE INDEX idx_mentor_assignments_class_id ON mentor_assignments (class_id, academic_year_id);
 CREATE INDEX idx_mentor_assignments_tenant_id ON mentor_assignments (tenant_id);
 CREATE INDEX idx_mentor_notes_assignment_id ON mentor_notes (assignment_id);
 CREATE INDEX idx_mentor_notes_student_id ON mentor_notes (student_id, created_at DESC);
@@ -2702,7 +2720,9 @@ CREATE INDEX IF NOT EXISTS idx_exams_tenant_schedule_approval ON exams (tenant_i
 CREATE INDEX IF NOT EXISTS idx_exams_schedule_approved_by ON exams (schedule_approved_by);
 CREATE INDEX IF NOT EXISTS idx_result_publications_tenant_approval ON result_publications (tenant_id, approval_status, published_at DESC);
 CREATE INDEX IF NOT EXISTS idx_result_publications_approved_by ON result_publications (approved_by);
-CREATE UNIQUE INDEX IF NOT EXISTS uq_mentor_assignments__tenant_student_year_active ON mentor_assignments (tenant_id, student_id, academic_year_id) WHERE is_active = TRUE;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_mentor_assignments__tenant_student_year_active ON mentor_assignments (tenant_id, student_id, academic_year_id) WHERE is_active = TRUE AND student_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_mentor_assignments__tenant_team_year_active ON mentor_assignments (tenant_id, team_id, academic_year_id) WHERE is_active = TRUE AND team_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_mentor_assignments__tenant_class_year_active ON mentor_assignments (tenant_id, class_id, academic_year_id) WHERE is_active = TRUE AND class_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_timetable_substitutions_date ON timetable_substitutions (tenant_id, date);
 CREATE INDEX IF NOT EXISTS idx_academic_events_tenant_year ON academic_events (tenant_id, academic_year_id);
 CREATE INDEX IF NOT EXISTS idx_academic_events_dates ON academic_events (tenant_id, start_date, end_date);

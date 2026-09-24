@@ -100,7 +100,7 @@ export default async function DashboardPage() {
 | **Vice Principal** | Same as Principal but dept-scoped. Delegated actions pending. | `GET /dashboard/vp-stats` |
 | **HOD** | Dept attendance %, pending assignment reviews, exams in dept this week, teacher count, recent dept notice | `GET /dashboard/hod-stats` |
 | **Teacher** | Today's periods (from timetable), pending submissions to review, upcoming exams created, recent notices for class | `GET /dashboard/teacher-stats` |
-| **Mentor** | Assigned mentees list, their attendance %, upcoming exams, any alerts | `GET /dashboard/mentor-stats` |
+| **Mentor** | Assigned mentees (direct / team / class), their attendance %, at-risk alerts, upcoming exams, recent log | `GET /mentor/dashboard` |
 | **Exam Controller** | Exams scheduled today, live exam count, pending result compilations, malpractice flags today | `GET /dashboard/exam-controller-stats` |
 | **Academic Coordinator** | Substitutions today, timetable conflicts count, upcoming events, recent schedule changes | `GET /dashboard/coordinator-stats` |
 | **Accountant** | Today's collection amount, total balance due, overdue count, upcoming installment dues, recent payments | `GET /dashboard/accountant-stats` |
@@ -513,7 +513,7 @@ Global search bar available to all roles. What appears in results depends on rol
 | **Principal / VP** | Profile · Attendance · Results | View only |
 | **HOD** | Profile · Attendance (dept) · Results (dept) | View only |
 | **Teacher** | Attendance (own subject) · Assignment submissions | View only |
-| **Mentor** | Profile · Attendance · Results · Notes (private to mentor) | Add mentor notes |
+| **Mentor** | Profile · Guardians · Attendance · Results · Coursework · Leave · Notes (private, or shared with co-mentors) | Add / edit / delete own mentor notes (`/mentor/mentees/{id}`) |
 | **Exam Controller** | Results · Exam attempts · Malpractice flags | View only |
 | **Accountant** | Fee account · Payment history | Record payment |
 | **Placement Officer** | Profile · Academic records · Applications · Offers | View + shortlist |

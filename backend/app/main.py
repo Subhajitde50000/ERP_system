@@ -37,6 +37,7 @@ from app.routers import (
     coordinator_router,
     exam_controller_router,
     teacher_router,
+    mentor_router,
     student_router,
     parent_router,
     library_router,
@@ -155,6 +156,7 @@ app.include_router(hod_router, prefix=api_prefix)
 app.include_router(coordinator_router, prefix=api_prefix)
 app.include_router(exam_controller_router, prefix=api_prefix)
 app.include_router(teacher_router, prefix=api_prefix)
+app.include_router(mentor_router, prefix=api_prefix)
 app.include_router(student_router, prefix=api_prefix)
 app.include_router(parent_router, prefix=api_prefix)
 app.include_router(library_router, prefix=api_prefix)
