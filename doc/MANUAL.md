@@ -74,14 +74,17 @@ psql -U erp_user -d erp_db -f database/database.sql
 # 3. Post-base updates (owner accounts, academic links, support and Principal governance)
 psql -U erp_user -d erp_db -f database/update.sql
 psql -U erp_user -d erp_db -f database/update2.sql
+
+# 4. Mentor scopes (team / class mentoring + mentoring log) — idempotent, safe to re-run
+psql -U erp_user -d erp_db -f database/update_mentor_scopes.sql
 ```
 
 > **Alembic-managed deployments** instead of raw SQL:
 > ```bash
 > cd backend && alembic upgrade head
 > ```
-> The migrations end at `e7f2a6c3b904` and include the Principal governance
-> and HOD mentor/scope workflow. Apply the raw schema plus both update files for the documented
+> The migrations end at `e6a7b8c9d0e1` and include the Principal governance,
+> the HOD mentor/scope workflow and team/class mentor scopes. Apply the raw schema plus both update files for the documented
 > production path, or use your validated Alembic baseline for a
 > migrations-managed environment — never mix a raw-schema bootstrap and
 > Alembic on the same database without stamping/validating its revision.
@@ -250,7 +253,7 @@ institution-wide fallback.
 | `/hod/examinations`, `/hod/results` | Department-only schedules/results with CSV export; final approval stays with the Principal |
 | `/hod/assignments` | Department assignment and pending-review overview |
 | `/hod/teachers` | Subject staffing and safe removal of a scoped teacher-subject link |
-| `/hod/mentors` | Assign/reassign/remove one active mentor per student/year |
+| `/hod/mentors` | Assign/reassign/remove one active mentor per student/year (student scope only, mentor must already hold the Mentor role) |
 | `/hod/notices`, `/hod/notices/new` | Institution feed plus department/class-only posting; no read receipt payload |
 | `/hod/discussion` | Pin, lock and soft-delete department/class/subject threads |
 | `/hod/timetable` | Read-only classes in the HOD's departments |
@@ -259,6 +262,38 @@ institution-wide fallback.
 unique mentor index. Section 11 backfills scoped HOD role assignments for
 legacy `departments.hod_id` records. Apply this update before deploying the
 HOD console.
+
+### Mentor allocation and the Mentor console (`/mentor/*`)
+
+Mentor allocation is owned by the **Academic Coordinator** (`/coordinator/mentors`);
+the **Institution Admin** has the same board at `/admin/mentors` as the operational
+fallback. Both call `/api/v1/institution/mentors/*`. The HOD board above keeps
+working for student-level assignments inside its departments — all three write
+paths share one service, so the rules are identical everywhere:
+
+| Rule | Enforcement |
+|---|---|
+| A mentor can be assigned to a **student**, a **project team** or a **whole class** | `mentor_assignments.scope_type` + `ck_mentor_assignments__scope_target` |
+| Each student / team / class has **one active mentor per academic year** | Partial unique indexes `uq_mentor_assignments__tenant_{student,team,class}_year_active`; assigning a new mentor deactivates the previous row (audited as `REASSIGN_MENTOR`) |
+| One mentor may hold **any number** of assignments | No limit on the mentor side |
+| Staff picked on the Coordinator/Admin board without the Mentor role | Receive a scope-less `MENTOR` role automatically (audited `ASSIGN_ROLE`); it is never revoked automatically |
+| Mentor and affected students are told | `MENTOR_ASSIGNED` notification |
+
+The mentor's own console derives its reach from those rows — direct students ∪
+team members ∪ actively enrolled students of mentored classes, de-duplicated:
+
+| Area | What works |
+|---|---|
+| `/mentor/dashboard` | Mentee count by scope, at-risk count against `attendance_threshold`, average attendance, upcoming exams, recent log entries |
+| `/mentor/mentees`, `/mentor/mentees/{id}` | Searchable directory; profile with guardians, overall + per-subject attendance, published results, coursework, upcoming exams, leave requests and the mentoring log |
+| `/mentor/alerts` | Mentees below the attendance threshold |
+| `/mentor/notes` | Mentoring log across all mentees — private notes stay with the author, shared notes are visible to any mentor of that student |
+| `/mentor/teams`, `/mentor/teams/{id}` | Project teams: members, task board, resources, recent team chat (read-only) |
+| `/mentor/classes` | Classes mentored as a whole with roster size and at-risk count |
+| `/mentor/notices`, `/mentor/notifications` | Institution notices plus those addressed to mentees' departments/classes; personal inbox |
+
+Schema: `database/update_mentor_scopes.sql` (also folded into `database/database.sql`)
+/ Alembic `e6a7b8c9d0e1`. `mentor_notes` is now ORM-managed.
 
 ---
 
@@ -295,7 +330,7 @@ scored by policy (≥75% of class duration → Present, 30–74% → Late/Partia
 - [ ] **Secrets** — `JWT_SECRET_KEY` a 64-hex random string; rotate periodically.
       `APP_DEBUG=false` (hides `/docs`, `/redoc`, stack traces; also hides the
       raw email-verification token from API responses).
-- [ ] **Database** — `database.sql`, `update.sql` **and** `update2.sql` applied (or the validated Alembic path reaches `e7f2a6c3b904`); backups on.
+- [ ] **Database** — `database.sql`, `update.sql` **and** `update2.sql` applied plus `update_mentor_scopes.sql` (or the validated Alembic path reaches `e6a7b8c9d0e1`); backups on.
 - [ ] **CORS** — `ALLOWED_ORIGINS` lists only your real origins
       (`https://shikshasync.me,https://app.shikshasync.me`, approved tenant origins).
 - [ ] **Email** — wire an outbound provider to drain `outbox_emails`
@@ -325,6 +360,8 @@ All under `/api/v1`. Authenticated routes take `Authorization: Bearer <jwt>`.
 | Principal | `/principal` | `/dashboard`, `/attendance`, `/examinations` (+ schedule approval), `/results` (+ publication approval), `/staff`, `/students`, `/notices`, `/timetable`, `/reports`, `/reports/export` |
 | Vice Principal | `/vice-principal` | Delegated `/dashboard`, `/attendance`, `/examinations`, `/results`, `/staff`, `/notices`, `/reports/export`; no final approval endpoints |
 | Head of Department | `/hod` | Department dashboard, attendance detail/export, exams, assignments, results, teachers/subjects, mentors, notices, discussion moderation and timetable |
+| Mentor allocation | `/institution/mentors` | `/board`, `POST /assignments` (`mentor_id`, `scope_type` STUDENT/TEAM/CLASS, `target_id`, `notes`), `DELETE /assignments/{id}` — Academic Coordinator or Institution Admin |
+| Mentor console | `/mentor` | `/dashboard`, `/mentees` (+ `/{student_id}`, `/{student_id}/notes`), `/notes` (+ `PATCH`/`DELETE /{id}`), `/teams` (+ `/{id}`), `/classes`, `/notices` (+ `/{id}`) |
 | Online classes | `/online-classes` | Teacher: `/setup-options`, schedule (`POST`), `/instant`, `/{id}/start`, `/{id}/end`, admit/remove, `/{id}/attendance`, `/{id}/files`, `/{id}/recording`. Student: `/my/classes`, `/{id}/join`, `/{id}/leave`, chat, materials. Live room: `WS /{id}/live` |
 | Tenant auth | `/tenant/auth` | `/login`, `/logout`, `/refresh`, `/me`, `/forgot-password`, `/reset-password` |
 | Platform staff auth | `/platform/auth` | `/login`, `/logout`, `/refresh`, `/me` |
@@ -357,7 +394,7 @@ institution-admin RBAC guard + plan-gated modules.
 | `402 … not included in your plan` | Optional module toggle blocked by `plans.allowed_modules`. Upgrade the plan. |
 | `next build` fails | Run `npm ci` first, then inspect the reported TypeScript/route error. The app no longer fetches Google Fonts during build. |
 | Email links never arrive | No outbound provider draining `outbox_emails`. In dev (`APP_DEBUG=true`) the owner verification token is returned in the signup response. |
-| Migration conflict | Ensure a single source: raw SQL (`database.sql` + `update.sql` + `update2.sql`) **or** your validated Alembic path, not both. Current head revision is `e7f2a6c3b904`. |
+| Migration conflict | Ensure a single source: raw SQL (`database.sql` + `update.sql` + `update2.sql`) **or** your validated Alembic path, not both. Current head revision is `e6a7b8c9d0e1`. |
 
 ---
 
@@ -375,4 +412,4 @@ institution-admin RBAC guard + plan-gated modules.
   both consoles and the test map
 
 _Manual v1.5 — verified against the 106-table schema, `update2.sql`, Alembic
-head `e7f2a6c3b904`, and the live `/admin`, `/principal`, `/vp` and `/hod` consoles._
+head `e6a7b8c9d0e1`, and the live `/admin`, `/principal`, `/vp`, `/hod` and `/mentor` consoles._

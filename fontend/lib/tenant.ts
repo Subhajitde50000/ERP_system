@@ -12,6 +12,13 @@ import { API_BASE_URL } from "./auth";
  * without a running database.
  */
 
+/**
+ * Server-side API origin. Server Components run inside the container/network
+ * where the browser-facing NEXT_PUBLIC_API_URL may not resolve (Docker, proxied
+ * previews), so deployments can point them at the internal address instead.
+ */
+const SERVER_API_BASE_URL = process.env.API_INTERNAL_URL || API_BASE_URL;
+
 /** Root domain; override per-environment with NEXT_PUBLIC_ROOT_DOMAIN. */
 export const ROOT_DOMAIN =
   process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? "shikshasync.me";
@@ -95,7 +102,7 @@ async function fetchTenantBySlug(
 ): Promise<Omit<Tenant, "host" | "slug"> | null> {
   try {
     const res = await fetch(
-      `${API_BASE_URL}/api/v1/public/tenants/by-slug/${encodeURIComponent(slug)}`,
+      `${SERVER_API_BASE_URL}/api/v1/public/tenants/by-slug/${encodeURIComponent(slug)}`,
       {
         // Disable caching in development so new institutions are recognized immediately;
         // cache for 5 minutes in production to match the Redis TTL.

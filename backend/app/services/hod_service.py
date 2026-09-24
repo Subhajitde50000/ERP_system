@@ -28,6 +28,7 @@ from app.models.hod import (
     AttendanceRecord,
     DiscussionThread,
     MentorAssignment,
+    MentorScopeType,
     Submission,
     SubmissionStatus,
 )
@@ -66,6 +67,7 @@ from app.schemas.principal import (
 )
 from app.services.audit_service import AuditService
 from app.services.department_scope_service import DepartmentScope, DepartmentScopeService
+from app.services.mentor_assignment_service import MentorAssignmentService, MentorTarget
 from app.services.principal_service import PrincipalService, _date_window, _value
 
 
@@ -841,127 +843,27 @@ class HodService:
     async def assign_mentor(
         db: AsyncSession, hod: User, payload: HodMentorAssign
     ) -> HodMentorBoard:
+        """Student-scope assignment inside the HOD's departments.
+
+        The HOD cannot grant roles, so the mentor must already hold MENTOR.
+        Team / class scopes are owned by the Academic Coordinator and
+        Institution Admin (``/institution/mentors``); all three consoles share
+        ``MentorAssignmentService`` so the one-active-mentor rule is identical.
+        """
         scope = await HodService.scope_for_user(db, hod)
-        current_year = await HodService._current_year(db, hod.tenant_id)
-        if current_year is None:
-            raise HTTPException(status.HTTP_409_CONFLICT, detail="Set a current academic year before assigning mentors")
+        current_year = await MentorAssignmentService.require_current_year(db, hod.tenant_id)
         student_rows = await HodService._students_for_scope(db, hod.tenant_id, scope, current_year, student_id=payload.student_id)
         if not student_rows:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Student not found")
         teachers = await HodService._teachers_for_scope(db, hod.tenant_id, scope, current_year)
-        mentor = next((teacher for teacher in teachers if teacher.id == payload.mentor_id and "MENTOR" in teacher.roles and teacher.is_active), None)
-        if mentor is None:
+        if not any(teacher.id == payload.mentor_id and "MENTOR" in teacher.roles and teacher.is_active for teacher in teachers):
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Active mentor not found")
-        existing = (
-            await db.execute(
-                select(MentorAssignment)
-                .where(
-                    MentorAssignment.tenant_id == hod.tenant_id,
-                    MentorAssignment.student_id == payload.student_id,
-                    MentorAssignment.academic_year_id == current_year.id,
-                    MentorAssignment.is_active.is_(True),
-                )
-                .with_for_update()
-            )
-        ).scalar_one_or_none()
-        if existing:
-            old_mentor = existing.mentor_id
-            target_history = None
-            if old_mentor != mentor.id:
-                target_history = (
-                    await db.execute(
-                        select(MentorAssignment)
-                        .where(
-                            MentorAssignment.tenant_id == hod.tenant_id,
-                            MentorAssignment.student_id == payload.student_id,
-                            MentorAssignment.academic_year_id == current_year.id,
-                            MentorAssignment.mentor_id == mentor.id,
-                        )
-                        .limit(1)
-                        .with_for_update()
-                    )
-                ).scalar_one_or_none()
-            if target_history is not None:
-                # The raw schema's historical pair unique key means changing
-                # A→B would collide with B's inactive history. Preserve both
-                # histories by deactivating A and reactivating B instead.
-                existing.is_active = False
-                target_history.is_active = True
-                target_history.assigned_by = hod.id
-                target_history.assigned_at = datetime.now(timezone.utc)
-                target_history.notes = payload.notes.strip() if payload.notes else None
-                entity_id = target_history.id
-            else:
-                existing.mentor_id = mentor.id
-                existing.assigned_by = hod.id
-                existing.assigned_at = datetime.now(timezone.utc)
-                existing.notes = payload.notes.strip() if payload.notes else None
-                entity_id = existing.id
-            try:
-                await db.flush()
-            except IntegrityError:
-                raise HTTPException(status.HTTP_409_CONFLICT, detail="This student was assigned concurrently; retry")
-            action = "REASSIGN_MENTOR"
-            old_value = {"mentor_id": str(old_mentor), "student_id": str(payload.student_id)}
-        else:
-            # The base table keeps historical mentor/student pairs unique. If
-            # this exact pair was previously removed, reactivate that row rather
-            # than attempting a duplicate INSERT; a different former mentor can
-            # still receive a new historical row safely.
-            historical = (
-                await db.execute(
-                    select(MentorAssignment)
-                    .where(
-                        MentorAssignment.tenant_id == hod.tenant_id,
-                        MentorAssignment.student_id == payload.student_id,
-                        MentorAssignment.academic_year_id == current_year.id,
-                        MentorAssignment.mentor_id == mentor.id,
-                    )
-                    .order_by(MentorAssignment.assigned_at.desc())
-                    .limit(1)
-                    .with_for_update()
-                )
-            ).scalar_one_or_none()
-            if historical:
-                historical.is_active = True
-                historical.assigned_by = hod.id
-                historical.assigned_at = datetime.now(timezone.utc)
-                historical.notes = payload.notes.strip() if payload.notes else None
-                try:
-                    await db.flush()
-                except IntegrityError:
-                    raise HTTPException(status.HTTP_409_CONFLICT, detail="This student was assigned concurrently; retry")
-                action = "REACTIVATE_MENTOR"
-                old_value = {"mentor_id": str(mentor.id), "student_id": str(payload.student_id)}
-                entity_id = historical.id
-            else:
-                assignment = MentorAssignment(
-                    id=uuid.uuid4(),
-                    tenant_id=hod.tenant_id,
-                    mentor_id=mentor.id,
-                    student_id=payload.student_id,
-                    academic_year_id=current_year.id,
-                    assigned_by=hod.id,
-                    notes=payload.notes.strip() if payload.notes else None,
-                )
-                db.add(assignment)
-                try:
-                    await db.flush()
-                except IntegrityError:
-                    raise HTTPException(status.HTTP_409_CONFLICT, detail="This student was assigned concurrently; retry")
-                action = "ASSIGN_MENTOR"
-                old_value = None
-                entity_id = assignment.id
-        AuditService.record(
-            db,
-            actor=hod,
-            actor_role="HOD",
-            action=action,
-            entity="MentorAssignment",
-            entity_id=entity_id,
-            tenant_id=hod.tenant_id,
-            old_value=old_value,
-            new_value={"mentor_id": str(mentor.id), "student_id": str(payload.student_id)},
+        mentor, _roles = await MentorAssignmentService.mentor_candidate(db, hod.tenant_id, payload.mentor_id, require_mentor_role=True)
+        student, _enrollment, school_class = student_rows[0]
+        target = MentorTarget(MentorScopeType.STUDENT, student.id, student.name, school_class.id, school_class.name, (student.id,))
+        await MentorAssignmentService.assign(
+            db, tenant_id=hod.tenant_id, year=current_year, mentor=mentor, target=target,
+            notes=payload.notes, actor=hod, actor_role="HOD",
         )
         return await HodService._mentor_board(db, hod.tenant_id, scope)
 
@@ -992,18 +894,7 @@ class HodService:
         ).scalar_one_or_none()
         if assignment is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="Mentor assignment not found")
-        assignment.is_active = False
-        await db.flush()
-        AuditService.record(
-            db,
-            actor=hod,
-            actor_role="HOD",
-            action="REMOVE_MENTOR",
-            entity="MentorAssignment",
-            entity_id=assignment.id,
-            tenant_id=hod.tenant_id,
-            old_value={"mentor_id": str(assignment.mentor_id), "student_id": str(assignment.student_id)},
-        )
+        await MentorAssignmentService.remove(db, assignment=assignment, actor=hod, actor_role="HOD")
         return await HodService._mentor_board(db, hod.tenant_id, scope)
 
     @staticmethod

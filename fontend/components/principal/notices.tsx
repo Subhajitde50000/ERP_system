@@ -31,7 +31,8 @@ type LeadershipNoticeDetail = Omit<PrincipalNoticeDetail, "read_count" | "reader
 export interface LeadershipNoticesConfig {
   title: string;
   subtitle: string;
-  composeHref: string;
+  /** Omit for read-only boards (e.g. the mentor console) — hides the compose action. */
+  composeHref?: string;
   canViewReadReceipts: boolean;
   canPin: boolean;
   allowAttachments?: boolean;
@@ -86,7 +87,7 @@ export function LeadershipNoticesPage({ config }: { config: LeadershipNoticesCon
       <PageHeader
         title={config.title}
         subtitle={config.subtitle}
-        action={<Link href={config.composeHref} className="inline-flex h-10 items-center gap-2 rounded-field bg-accent px-4 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover"><Plus className="h-4 w-4" /> Post notice</Link>}
+        action={config.composeHref ? <Link href={config.composeHref} className="inline-flex h-10 items-center gap-2 rounded-field bg-accent px-4 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover"><Plus className="h-4 w-4" /> Post notice</Link> : undefined}
       />
       <Card className="mb-5 !p-4">
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_220px]">
@@ -139,7 +140,7 @@ export function LeadershipNoticeComposerPage({ config }: { config: LeadershipNot
         expires_at: form.expiresAt ? new Date(form.expiresAt).toISOString() : null,
         attachments,
       });
-      router.replace(config.composeHref.replace(/\/new$/, ""));
+      router.replace((config.composeHref ?? "/").replace(/\/new$/, ""));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not publish this notice.");
     } finally {
@@ -160,7 +161,7 @@ export function LeadershipNoticeComposerPage({ config }: { config: LeadershipNot
             {form.targetScope !== "INSTITUTION" ? <div><label htmlFor="notice-target" className={labelClass}>{form.targetScope === "DEPARTMENT" ? "Department" : "Class"}</label><select id="notice-target" className={inputClass} value={form.targetId} onChange={(event) => setForm({ ...form, targetId: event.target.value })} required><option value="">Select {form.targetScope.toLowerCase()}</option>{options.map((option) => <option key={option.id} value={option.id}>{option.department_name ? `${option.department_name} · ${option.name}` : option.name}</option>)}</select></div> : null}
             <div className="grid gap-4 sm:grid-cols-2"><div><label htmlFor="notice-expires" className={labelClass}>Expires at (optional)</label><input id="notice-expires" type="datetime-local" className={inputClass} value={form.expiresAt} onChange={(event) => setForm({ ...form, expiresAt: event.target.value })} /></div>{config.canPin ? <label className="flex items-center gap-2 pt-7 text-sm font-medium text-primary"><input type="checkbox" checked={form.pinned} onChange={(event) => setForm({ ...form, pinned: event.target.checked })} className="h-4 w-4 rounded border-border accent-accent" /> Pin this notice</label> : <p className="pt-7 text-xs text-muted-foreground">Only institution leadership can pin notices.</p>}</div>
             {error ? <p role="alert" className="text-sm text-destructive-text">{error}</p> : null}
-            <div className="flex flex-wrap gap-3"><button type="submit" disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-field bg-accent px-5 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover disabled:opacity-60"><Megaphone className="h-4 w-4" /> {busy ? "Publishing…" : "Publish notice"}</button><Link href={config.composeHref.replace(/\/new$/, "")} className="inline-flex h-11 items-center rounded-field border border-border px-5 text-sm font-semibold text-muted-foreground hover:border-accent hover:text-accent">Cancel</Link></div>
+            <div className="flex flex-wrap gap-3"><button type="submit" disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-field bg-accent px-5 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover disabled:opacity-60"><Megaphone className="h-4 w-4" /> {busy ? "Publishing…" : "Publish notice"}</button><Link href={(config.composeHref ?? "/").replace(/\/new$/, "")} className="inline-flex h-11 items-center rounded-field border border-border px-5 text-sm font-semibold text-muted-foreground hover:border-accent hover:text-accent">Cancel</Link></div>
           </form>
         </Card>
       </AsyncState>

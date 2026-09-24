@@ -9,6 +9,7 @@ import {
   Megaphone,
   RefreshCw,
   Repeat,
+  UserRoundCheck,
   Users,
 } from "lucide-react";
 
@@ -22,6 +23,7 @@ const NAVIGATION: InstitutionConsoleNavItem[] = [
   { label: "Dashboard", href: "/coordinator/dashboard", icon: LayoutDashboard },
   { label: "Student records", href: "/coordinator/students", icon: Users },
   { label: "Import students", href: "/coordinator/import", icon: Users },
+  { label: "Mentors", href: "/coordinator/mentors", icon: UserRoundCheck },
   { label: "Subjects", href: "/coordinator/subjects", icon: BookOpen },
   { label: "Timetable builder", href: "/coordinator/timetable", icon: CalendarDays },
   { label: "Conflict checker", href: "/coordinator/timetable/conflicts", icon: AlertTriangle },
