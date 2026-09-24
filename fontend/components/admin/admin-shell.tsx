@@ -8,6 +8,7 @@ import {
   Puzzle,
   Settings,
   UserRound,
+  UserRoundCheck,
   Users,
 } from "lucide-react";
 
@@ -27,6 +28,8 @@ const NAVIGATION: InstitutionConsoleNavItem[] = [
   { label: "Students", href: "/admin/students", icon: Users },
   // C-IA-12: the grant side of the parent portal — who may see which child, and how much.
   { label: "Guardians", href: "/admin/guardian-links", icon: UserRound },
+  // Operational fallback for mentor allocation; the Academic Coordinator owns it day to day.
+  { label: "Mentors", href: "/admin/mentors", icon: UserRoundCheck },
   { label: "Modules", href: "/admin/modules", icon: Puzzle },
   { label: "Settings", href: "/admin/settings", icon: Settings },
   { label: "Profile", href: "/admin/profile", icon: UserRound },

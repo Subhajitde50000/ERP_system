@@ -48,7 +48,7 @@ _UNMANAGED_TABLES = frozenset([
     "inventory_categories", "inventory_items",
     # Misc legacy (no ORM model yet)
     "bulk_import_jobs", "notification_templates", "staff_documents",
-    "mentor_notes", "grade_cards",
+    "grade_cards",
 ])
 
 
