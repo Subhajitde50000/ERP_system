@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Megaphone,
   MessageSquare,
+  MessageSquareMore,
   PenSquare,
   Repeat2,
   UserRoundCheck,
@@ -36,6 +37,7 @@ const NAVIGATION: InstitutionConsoleNavItem[] = [
   { label: "Content", href: "/teacher/content", icon: BookOpen },
   { label: "Notices", href: "/teacher/notices", icon: Megaphone },
   { label: "Discussion", href: "/teacher/discussion", icon: MessageSquare },
+  { label: "My Feedback", href: "/teacher/feedback", icon: MessageSquareMore },
 ];
 
 export function TeacherShell({ children }: { children: React.ReactNode }) {

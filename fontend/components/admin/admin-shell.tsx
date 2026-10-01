@@ -5,6 +5,7 @@ import {
   Building2,
   CalendarRange,
   LayoutDashboard,
+  MessageSquareMore,
   Puzzle,
   Settings,
   UserRound,
@@ -28,6 +29,7 @@ const NAVIGATION: InstitutionConsoleNavItem[] = [
   // C-IA-12: the grant side of the parent portal — who may see which child, and how much.
   { label: "Guardians", href: "/admin/guardian-links", icon: UserRound },
   { label: "Modules", href: "/admin/modules", icon: Puzzle },
+  { label: "Feedback", href: "/admin/feedback", icon: MessageSquareMore },
   { label: "Settings", href: "/admin/settings", icon: Settings },
   { label: "Profile", href: "/admin/profile", icon: UserRound },
 ];

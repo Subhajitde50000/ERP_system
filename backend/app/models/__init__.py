@@ -123,6 +123,12 @@ from app.models.online_class import (
     OnlineClassStatus,
 )
 from app.models.notification import DeviceToken, NotificationDelivery
+from app.models.feedback import (
+    CampaignStatus,
+    FeedbackCampaign,
+    FeedbackCampaignTarget,
+    FeedbackResponse,
+)
 
 __all__ = [
     "PlatformUser",
@@ -254,4 +260,9 @@ __all__ = [
     "PARENT_ACCESS_MODULES",
     "LinkStatus",
     "ParentStudentLink",
+    # teacher feedback campaigns
+    "CampaignStatus",
+    "FeedbackCampaign",
+    "FeedbackCampaignTarget",
+    "FeedbackResponse",
 ]

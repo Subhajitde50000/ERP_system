@@ -237,6 +237,19 @@ async def get_current_tenant_user_student_records_manager(
     )
 
 
+async def get_current_tenant_user_feedback_manager(
+    current_user: Annotated[User, Depends(get_current_tenant_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> User:
+    """Allow Institution Admin and Principal to manage teacher feedback campaigns."""
+    return await _require_current_tenant_roles(
+        current_user,
+        db,
+        {"INSTITUTION_ADMIN", "PRINCIPAL"},
+        "Institution Admin or Principal privileges are required",
+    )
+
+
 async def get_current_tenant_user_coordinator(
     current_user: Annotated[User, Depends(get_current_tenant_user)],
     db: Annotated[AsyncSession, Depends(get_db)],

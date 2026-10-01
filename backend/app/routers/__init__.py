@@ -27,6 +27,7 @@ from app.routers.hostel import router as hostel_router
 from app.routers.online_class import router as online_class_router
 from app.routers.notifications import router as notifications_router, push_token_router as push_tokens_router
 from app.routers.files import router as files_router
+from app.routers.feedback import router as feedback_router
 
 __all__ = [
     "platform_auth_router",
@@ -52,4 +53,6 @@ __all__ = [
     "online_class_router",
     "notifications_router",
     "push_tokens_router",
+    "files_router",
+    "feedback_router",
 ]

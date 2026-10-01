@@ -711,3 +711,33 @@ async def fees(
     student: Annotated[User, Depends(get_current_tenant_user_student)],
 ):
     return APIResponse(success=True, data=await StudentService.fees(db, student), message="Fee account loaded")
+
+
+# ── Feedback campaigns ─────────────────────────────────────────────────────────
+
+from app.schemas.feedback import APIResponseStudentCampaigns, FeedbackSubmit  # noqa: E402
+from app.services.feedback_service import FeedbackService  # noqa: E402
+
+
+@router.get("/feedback", response_model=APIResponseStudentCampaigns)
+async def student_feedback_campaigns(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    student: Annotated[User, Depends(get_current_tenant_user_student)],
+):
+    """List all active feedback campaigns with only the teachers the student studies under."""
+    data = await FeedbackService.list_active_campaigns_for_student(
+        db, student.tenant_id, student.id
+    )
+    return APIResponse(success=True, data=data, message="Feedback campaigns loaded")
+
+
+@router.post("/feedback/{campaign_id}/submit", status_code=status.HTTP_201_CREATED)
+async def student_submit_feedback(
+    campaign_id: uuid.UUID,
+    payload: FeedbackSubmit,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    student: Annotated[User, Depends(get_current_tenant_user_student)],
+):
+    """Submit feedback for one teacher in a campaign. One submission per teacher per campaign."""
+    await FeedbackService.submit_feedback(db, student.tenant_id, student.id, campaign_id, payload)
+    return APIResponse(success=True, data=None, message="Feedback submitted successfully")

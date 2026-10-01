@@ -45,6 +45,7 @@ from app.routers import (
     notifications_router,
     push_tokens_router,
     files_router,
+    feedback_router,
 )
 from app.schemas.common import ErrorDetail
 from app.services.fcm_client import get_fcm_client
@@ -163,3 +164,6 @@ app.include_router(online_class_router, prefix=api_prefix)
 app.include_router(notifications_router, prefix=api_prefix)
 app.include_router(push_tokens_router, prefix=api_prefix)
 app.include_router(files_router, prefix=api_prefix)
+# Feedback campaigns — accessible to both Institution Admin and Principal
+app.include_router(feedback_router, prefix=api_prefix)
+app.include_router(feedback_router, prefix=f"{api_prefix}/principal")

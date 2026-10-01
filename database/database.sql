@@ -3044,3 +3044,64 @@ END $do$;
 -- ============================================================================
 --  End of database.sql
 -- ============================================================================
+
+
+-- ============================================================================
+--  Teacher Feedback Campaign feature
+--  Added: 2026-09-30
+--  See: database/feedback_campaigns_migration.sql  (idempotent update script)
+--       backend/app/alembic/versions/e2f3a4b5c6d7_add_feedback_campaigns.py
+-- ============================================================================
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'campaign_status') THEN
+        CREATE TYPE campaign_status AS ENUM ('DRAFT', 'ACTIVE', 'CLOSED');
+    END IF;
+END$$;
+
+CREATE TABLE IF NOT EXISTS feedback_campaigns (
+    id              UUID            PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id       UUID            NOT NULL REFERENCES tenants(id),
+    title           VARCHAR(200)    NOT NULL,
+    description     TEXT,
+    starts_at       TIMESTAMPTZ     NOT NULL,
+    ends_at         TIMESTAMPTZ     NOT NULL,
+    allow_anonymous BOOLEAN         NOT NULL DEFAULT TRUE,
+    status          campaign_status NOT NULL DEFAULT 'DRAFT',
+    created_by      UUID            NOT NULL REFERENCES users(id),
+    created_at      TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    closed_at       TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_feedback_campaigns_tenant_id ON feedback_campaigns (tenant_id);
+CREATE INDEX IF NOT EXISTS idx_feedback_campaigns_status    ON feedback_campaigns (status);
+
+CREATE TABLE IF NOT EXISTS feedback_campaign_targets (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    campaign_id UUID NOT NULL REFERENCES feedback_campaigns(id) ON DELETE CASCADE,
+    teacher_id  UUID NOT NULL REFERENCES users(id),
+    subject_id  UUID REFERENCES subjects(id),
+    class_id    UUID REFERENCES classes(id),
+    CONSTRAINT uq_fct__campaign_teacher_subject UNIQUE (campaign_id, teacher_id, subject_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fct_campaign_id ON feedback_campaign_targets (campaign_id);
+CREATE INDEX IF NOT EXISTS idx_fct_teacher_id  ON feedback_campaign_targets (teacher_id);
+
+CREATE TABLE IF NOT EXISTS feedback_responses (
+    id                UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    campaign_id       UUID        NOT NULL REFERENCES feedback_campaigns(id)        ON DELETE CASCADE,
+    target_id         UUID        NOT NULL REFERENCES feedback_campaign_targets(id) ON DELETE CASCADE,
+    student_id        UUID        NOT NULL REFERENCES users(id),
+    teaching_clarity  SMALLINT,
+    subject_knowledge SMALLINT,
+    interaction       SMALLINT,
+    overall           SMALLINT,
+    comment           TEXT,
+    submitted_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT uq_fr__campaign_target_student UNIQUE (campaign_id, target_id, student_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fr_campaign_id ON feedback_responses (campaign_id);
+CREATE INDEX IF NOT EXISTS idx_fr_target_id   ON feedback_responses (target_id);
