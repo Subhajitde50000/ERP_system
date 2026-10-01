@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowLeftRight,
   BookOpen,
   CalendarDays,
   ClipboardCheck,
@@ -9,6 +10,7 @@ import {
   LayoutDashboard,
   Megaphone,
   MessageSquare,
+  MessageSquareMore,
   PenSquare,
   Repeat2,
   UserRoundCheck,
@@ -20,6 +22,7 @@ import {
   InstitutionConsoleShell,
   type InstitutionConsoleNavItem,
 } from "@/components/institution-console/institution-console-shell";
+import { useInstitutionAuth } from "@/hooks/use-institution-auth";
 
 /** C-TC-01 … C-TC-22 navigation for the teaching-scope teacher console. */
 const NAVIGATION: InstitutionConsoleNavItem[] = [
@@ -36,12 +39,18 @@ const NAVIGATION: InstitutionConsoleNavItem[] = [
   { label: "Content", href: "/teacher/content", icon: BookOpen },
   { label: "Notices", href: "/teacher/notices", icon: Megaphone },
   { label: "Discussion", href: "/teacher/discussion", icon: MessageSquare },
+  { label: "My Feedback", href: "/teacher/feedback", icon: MessageSquareMore },
 ];
 
 export function TeacherShell({ children }: { children: React.ReactNode }) {
+  const { hasRole } = useInstitutionAuth();
+  // Teachers who also mentor get a direct hop to their mentee console.
+  const navigation = hasRole("MENTOR")
+    ? [...NAVIGATION, { label: "Mentor console", href: "/mentor/dashboard", icon: ArrowLeftRight }]
+    : NAVIGATION;
   return (
     <InstitutionConsoleShell
-      navigation={NAVIGATION}
+      navigation={navigation}
       consoleTitle="Teacher console"
       headerTitle="Classes, exams and assignments"
       roleLabel="Teacher"

@@ -210,15 +210,23 @@ Same as Principal but with scope limited to duties delegated by Principal. Canno
 **Cannot:** Edit other teachers' content, view other departments, access fee or ERP data.
 
 #### Mentor (optional)
-A teacher-level role scoped to assigned mentee students only.
+A teacher-level role scoped to assigned mentees only. Mentees are derived from
+`mentor_assignments`: a mentor may be assigned to individual **students**, to
+**project teams** (one mentor per team) and to whole **classes**; each
+student / team / class has exactly one active mentor per academic year, while a
+mentor may hold any number of assignments. Allocation is owned by the Academic
+Coordinator (`/coordinator/mentors`), with the Institution Admin as fallback
+(`/admin/mentors`); the HOD may still assign student-level mentors inside their
+departments (`/hod/mentors`). Console: `/mentor/*` (API `/api/v1/mentor/*`).
 
 | Area | Permissions |
 |---|---|
-| Attendance | View mentee attendance |
-| Results | View mentee results |
-| Student Profile | View and add notes to mentee profiles |
-| Notices | Receive notices for mentee students |
-| Discussion | Participate in mentee group forum |
+| Dashboard | Mentee counts by scope, at-risk (below `attendance_threshold`), upcoming exams, recent log |
+| Attendance | View mentee attendance (overall and per subject) |
+| Results | View mentee published results and coursework status |
+| Student Profile | View profile, guardians and leave requests; add mentoring-log notes (private or shared with other mentors of the student) |
+| Teams / Classes | Read-only view of mentored project teams (members, tasks, resources, chat) and class rosters |
+| Notices | Institution notices plus those addressed to mentees' departments/classes |
 
 #### Academic Coordinator
 

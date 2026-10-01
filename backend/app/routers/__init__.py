@@ -20,6 +20,7 @@ from app.routers.hod import router as hod_router
 from app.routers.coordinator import router as coordinator_router
 from app.routers.exam_controller import router as exam_controller_router
 from app.routers.teacher import router as teacher_router
+from app.routers.mentor import router as mentor_router
 from app.routers.student import router as student_router
 from app.routers.parent import router as parent_router
 from app.routers.library import router as library_router
@@ -27,6 +28,7 @@ from app.routers.hostel import router as hostel_router
 from app.routers.online_class import router as online_class_router
 from app.routers.notifications import router as notifications_router, push_token_router as push_tokens_router
 from app.routers.files import router as files_router
+from app.routers.feedback import router as feedback_router
 
 __all__ = [
     "platform_auth_router",
@@ -45,6 +47,7 @@ __all__ = [
     "coordinator_router",
     "exam_controller_router",
     "teacher_router",
+    "mentor_router",
     "student_router",
     "parent_router",
     "library_router",
@@ -52,4 +55,6 @@ __all__ = [
     "online_class_router",
     "notifications_router",
     "push_tokens_router",
+    "files_router",
+    "feedback_router",
 ]

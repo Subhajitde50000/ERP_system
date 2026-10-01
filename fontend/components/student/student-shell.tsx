@@ -10,6 +10,7 @@ import {
   LayoutDashboard,
   Megaphone,
   MessageSquare,
+  MessageSquareMore,
   Repeat2,
   UserRound,
   Users,
@@ -36,6 +37,7 @@ const NAVIGATION: InstitutionConsoleNavItem[] = [
   { label: "Notices", href: "/student/notices", icon: Megaphone },
   { label: "Discussion", href: "/student/discussion", icon: MessageSquare },
   { label: "Fees", href: "/student/fees", icon: IndianRupee },
+  { label: "Feedback", href: "/student/feedback", icon: MessageSquareMore },
 ];
 
 export function StudentShell({ children }: { children: React.ReactNode }) {

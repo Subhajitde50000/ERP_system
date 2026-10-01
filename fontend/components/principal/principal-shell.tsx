@@ -8,6 +8,7 @@ import {
   FileSpreadsheet,
   LayoutDashboard,
   Megaphone,
+  MessageSquareMore,
   Users,
   GraduationCap,
 } from "lucide-react";
@@ -27,6 +28,7 @@ const NAVIGATION: InstitutionConsoleNavItem[] = [
   { label: "Students", href: "/principal/students", icon: GraduationCap },
   { label: "Notice Board", href: "/principal/notices", icon: Megaphone },
   { label: "Timetable", href: "/principal/timetable", icon: CalendarDays },
+  { label: "Feedback", href: "/principal/feedback", icon: MessageSquareMore },
   { label: "Reports", href: "/principal/reports", icon: BarChart3 },
 ];
 

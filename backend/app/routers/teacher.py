@@ -925,3 +925,25 @@ async def accept_reply(
     teacher: Annotated[User, Depends(get_current_tenant_user_teacher)],
 ):
     return APIResponse(success=True, data=await TeacherService.accept_reply(db, teacher, reply_id), message="Answer accepted")
+
+
+# ── Feedback results (teacher view — aggregated only) ─────────────────────────
+
+from app.schemas.feedback import APIResponseTeacherFeedback  # noqa: E402
+from app.services.feedback_service import FeedbackService  # noqa: E402
+
+
+@router.get("/feedback", response_model=APIResponseTeacherFeedback)
+async def teacher_feedback_results(
+    db: Annotated[AsyncSession, Depends(get_db)],
+    teacher: Annotated[User, Depends(get_current_tenant_user_teacher)],
+):
+    """Return aggregated feedback results for all campaigns the teacher appears in.
+
+    Student identities are never included. Comments are only included when
+    the campaign was explicitly configured as non-anonymous by the admin.
+    """
+    data = await FeedbackService.get_teacher_feedback_results(
+        db, teacher.tenant_id, teacher.id
+    )
+    return APIResponse(success=True, data=data, message="Feedback results loaded")

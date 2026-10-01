@@ -37,6 +37,7 @@ from app.routers import (
     coordinator_router,
     exam_controller_router,
     teacher_router,
+    mentor_router,
     student_router,
     parent_router,
     library_router,
@@ -45,6 +46,7 @@ from app.routers import (
     notifications_router,
     push_tokens_router,
     files_router,
+    feedback_router,
 )
 from app.schemas.common import ErrorDetail
 from app.services.fcm_client import get_fcm_client
@@ -155,6 +157,7 @@ app.include_router(hod_router, prefix=api_prefix)
 app.include_router(coordinator_router, prefix=api_prefix)
 app.include_router(exam_controller_router, prefix=api_prefix)
 app.include_router(teacher_router, prefix=api_prefix)
+app.include_router(mentor_router, prefix=api_prefix)
 app.include_router(student_router, prefix=api_prefix)
 app.include_router(parent_router, prefix=api_prefix)
 app.include_router(library_router, prefix=api_prefix)
@@ -163,3 +166,6 @@ app.include_router(online_class_router, prefix=api_prefix)
 app.include_router(notifications_router, prefix=api_prefix)
 app.include_router(push_tokens_router, prefix=api_prefix)
 app.include_router(files_router, prefix=api_prefix)
+# Feedback campaigns — accessible to both Institution Admin and Principal
+app.include_router(feedback_router, prefix=api_prefix)
+app.include_router(feedback_router, prefix=f"{api_prefix}/principal")

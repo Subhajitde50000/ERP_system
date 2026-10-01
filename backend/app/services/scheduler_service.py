@@ -155,6 +155,18 @@ async def drain_push_deliveries() -> None:
         logger.exception("push worker round failed: %s", exc)
 
 
+async def auto_close_feedback_campaigns() -> None:
+    """Close ACTIVE feedback campaigns whose ends_at has passed."""
+    try:
+        from app.services.feedback_service import FeedbackService
+        async with AsyncSessionLocal() as db:
+            closed = await FeedbackService.auto_close_expired_campaigns(db)
+            if closed:
+                logger.info("Feedback campaign auto-close: %d campaign(s) closed", closed)
+    except Exception as exc:  # noqa: BLE001 - scheduler job must not crash the loop
+        logger.exception("feedback campaign auto-close failed: %s", exc)
+
+
 def _register_jobs() -> None:
     scheduler.add_job(
         check_and_auto_start_classes,
@@ -177,10 +189,22 @@ def _register_jobs() -> None:
         id="push_deliveries",
         replace_existing=True,
     )
+    scheduler.add_job(
+        auto_close_feedback_campaigns,
+        "interval",
+        minutes=5,
+        id="feedback_campaign_auto_close",
+        replace_existing=True,
+    )
 
 
 def _deregister_jobs() -> None:
-    for job_id in ("online_class_auto_start", "online_class_reminders", "push_deliveries"):
+    for job_id in (
+        "online_class_auto_start",
+        "online_class_reminders",
+        "push_deliveries",
+        "feedback_campaign_auto_close",
+    ):
         scheduler.remove_job(job_id)
         _job_ids.discard(job_id)
 
@@ -198,7 +222,12 @@ async def _leader_heartbeat() -> None:
     if await _leader_lock.acquire_or_renew():
         if not _job_ids:
             _register_jobs()
-            _job_ids = {"online_class_auto_start", "online_class_reminders", "push_deliveries"}
+            _job_ids = {
+                "online_class_auto_start",
+                "online_class_reminders",
+                "push_deliveries",
+                "feedback_campaign_auto_close",
+            }
             logger.info("scheduler leadership acquired — this worker runs the background jobs.")
     elif _job_ids:
         _deregister_jobs()

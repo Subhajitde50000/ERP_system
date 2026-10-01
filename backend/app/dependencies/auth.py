@@ -237,6 +237,19 @@ async def get_current_tenant_user_student_records_manager(
     )
 
 
+async def get_current_tenant_user_feedback_manager(
+    current_user: Annotated[User, Depends(get_current_tenant_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> User:
+    """Allow Institution Admin and Principal to manage teacher feedback campaigns."""
+    return await _require_current_tenant_roles(
+        current_user,
+        db,
+        {"INSTITUTION_ADMIN", "PRINCIPAL"},
+        "Institution Admin or Principal privileges are required",
+    )
+
+
 async def get_current_tenant_user_coordinator(
     current_user: Annotated[User, Depends(get_current_tenant_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
@@ -291,6 +304,26 @@ async def get_current_tenant_user_teacher(
         db,
         {"TEACHER", "MENTOR"},
         "Teacher privileges are required",
+    )
+
+
+async def get_current_tenant_user_mentor(
+    current_user: Annotated[User, Depends(get_current_tenant_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> User:
+    """Require a live MENTOR role; the mentee fence is the assignment, not the role.
+
+    The `/mentor/*` console never accepts a student, team or class id as
+    authority.  `MentorScopeService` resolves the caller's ACTIVE
+    ``mentor_assignments`` for the current academic year on every request,
+    so revoking an assignment (Coordinator / Admin / HOD) closes access at
+    once — a role grant alone shows an empty console.
+    """
+    return await _require_current_tenant_roles(
+        current_user,
+        db,
+        {"MENTOR"},
+        "Mentor privileges are required",
     )
 
 

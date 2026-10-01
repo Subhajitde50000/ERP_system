@@ -59,6 +59,8 @@ from app.models.hod import (
     AttendanceRecord,
     DiscussionThread,
     MentorAssignment,
+    MentorNote,
+    MentorScopeType,
     Submission,
 )
 from app.models.library import Book, BookCondition, BookCopy, BookIssue, EResource
@@ -123,6 +125,12 @@ from app.models.online_class import (
     OnlineClassStatus,
 )
 from app.models.notification import DeviceToken, NotificationDelivery
+from app.models.feedback import (
+    CampaignStatus,
+    FeedbackCampaign,
+    FeedbackCampaignTarget,
+    FeedbackResponse,
+)
 
 __all__ = [
     "PlatformUser",
@@ -179,6 +187,8 @@ __all__ = [
     "AttendanceRecord",
     "DiscussionThread",
     "MentorAssignment",
+    "MentorNote",
+    "MentorScopeType",
     "Submission",
     "AcademicEvent",
     "AcademicEventScope",
@@ -254,4 +264,9 @@ __all__ = [
     "PARENT_ACCESS_MODULES",
     "LinkStatus",
     "ParentStudentLink",
+    # teacher feedback campaigns
+    "CampaignStatus",
+    "FeedbackCampaign",
+    "FeedbackCampaignTarget",
+    "FeedbackResponse",
 ]
