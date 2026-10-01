@@ -99,3 +99,19 @@ CREATE INDEX IF NOT EXISTS idx_fr_campaign_id
 
 CREATE INDEX IF NOT EXISTS idx_fr_target_id
     ON feedback_responses (target_id);
+
+-- ---------------------------------------------------------------------------
+-- 5. Permissions & ownership (ensures application user erp_user has access)
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'erp_user') THEN
+        ALTER TABLE feedback_campaigns OWNER TO erp_user;
+        ALTER TABLE feedback_campaign_targets OWNER TO erp_user;
+        ALTER TABLE feedback_responses OWNER TO erp_user;
+        GRANT ALL ON feedback_campaigns TO erp_user;
+        GRANT ALL ON feedback_campaign_targets TO erp_user;
+        GRANT ALL ON feedback_responses TO erp_user;
+    END IF;
+END$$;
+

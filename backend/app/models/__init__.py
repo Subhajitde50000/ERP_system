@@ -59,6 +59,8 @@ from app.models.hod import (
     AttendanceRecord,
     DiscussionThread,
     MentorAssignment,
+    MentorNote,
+    MentorScopeType,
     Submission,
 )
 from app.models.library import Book, BookCondition, BookCopy, BookIssue, EResource
@@ -185,6 +187,8 @@ __all__ = [
     "AttendanceRecord",
     "DiscussionThread",
     "MentorAssignment",
+    "MentorNote",
+    "MentorScopeType",
     "Submission",
     "AcademicEvent",
     "AcademicEventScope",

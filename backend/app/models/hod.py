@@ -9,10 +9,10 @@ from __future__ import annotations
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Enum as SAEnum, ForeignKey, Index, Integer, Numeric, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Date, Enum as SAEnum, ForeignKey, Index, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY, TIMESTAMP, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
@@ -148,27 +148,102 @@ class DiscussionThread(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
 
+class MentorScopeType(str, enum.Enum):
+    """What a ``mentor_assignments`` row targets (``scope_type`` VARCHAR)."""
+
+    STUDENT = "STUDENT"
+    TEAM = "TEAM"
+    CLASS = "CLASS"
+
+
 class MentorAssignment(Base):
+    """One mentor ↔ one target (student, project team or whole class).
+
+    Business rules (revision ``e6a7b8c9d0e1`` / ``update_mentor_scopes.sql``):
+    a mentor may hold any number of assignments, but each student, team and
+    class has at most one ACTIVE mentor per academic year.  Exactly one of
+    ``student_id`` / ``team_id`` / ``class_id`` is set, matching ``scope_type``.
+    """
+
     __tablename__ = "mentor_assignments"
     __table_args__ = (
+        CheckConstraint("scope_type IN ('STUDENT', 'TEAM', 'CLASS')", name="ck_mentor_assignments__scope_type"),
+        CheckConstraint(
+            "(scope_type = 'STUDENT' AND student_id IS NOT NULL AND team_id IS NULL AND class_id IS NULL) "
+            "OR (scope_type = 'TEAM' AND team_id IS NOT NULL AND student_id IS NULL AND class_id IS NULL) "
+            "OR (scope_type = 'CLASS' AND class_id IS NOT NULL AND student_id IS NULL AND team_id IS NULL)",
+            name="ck_mentor_assignments__scope_target",
+        ),
         Index(
             "uq_mentor_assignments__tenant_student_year_active",
             "tenant_id",
             "student_id",
             "academic_year_id",
             unique=True,
-            postgresql_where="is_active = TRUE",
+            postgresql_where="is_active = TRUE AND student_id IS NOT NULL",
+        ),
+        Index(
+            "uq_mentor_assignments__tenant_team_year_active",
+            "tenant_id",
+            "team_id",
+            "academic_year_id",
+            unique=True,
+            postgresql_where="is_active = TRUE AND team_id IS NOT NULL",
+        ),
+        Index(
+            "uq_mentor_assignments__tenant_class_year_active",
+            "tenant_id",
+            "class_id",
+            "academic_year_id",
+            unique=True,
+            postgresql_where="is_active = TRUE AND class_id IS NOT NULL",
         ),
         Index("idx_mentor_assignments_mentor_id", "mentor_id", "academic_year_id"),
         Index("idx_mentor_assignments_student_id", "student_id", "academic_year_id"),
+        Index("idx_mentor_assignments_team_id", "team_id", "academic_year_id"),
+        Index("idx_mentor_assignments_class_id", "class_id", "academic_year_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
+    mentor_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    # Plain VARCHAR (not a PG enum) so asyncpg never needs a type cast and the
+    # raw-SQL and Alembic paths stay byte-identical.
+    scope_type: Mapped[str] = mapped_column(String(10), nullable=False, default=MentorScopeType.STUDENT.value, server_default="STUDENT")
+    student_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    team_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("project_groups.id", ondelete="CASCADE"), nullable=True)
+    class_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("classes.id", ondelete="CASCADE"), nullable=True)
+    academic_year_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("academic_years.id"), nullable=False)
+    assigned_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    assigned_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class MentorNote(Base):
+    """A mentor's dated note about one mentee (mentoring log / meeting record).
+
+    ``assignment_id`` points at the mentor assignment that put the student in
+    the mentor's scope — a STUDENT, TEAM or CLASS row — so a note always has an
+    auditable reason to exist.  Private notes are visible only to their author;
+    shared notes (``is_private = FALSE``) are also visible to a successor mentor.
+    """
+
+    __tablename__ = "mentor_notes"
+    __table_args__ = (
+        Index("idx_mentor_notes_assignment_id", "assignment_id"),
+        Index("idx_mentor_notes_student_id", "student_id", "created_at"),
+        Index("idx_mentor_notes_mentor_id", "mentor_id"),
+        Index("idx_mentor_notes_tenant_id", "tenant_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="CASCADE"), nullable=False)
     mentor_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
     student_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    academic_year_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("academic_years.id"), nullable=False)
-    assigned_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    assigned_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    assignment_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("mentor_assignments.id", ondelete="CASCADE"), nullable=False)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
+    is_private: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    note_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
