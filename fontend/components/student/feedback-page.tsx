@@ -78,7 +78,7 @@ export function StudentFeedbackPage() {
     setError(null);
     try {
       const res = await getStudentFeedbackCampaigns();
-      setCampaigns(res.data ?? []);
+      setCampaigns(res ?? []);
     } catch {
       setError("Failed to load feedback campaigns.");
     } finally {

@@ -40,7 +40,7 @@ export function TeacherFeedbackResultsPage() {
     setError(null);
     try {
       const res = await getTeacherFeedbackResults();
-      setResults(res.data ?? []);
+      setResults(res ?? []);
     } catch {
       setError("Failed to load feedback results.");
     } finally {

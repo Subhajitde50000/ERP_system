@@ -21,11 +21,11 @@ import logging
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, func, or_, select, update
+from sqlalchemy import and_, cast, func, or_, select, update, String
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.academic import SchoolClass, Subject
-from app.models.enrollment import Enrollment, TeacherSubject
+from app.models.enrollment import Enrollment, EnrollmentStatus, TeacherSubject
 from app.models.feedback import CampaignStatus, FeedbackCampaign, FeedbackCampaignTarget, FeedbackResponse
 from app.models.online_class import Notification
 from app.models.user import User
@@ -81,7 +81,7 @@ class FeedbackService:
         class_ids = {t.class_id for t in targets if t.class_id}
 
         teachers = {
-            u.id: u.full_name
+            u.id: u.name
             for u in (
                 await db.execute(select(User).where(User.id.in_(teacher_ids)))
             ).scalars().all()
@@ -314,51 +314,52 @@ class FeedbackService:
     ) -> None:
         """Send in-app + push notification to all enrolled students in targeted classes."""
         try:
-            # Collect class_ids from targets
-            targets = (
-                await db.execute(
-                    select(FeedbackCampaignTarget).where(
-                        FeedbackCampaignTarget.campaign_id == campaign.id,
-                        FeedbackCampaignTarget.class_id.is_not(None),
+            async with db.begin_nested():
+                # Collect class_ids from targets
+                targets = (
+                    await db.execute(
+                        select(FeedbackCampaignTarget).where(
+                            FeedbackCampaignTarget.campaign_id == campaign.id,
+                            FeedbackCampaignTarget.class_id.is_not(None),
+                        )
                     )
+                ).scalars().all()
+                class_ids = {t.class_id for t in targets if t.class_id}
+
+                if not class_ids:
+                    # Fall back to all active enrolled students in the tenant
+                    student_ids_rows = (
+                        await db.execute(
+                            select(Enrollment.student_id).where(
+                                Enrollment.tenant_id == tenant_id,
+                                cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
+                            )
+                        )
+                    ).scalars().all()
+                else:
+                    student_ids_rows = (
+                        await db.execute(
+                            select(Enrollment.student_id).where(
+                                Enrollment.class_id.in_(class_ids),
+                                Enrollment.tenant_id == tenant_id,
+                                cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
+                            )
+                        )
+                    ).scalars().all()
+
+                student_ids = list(set(student_ids_rows))
+                if not student_ids:
+                    return
+
+                await NotificationService.create_notifications(
+                    db,
+                    tenant_id=tenant_id,
+                    user_ids=student_ids,
+                    title="Feedback Campaign Open",
+                    body=f"Feedback campaign '{campaign.title}' is now open. Feedback window closes {campaign.ends_at.strftime('%d %b %Y')}.",
+                    notif_type="FEEDBACK_CAMPAIGN",
+                    data={"campaign_id": str(campaign.id)},
                 )
-            ).scalars().all()
-            class_ids = {t.class_id for t in targets if t.class_id}
-
-            if not class_ids:
-                # Fall back to all active enrolled students in the tenant
-                student_ids_rows = (
-                    await db.execute(
-                        select(Enrollment.student_id).where(
-                            Enrollment.tenant_id == tenant_id,
-                            Enrollment.status == "ACTIVE",
-                        )
-                    )
-                ).scalars().all()
-            else:
-                student_ids_rows = (
-                    await db.execute(
-                        select(Enrollment.student_id).where(
-                            Enrollment.class_id.in_(class_ids),
-                            Enrollment.tenant_id == tenant_id,
-                            Enrollment.status == "ACTIVE",
-                        )
-                    )
-                ).scalars().all()
-
-            student_ids = list(set(student_ids_rows))
-            if not student_ids:
-                return
-
-            await NotificationService.notify_users(
-                db,
-                tenant_id=tenant_id,
-                user_ids=student_ids,
-                title="Feedback Campaign Open",
-                body="Feedback campaign '" + campaign.title + "' is now open. Feedback window closes " + campaign.ends_at.strftime('%d %b %Y') + ".",
-                notif_type="FEEDBACK_CAMPAIGN",
-                data={"campaign_id": str(campaign.id)},
-            )
         except Exception as exc:  # noqa: BLE001 — notification is best-effort
             logger.warning("Failed to notify students for campaign %s: %s", campaign.id, exc)
 
@@ -462,7 +463,7 @@ class FeedbackService:
         # Resolve teacher names
         teacher_ids = {t.teacher_id for t in targets}
         teachers = {
-            u.id: u.full_name
+            u.id: u.name
             for u in (
                 await db.execute(select(User).where(User.id.in_(teacher_ids)))
             ).scalars().all()
@@ -549,7 +550,7 @@ class FeedbackService:
                 await db.execute(
                     select(Enrollment.class_id).where(
                         Enrollment.student_id == student_id,
-                        Enrollment.status == "ACTIVE",
+                        cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     )
                 )
             ).scalars().all()
@@ -587,7 +588,7 @@ class FeedbackService:
 
         # Load teacher names
         teachers = {
-            u.id: u.full_name
+            u.id: u.name
             for u in (
                 await db.execute(select(User).where(User.id.in_(student_teacher_ids)))
             ).scalars().all()
@@ -692,7 +693,7 @@ class FeedbackService:
                 await db.execute(
                     select(Enrollment.class_id).where(
                         Enrollment.student_id == student_id,
-                        Enrollment.status == "ACTIVE",
+                        cast(Enrollment.status, String) == EnrollmentStatus.ACTIVE.value,
                     )
                 )
             ).scalars().all()

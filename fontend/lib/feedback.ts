@@ -5,6 +5,9 @@
  *  - Admin / Principal  →  CRUD + analytics  (prefix: /feedback or /principal/feedback)
  *  - Student            →  list + submit      (prefix: /student/feedback)
  *  - Teacher            →  own results        (prefix: /teacher/feedback)
+ *
+ * `leadershipCall` / `requestJson` already unwraps the `{ success, data }` envelope
+ * and returns `data` directly, so every function here is typed to the inner shape.
  */
 
 import { leadershipCall, queryString } from "./principal";
@@ -133,6 +136,8 @@ export interface TeacherFeedbackResult {
 }
 
 // ── Admin / Principal API calls ───────────────────────────────────────────────
+// NOTE: requestJson already unwraps the { success, data } envelope.
+// These functions return the inner `data` type directly.
 
 type AdminPrefix = "feedback" | "principal/feedback";
 
@@ -140,8 +145,8 @@ function adminCall<T>(prefix: AdminPrefix, path: string, init: RequestInit = {})
   return leadershipCall<T>(prefix, path, init, "FeedbackAPIError");
 }
 
-export function createCampaign(prefix: AdminPrefix, payload: CampaignCreate): Promise<{ success: boolean; data: CampaignDetail }> {
-  return adminCall(prefix, "/campaigns", {
+export function createCampaign(prefix: AdminPrefix, payload: CampaignCreate): Promise<CampaignDetail> {
+  return adminCall<CampaignDetail>(prefix, "/campaigns", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -151,40 +156,40 @@ export function createCampaign(prefix: AdminPrefix, payload: CampaignCreate): Pr
 export function listCampaigns(
   prefix: AdminPrefix,
   params: { status?: string; limit?: number; offset?: number } = {},
-): Promise<{ success: boolean; data: CampaignPage }> {
-  return adminCall(prefix, `/campaigns${queryString(params)}`);
+): Promise<CampaignPage> {
+  return adminCall<CampaignPage>(prefix, `/campaigns${queryString(params)}`);
 }
 
-export function getCampaign(prefix: AdminPrefix, id: string): Promise<{ success: boolean; data: CampaignDetail }> {
-  return adminCall(prefix, `/campaigns/${id}`);
+export function getCampaign(prefix: AdminPrefix, id: string): Promise<CampaignDetail> {
+  return adminCall<CampaignDetail>(prefix, `/campaigns/${id}`);
 }
 
 export function updateCampaign(
   prefix: AdminPrefix,
   id: string,
   payload: CampaignUpdate,
-): Promise<{ success: boolean; data: CampaignDetail }> {
-  return adminCall(prefix, `/campaigns/${id}`, {
+): Promise<CampaignDetail> {
+  return adminCall<CampaignDetail>(prefix, `/campaigns/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
 
-export function publishCampaign(prefix: AdminPrefix, id: string): Promise<{ success: boolean; data: CampaignDetail }> {
-  return adminCall(prefix, `/campaigns/${id}/publish`, { method: "POST" });
+export function publishCampaign(prefix: AdminPrefix, id: string): Promise<CampaignDetail> {
+  return adminCall<CampaignDetail>(prefix, `/campaigns/${id}/publish`, { method: "POST" });
 }
 
-export function closeCampaign(prefix: AdminPrefix, id: string): Promise<{ success: boolean; data: CampaignDetail }> {
-  return adminCall(prefix, `/campaigns/${id}/close`, { method: "POST" });
+export function closeCampaign(prefix: AdminPrefix, id: string): Promise<CampaignDetail> {
+  return adminCall<CampaignDetail>(prefix, `/campaigns/${id}/close`, { method: "POST" });
 }
 
-export function deleteCampaign(prefix: AdminPrefix, id: string): Promise<void> {
-  return adminCall(prefix, `/campaigns/${id}`, { method: "DELETE" });
+export function deleteCampaign(prefix: AdminPrefix, id: string): Promise<null> {
+  return adminCall<null>(prefix, `/campaigns/${id}`, { method: "DELETE" });
 }
 
-export function getCampaignAnalytics(prefix: AdminPrefix, id: string): Promise<{ success: boolean; data: CampaignAnalytics }> {
-  return adminCall(prefix, `/campaigns/${id}/analytics`);
+export function getCampaignAnalytics(prefix: AdminPrefix, id: string): Promise<CampaignAnalytics> {
+  return adminCall<CampaignAnalytics>(prefix, `/campaigns/${id}/analytics`);
 }
 
 // ── Student API calls ─────────────────────────────────────────────────────────
@@ -193,15 +198,15 @@ function studentCall<T>(path: string, init: RequestInit = {}): Promise<T> {
   return leadershipCall<T>("student", path, init, "StudentFeedbackAPIError");
 }
 
-export function getStudentFeedbackCampaigns(): Promise<{ success: boolean; data: StudentFeedbackCampaign[] }> {
-  return studentCall("/feedback");
+export function getStudentFeedbackCampaigns(): Promise<StudentFeedbackCampaign[]> {
+  return studentCall<StudentFeedbackCampaign[]>("/feedback");
 }
 
 export function submitStudentFeedback(
   campaignId: string,
   payload: FeedbackSubmit,
-): Promise<{ success: boolean }> {
-  return studentCall(`/feedback/${campaignId}/submit`, {
+): Promise<null> {
+  return studentCall<null>(`/feedback/${campaignId}/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -210,8 +215,8 @@ export function submitStudentFeedback(
 
 // ── Teacher API calls ─────────────────────────────────────────────────────────
 
-export function getTeacherFeedbackResults(): Promise<{ success: boolean; data: TeacherFeedbackResult[] }> {
-  return leadershipCall<{ success: boolean; data: TeacherFeedbackResult[] }>(
+export function getTeacherFeedbackResults(): Promise<TeacherFeedbackResult[]> {
+  return leadershipCall<TeacherFeedbackResult[]>(
     "teacher",
     "/feedback",
     {},

@@ -9,7 +9,9 @@ import {
   CheckCircle2,
   ChevronRight,
   Loader2,
+  Maximize2,
   MessageSquareMore,
+  Minimize2,
   Plus,
   Trash2,
   X,
@@ -69,11 +71,13 @@ export function FeedbackCampaignsPage({ apiPrefix }: Props) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [analytics, setAnalytics] = useState<CampaignAnalytics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   // Create modal state
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [allTeachers, setAllTeachers] = useState(false);
   const [form, setForm] = useState<Omit<CampaignCreate, "targets">>({
     title: "",
     description: null,
@@ -91,7 +95,7 @@ export function FeedbackCampaignsPage({ apiPrefix }: Props) {
     setError(null);
     try {
       const res = await listCampaigns(apiPrefix);
-      setCampaigns(res.data.items);
+      setCampaigns(res.items);
     } catch {
       setError("Failed to load feedback campaigns.");
     } finally {
@@ -131,10 +135,11 @@ export function FeedbackCampaignsPage({ apiPrefix }: Props) {
     setDetailId(id);
     setDetail(null);
     setAnalytics(null);
+    setIsFullScreen(false);
     setDetailLoading(true);
     try {
       const res = await getCampaign(apiPrefix, id);
-      setDetail(res.data);
+      setDetail(res);
     } catch {
       setDetailId(null);
     } finally {
@@ -146,7 +151,7 @@ export function FeedbackCampaignsPage({ apiPrefix }: Props) {
     setAnalyticsLoading(true);
     try {
       const res = await getCampaignAnalytics(apiPrefix, id);
-      setAnalytics(res.data);
+      setAnalytics(res);
     } catch {
       // analytics load failure is non-fatal
     } finally {
@@ -155,15 +160,22 @@ export function FeedbackCampaignsPage({ apiPrefix }: Props) {
   };
 
   const handleCreate = async () => {
-    const validTargets = targetRows.filter((t) => t.teacher_id.trim());
+    const validTargets = allTeachers
+      ? staffList.map((s) => ({ teacher_id: s.id, subject_id: null, class_id: null }))
+      : targetRows.filter((t) => t.teacher_id.trim() && t.teacher_id !== "ALL");
+
     if (!form.title.trim()) { setCreateError("Campaign title is required."); return; }
     if (!form.starts_at || !form.ends_at) { setCreateError("Start and end dates are required."); return; }
-    if (!validTargets.length) { setCreateError("Add at least one teacher target."); return; }
+    if (!validTargets.length) {
+      setCreateError(allTeachers ? "No teachers found in the system to target." : "Add at least one teacher target.");
+      return;
+    }
     setCreating(true);
     setCreateError(null);
     try {
       await createCampaign(apiPrefix, { ...form, targets: validTargets });
       setShowCreate(false);
+      setAllTeachers(false);
       setForm({ title: "", description: null, starts_at: "", ends_at: "", allow_anonymous: true });
       setTargetRows([{ teacher_id: "", subject_id: null, class_id: null }]);
       loadCampaigns();
@@ -270,135 +282,185 @@ export function FeedbackCampaignsPage({ apiPrefix }: Props) {
 
       {/* Detail modal */}
       {detailId && (
-        <div role="dialog" aria-modal="true" aria-label="Campaign details" className="fixed inset-0 z-50 flex items-center justify-center bg-primary/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-card bg-white p-5 shadow-2xl sm:p-6">
-            <div className="mb-5 flex items-center justify-between gap-3">
-              <h2 className="font-display text-lg font-bold text-primary">Campaign Details</h2>
-              <button type="button" onClick={() => { setDetailId(null); setDetail(null); setAnalytics(null); }} aria-label="Close" className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-primary">
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            {detailLoading ? (
-              <Loading label="Loading…" />
-            ) : detail ? (
-              <div className="space-y-5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${STATUS_CLASS[detail.status] ?? ""}`}>
-                    {statusLabel(detail.status)}
-                  </span>
-                  {detail.allow_anonymous && (
-                    <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-muted-foreground">Anonymous</span>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Campaign details"
+          className={`fixed inset-0 z-50 flex ${
+            isFullScreen ? "p-0 bg-white" : "items-center justify-center bg-primary/50 p-4"
+          }`}
+        >
+          <div
+            className={`overflow-y-auto bg-white transition-all ${
+              isFullScreen
+                ? "h-full w-full rounded-none p-6 sm:p-8"
+                : "max-h-[90vh] w-full max-w-2xl rounded-card p-5 shadow-2xl sm:p-6"
+            }`}
+          >
+            <div className={isFullScreen ? "mx-auto max-w-5xl" : ""}>
+              <div className="mb-5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-lg font-bold text-primary">Campaign Details</h2>
+                  {isFullScreen && (
+                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                      Full Screen
+                    </span>
                   )}
                 </div>
-                <h3 className="font-display text-xl font-bold text-primary">{detail.title}</h3>
-                {detail.description && <p className="text-sm text-muted-foreground">{detail.description}</p>}
-
-                <div className="grid grid-cols-2 gap-4 border-t border-border pt-4 text-sm">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Opens</p>
-                    <p className="mt-1 font-medium text-primary">{dateTime(detail.starts_at)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Closes</p>
-                    <p className="mt-1 font-medium text-primary">{dateTime(detail.ends_at)}</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-border pt-4">
-                  <p className="mb-2 font-display text-sm font-bold text-primary">Teacher Targets ({detail.targets.length})</p>
-                  <ul className="space-y-1">
-                    {detail.targets.map((t) => (
-                      <li key={t.id} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-                        <span className="font-medium text-primary">{t.teacher_name ?? t.teacher_id}</span>
-                        {t.subject_name && <span>— {t.subject_name}</span>}
-                        {t.class_name && <span className="text-xs">({t.class_name})</span>}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Analytics */}
-                {detail.status !== "DRAFT" && (
-                  <div className="border-t border-border pt-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="font-display text-sm font-bold text-primary">Analytics</p>
-                      {!analytics && !analyticsLoading && (
-                        <button
-                          type="button"
-                          onClick={() => loadAnalytics(detail.id)}
-                          className="inline-flex h-8 items-center gap-1.5 rounded-field border border-border px-3 text-xs font-semibold text-foreground transition hover:border-accent hover:text-accent"
-                        >
-                          <BarChart3 className="h-3.5 w-3.5" /> Load Analytics
-                        </button>
-                      )}
-                      {analyticsLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-                    </div>
-                    {analytics && (
-                      <div className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                          Total responses: <span className="font-semibold text-primary">{analytics.total_responses}</span>
-                        </p>
-                        {analytics.results.map((r) => (
-                          <div key={r.teacher_id} className="rounded-field border border-border p-4">
-                            <p className="font-display text-sm font-bold text-primary">{r.teacher_name ?? r.teacher_id}</p>
-                            <p className="mb-3 text-xs text-muted-foreground">{r.response_count} response{r.response_count !== 1 ? "s" : ""}</p>
-                            <div className="space-y-2">
-                              <RatingBar label="Teaching Clarity" value={r.teaching_clarity_avg} />
-                              <RatingBar label="Subject Knowledge" value={r.subject_knowledge_avg} />
-                              <RatingBar label="Interaction" value={r.interaction_avg} />
-                              <RatingBar label="Overall" value={r.overall_avg} />
-                            </div>
-                            {r.comments && r.comments.length > 0 && (
-                              <div className="mt-3">
-                                <p className="mb-1.5 text-xs font-semibold text-muted-foreground">Comments</p>
-                                <ul className="space-y-1">
-                                  {r.comments.map((comment, i) => (
-                                    <li key={i} className="rounded-field bg-muted px-3 py-2 text-xs">"{comment}"</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setIsFullScreen(!isFullScreen)}
+                    aria-label={isFullScreen ? "Exit full screen" : "Open full screen"}
+                    title={isFullScreen ? "Exit full screen" : "Open full screen"}
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-primary transition"
+                  >
+                    {isFullScreen ? (
+                      <Minimize2 className="h-4 w-4" />
+                    ) : (
+                      <Maximize2 className="h-4 w-4" />
                     )}
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex flex-wrap gap-3 border-t border-border pt-4">
-                  {detail.status === "DRAFT" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(detail.id)}
-                        className="inline-flex h-10 items-center gap-2 rounded-field border border-destructive-border bg-destructive-light px-4 text-sm font-semibold text-destructive-text transition hover:opacity-80"
-                      >
-                        <Trash2 className="h-4 w-4" /> Delete
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handlePublish(detail.id)}
-                        className="inline-flex h-10 items-center gap-2 rounded-field bg-accent px-4 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover"
-                      >
-                        <CheckCircle2 className="h-4 w-4" /> Publish Campaign
-                      </button>
-                    </>
-                  )}
-                  {detail.status === "ACTIVE" && (
-                    <button
-                      type="button"
-                      onClick={() => handleClose(detail.id)}
-                      className="inline-flex h-10 items-center gap-2 rounded-field border border-border px-4 text-sm font-semibold text-foreground transition hover:border-accent hover:text-accent"
-                    >
-                      <X className="h-4 w-4" /> Close Campaign
-                    </button>
-                  )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDetailId(null);
+                      setDetail(null);
+                      setAnalytics(null);
+                      setIsFullScreen(false);
+                    }}
+                    aria-label="Close"
+                    title="Close"
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-primary transition"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
-            ) : null}
+
+              {detailLoading ? (
+                <Loading label="Loading…" />
+              ) : detail ? (
+                <div className="space-y-5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${STATUS_CLASS[detail.status] ?? ""}`}>
+                      {statusLabel(detail.status)}
+                    </span>
+                    {detail.allow_anonymous && (
+                      <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-bold text-muted-foreground">Anonymous</span>
+                    )}
+                  </div>
+                  <h3 className="font-display text-xl font-bold text-primary">{detail.title}</h3>
+                  {detail.description && <p className="text-sm text-muted-foreground">{detail.description}</p>}
+
+                  <div className="grid grid-cols-2 gap-4 border-t border-border pt-4 text-sm">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Opens</p>
+                      <p className="mt-1 font-medium text-primary">{dateTime(detail.starts_at)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Closes</p>
+                      <p className="mt-1 font-medium text-primary">{dateTime(detail.ends_at)}</p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border pt-4">
+                    <p className="mb-2 font-display text-sm font-bold text-primary">Teacher Targets ({detail.targets.length})</p>
+                    <ul className={`space-y-1 ${isFullScreen ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 space-y-0" : ""}`}>
+                      {detail.targets.map((t) => (
+                        <li key={t.id} className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+                          <span className="font-medium text-primary">{t.teacher_name ?? t.teacher_id}</span>
+                          {t.subject_name && <span>— {t.subject_name}</span>}
+                          {t.class_name && <span className="text-xs">({t.class_name})</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Analytics */}
+                  {detail.status !== "DRAFT" && (
+                    <div className="border-t border-border pt-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <p className="font-display text-sm font-bold text-primary">Analytics</p>
+                        {!analytics && !analyticsLoading && (
+                          <button
+                            type="button"
+                            onClick={() => loadAnalytics(detail.id)}
+                            className="inline-flex h-8 items-center gap-1.5 rounded-field border border-border px-3 text-xs font-semibold text-foreground transition hover:border-accent hover:text-accent"
+                          >
+                            <BarChart3 className="h-3.5 w-3.5" /> Load Analytics
+                          </button>
+                        )}
+                        {analyticsLoading && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                      </div>
+                      {analytics && (
+                        <div className="space-y-4">
+                          <p className="text-sm text-muted-foreground">
+                            Total responses: <span className="font-semibold text-primary">{analytics.total_responses}</span>
+                          </p>
+                          <div className={isFullScreen ? "grid grid-cols-1 md:grid-cols-2 gap-4 space-y-0" : "space-y-4"}>
+                            {analytics.results.map((r) => (
+                              <div key={r.teacher_id} className="rounded-field border border-border p-4">
+                                <p className="font-display text-sm font-bold text-primary">{r.teacher_name ?? r.teacher_id}</p>
+                                <p className="mb-3 text-xs text-muted-foreground">{r.response_count} response{r.response_count !== 1 ? "s" : ""}</p>
+                                <div className="space-y-2">
+                                  <RatingBar label="Teaching Clarity" value={r.teaching_clarity_avg} />
+                                  <RatingBar label="Subject Knowledge" value={r.subject_knowledge_avg} />
+                                  <RatingBar label="Interaction" value={r.interaction_avg} />
+                                  <RatingBar label="Overall" value={r.overall_avg} />
+                                </div>
+                                {r.comments && r.comments.length > 0 && (
+                                  <div className="mt-3">
+                                    <p className="mb-1.5 text-xs font-semibold text-muted-foreground">Comments</p>
+                                    <ul className="space-y-1">
+                                      {r.comments.map((comment, i) => (
+                                        <li key={i} className="rounded-field bg-muted px-3 py-2 text-xs">"{comment}"</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-3 border-t border-border pt-4">
+                    {detail.status === "DRAFT" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(detail.id)}
+                          className="inline-flex h-10 items-center gap-2 rounded-field border border-destructive-border bg-destructive-light px-4 text-sm font-semibold text-destructive-text transition hover:opacity-80"
+                        >
+                          <Trash2 className="h-4 w-4" /> Delete
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handlePublish(detail.id)}
+                          className="inline-flex h-10 items-center gap-2 rounded-field bg-accent px-4 text-sm font-semibold text-white shadow-accent transition hover:bg-accent-hover"
+                        >
+                          <CheckCircle2 className="h-4 w-4" /> Publish Campaign
+                        </button>
+                      </>
+                    )}
+                    {detail.status === "ACTIVE" && (
+                      <button
+                        type="button"
+                        onClick={() => handleClose(detail.id)}
+                        className="inline-flex h-10 items-center gap-2 rounded-field border border-border px-4 text-sm font-semibold text-foreground transition hover:border-accent hover:text-accent"
+                      >
+                        <X className="h-4 w-4" /> Close Campaign
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       )}
@@ -475,45 +537,87 @@ export function FeedbackCampaignsPage({ apiPrefix }: Props) {
 
               <div className="border-t border-border pt-4">
                 <div className="mb-2 flex items-center justify-between">
-                  <label className={labelClass}>Teacher Targets *</label>
-                  <button
-                    type="button"
-                    onClick={() => setTargetRows([...targetRows, { teacher_id: "", subject_id: null, class_id: null }])}
-                    className="inline-flex h-7 items-center gap-1 rounded-field border border-border px-2 text-xs font-semibold text-muted-foreground transition hover:border-accent hover:text-accent"
-                  >
-                    <Plus className="h-3 w-3" /> Add Row
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <label className={labelClass}>Teacher Targets *</label>
+                    <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold text-accent">
+                      <input
+                        type="checkbox"
+                        checked={allTeachers}
+                        onChange={(e) => {
+                          setAllTeachers(e.target.checked);
+                          if (!e.target.checked && targetRows.length === 0) {
+                            setTargetRows([{ teacher_id: "", subject_id: null, class_id: null }]);
+                          }
+                        }}
+                        className="h-3.5 w-3.5 rounded border-border accent-accent"
+                      />
+                      All Teachers ({staffList.length})
+                    </label>
+                  </div>
+                  {!allTeachers && (
+                    <button
+                      type="button"
+                      onClick={() => setTargetRows([...targetRows, { teacher_id: "", subject_id: null, class_id: null }])}
+                      className="inline-flex h-7 items-center gap-1 rounded-field border border-border px-2 text-xs font-semibold text-muted-foreground transition hover:border-accent hover:text-accent"
+                    >
+                      <Plus className="h-3 w-3" /> Add Row
+                    </button>
+                  )}
                 </div>
                 <p className="mb-3 text-xs text-muted-foreground">Students only see teachers they actually study under — the server enforces this.</p>
-                <div className="space-y-2">
-                  {targetRows.map((row, i) => (
-                    <div key={i} className="flex gap-2 items-center">
-                      <select
-                        className={`${inputClass} flex-1`}
-                        value={row.teacher_id}
-                        onChange={(e) => {
-                          const updated = [...targetRows];
-                          updated[i] = { ...row, teacher_id: e.target.value };
-                          setTargetRows(updated);
-                        }}
-                      >
-                        <option value="">— Select Teacher —</option>
-                        {staffList.map((s) => (
-                          <option key={s.id} value={s.id}>{s.name}</option>
-                        ))}
-                      </select>
-                      {targetRows.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => setTargetRows(targetRows.filter((_, j) => j !== i))}
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-field border border-border text-muted-foreground transition hover:border-destructive-border hover:text-destructive-text"
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </button>
-                      )}
+                {allTeachers ? (
+                  <div className="flex items-center justify-between rounded-field border border-accent/30 bg-accent/5 p-3 text-sm">
+                    <div className="flex items-center gap-2 font-medium text-primary">
+                      <CheckCircle2 className="h-4 w-4 text-accent shrink-0" />
+                      <span>All Teachers selected ({staffList.length} teacher{staffList.length !== 1 ? "s" : ""} included)</span>
                     </div>
-                  ))}
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAllTeachers(false);
+                        setTargetRows([{ teacher_id: "", subject_id: null, class_id: null }]);
+                      }}
+                      className="text-xs font-semibold text-accent hover:underline"
+                    >
+                      Select Individually
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {targetRows.map((row, i) => (
+                      <div key={i} className="flex gap-2 items-center">
+                        <select
+                          className={`${inputClass} flex-1`}
+                          value={row.teacher_id}
+                          onChange={(e) => {
+                            if (e.target.value === "ALL") {
+                              setAllTeachers(true);
+                              return;
+                            }
+                            const updated = [...targetRows];
+                            updated[i] = { ...row, teacher_id: e.target.value };
+                            setTargetRows(updated);
+                          }}
+                        >
+                          <option value="">— Select Teacher —</option>
+                          <option value="ALL">All Teachers ({staffList.length})</option>
+                          {staffList.map((s) => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))}
+                        </select>
+                        {targetRows.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => setTargetRows(targetRows.filter((_, j) => j !== i))}
+                            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-field border border-border text-muted-foreground transition hover:border-destructive-border hover:text-destructive-text"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {createError && <p role="alert" className="text-sm text-destructive-text">{createError}</p>}
